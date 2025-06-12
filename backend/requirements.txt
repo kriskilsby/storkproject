@@ -1,0 +1,6 @@
+# Lists Python dependencies.
+Flask
+psycopg2
+pandas
+scikit-learn
+folium

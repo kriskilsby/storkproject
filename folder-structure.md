@@ -1,0 +1,57 @@
+```
+└── 📁stork_project
+    └── 📁__pycache__
+    └── 📁.idea
+    └── 📁.vscode
+    └── 📁app
+        └── __init__.py
+        └── 📁__pycache__
+            └── __init__.cpython-312.pyc
+        └── 📁models
+            └── __init__.py
+            └── data_model.py
+        └── 📁routes
+            └── __init__.py
+            └── 📁__pycache__
+            └── data_routes.py
+            └── script_routes.py
+            └── visual_routes.py
+        └── 📁services
+            └── __init__.py
+            └── 📁__pycache__
+            └── clustering.py
+            └── data_processing.py
+            └── database.py
+        └── 📁static
+            └── 📁css
+                └── bootstrap.min.css
+                └── stork_styles.css
+                └── visual_styling.css
+                └── 📁working _copy
+                    └── visual_styling.css
+            └── 📁images
+            └── 📁js
+                └── data.js
+                └── 📁working_copy
+                    └── data.js
+        └── 📁templates
+    └── 📁bin
+    └── 📁bootstrap_tes
+    └── 📁lib
+    └── 📁tests
+        └── test_routes.py
+        └── test_services.py
+    └── 📁venv
+    └── 📁working_copy
+        └── run_script.py
+        └── server.py
+    └── .gitignore
+    └── activate_venv.bat
+    └── config.py
+    └── pyvenv.cfg
+    └── README.md
+    └── requirements.txt
+    └── run_script.py
+    └── run.py
+    └── server.py
+```

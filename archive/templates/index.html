@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Stork Migration Data Visualisation</title>
+        <!-- Include Pyodide -->
+        <script src="https://cdn.jsdelivr.net/pyodide/v0.21.3/full/pyodide.js"></script>
+        <!-- Related css files -->
+        <link rel="stylesheet" type="text/css" href="../static/css/stork_styles.css"/>
+        <link rel="canonical" href="https://getbootstrap.com/docs/5.3/examples/headers/">
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@docsearch/css@3">
+        <link href="../static/css/bootstrap.min.css" rel="stylesheet">
+    </head>
+    <body>
+        <nav class="fixed-nav-bar"><!-- Fixed navigation bar content --></nav>
+            <!-- Main Content -->
+            <main>
+            
+
+                <!-- <div class="container">
+                    <header class="d-flex flex-wrap justify-content-center py-3 mb-4 border-bottom">
+                    <a href="/" class="d-flex align-items-center mb-3 mb-md-0 me-md-auto link-body-emphasis text-decoration-none">
+                        <svg class="bi me-2" width="40" height="32"><use xlink:href="#bootstrap"/></svg>
+                        <span class="fs-4">Stork Migration Interactive Visualisation</span>
+                    </a>
+                
+                    <ul class="nav nav-pills">
+                        <li class="nav-item"><a href="index.html" class="nav-link active" aria-current="page">Home</a></li>
+                        <li class="nav-item"><a href="index.html" class="nav-link">Features</a></li>
+                        <li class="nav-item"><a href="index.html" class="nav-link">Pricing</a></li>
+                        <li class="nav-item"><a href="index.html" class="nav-link">FAQs</a></li>
+                        <li class="nav-item"><a href="index.html" class="nav-link">About</a></li>
+                    </ul>
+                    </header>
+                </div> -->
+
+                <div class="container">
+                    <nav class="navbar navbar-expand-lg bg-body-tertiary rounded" aria-label="Eleventh navbar example">
+                      <div class="container-fluid">
+                        <a class="navbar-brand" href="#">Stork Data</a>
+                        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarsExample09" aria-controls="navbarsExample09" aria-expanded="false" aria-label="Toggle navigation">
+                          <span class="navbar-toggler-icon"></span>
+                        </button>
+                
+                        <div class="collapse navbar-collapse" id="navbarsExample09">
+                          <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                            <li class="nav-item">
+                              <a class="nav-link active" aria-current="page" href="index.html">Home</a>
+                            </li>
+                            <li class="nav-item">
+                              <a class="nav-link" href="index.html">Link</a>
+                            </li>
+                            <li class="nav-item">
+                              <a class="nav-link disabled" aria-disabled="true">Disabled</a>
+                            </li>
+                            <li class="nav-item dropdown">
+                              <a class="nav-link dropdown-toggle" href="index.html" data-bs-toggle="dropdown" aria-expanded="false">Dropdown</a>
+                              <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="#">Action</a></li>
+                                <li><a class="dropdown-item" href="#">Another action</a></li>
+                                <li><a class="dropdown-item" href="#">Something else here</a></li>
+                              </ul>
+                            </li>
+                          </ul>
+                          <form role="search">
+                            <input class="form-control" type="search" placeholder="Search" aria-label="Search">
+                          </form>
+                        </div>
+                      </div>
+                    </nav>
+            
+                <div class="b-example-divider"></div>
+
+
+            <div class="px-4 py-5 my-5 text-center">
+                <img class="d-block mx-auto mb-4" src="../assets/brand/bootstrap-logo.svg" alt="" width="72" height="57">
+                <h1 class="display-5 fw-bold text-body-emphasis">Centered hero</h1>
+                <div class="col-lg-6 mx-auto">
+                    <p class="lead mb-4">Quickly design and customize responsive mobile-first sites with Bootstrap, the world’s most popular front-end open source toolkit, featuring Sass variables and mixins, responsive grid system, extensive prebuilt components, and powerful JavaScript plugins.</p>
+                    <div class="d-grid gap-2 d-sm-flex justify-content-sm-center">
+                        <button type="button" class="btn btn-primary btn-lg px-4 gap-3">Primary button</button>
+                        <button type="button" class="btn btn-outline-secondary btn-lg px-4">Secondary</button>
+                    </div>
+                </div>
+            </div>
+            
+              <div class="b-example-divider"></div>
+
+            <!-- Hero -->
+            <section id="hero">
+
+                <h1>Heading 1</h1>  
+                
+                    <p id="red-paragraph">Example drop-down selections below. 
+                        
+                    </p>
+             
+                <!-- Drop-down options selections setup -->
+                <div id="drop-down">
+                    <label for="year-select">Select Year:</label>
+                    <select id="year-select">
+                        <option value="spendingPower">Year 2015</option>
+                        <option value="annualInflation">Year 2016</option>
+                        <option value="compoundInflation">Year 2017</option>
+                        <option value="annualWages">Year 2018</option>
+                        <option value="foodInflation">Year 2019</option>
+                    </select>
+    
+                    <label for="bird-select">Select Bird ID:</label>
+                    <select id="bird-select">
+                        <option value="all">All Birds</option>
+                        <option value="Canada">Bird 001</option>
+                        <option value="France">Bird 002</option>
+                        <option value="Germany">Bird 003</option>
+                        <option value="Italy">Bird 004</option>
+                        <option value="Japan">Bird 005</option>
+                        <option value="United Kingdom">Bird 006</option>
+                        <option value="United States">Bird 007</option>
+                        
+                    </select>
+                    
+                </div>
+            </section>
+
+            <div class="flex-container wrapper">
+                <!-- Content -->
+                <section id="content" class="content">
+
+                    <div id="radio-buttons">
+                        <h4>Toggle Layers</h4>
+                        {% for group, layers in layer_mapping.items() %}
+                            <h5>{{ group }}</h5>
+                            {% for layer in layers %}
+                                <label>
+                                    <!--<input type="radio" name="{{ group }}" value="{{ layer }}" onclick="toggleLayer('{{ layer }}')">-->
+                                    <input type="checkbox" name="{{ group }}" value="{{ layer }}" checked onclick="toggleLayer('{{ layer }}')">
+                                    {{ layer }}
+                                </label><br>
+                            {% endfor %}
+                        {% endfor %}
+                    </div>
+                    <h1>Run Python Script from Browser</h1>
+                    <button onclick="runPythonScript()">Run Python Script</button>
+                    <div id="output"></div> <!-- To display script output -->
+
+                    <script>
+                        function runPythonScript() {
+                            fetch('http://127.0.0.1:5000/run-script')
+                                .then(response => response.text())
+                                .then(data => {
+                                    document.getElementById("output").innerHTML = data;  // Show the script output in the div
+                                })
+                                .catch(error => {
+                                    document.getElementById("output").innerHTML = 'Error: ' + error;  // Display any error in the div
+                                });
+                        }
+                    </script>
+                   
+                    <button id="theButton">Test Post to Python</button>
+                    <h3 id = "info"></h3>
+
+                    <div id="map" style="width: 100%; height: 100vh;"></div>
+                    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+                    <strong><!-- Link to the JavaScript file here: --></strong>
+                    <script type="text/javascript" src="../static/js/data.js"></script>
+
+                    <!--<div id="container" style="width: 1100px; height: 520px; margin: 0 auto"></div>-->
+                 
+
+                    <figure class="highcharts-figure">
+                    <!--<div id="container1"></div>-->
+                        <p id="dataset-description">
+                        Write something interesting potentially here.
+                        </p>
+                    </figure>
+
+                </section>
+
+                <!-- Sidebar -->
+                <aside id="r-sidebar" class="r-sidebar">
+                    
+                    <h2>Heading 2</h2>   
+                    
+                        <p style="text-align:left;">Write something interesting potentially here.
+                        </p>
+
+                    <h2>Heading 2</h2>
+                
+                        <p style="text-align:left;">Write something interesting potentially here.   
+                        </p>
+                    
+                    <h2>Heading 2</h2>
+                
+                        <p style="text-align:left;">Write something interesting potentially here.</p>
+                        <p> Write something interesting potentially here.</p>
+                     
+                    <h2>Heading 2</h2>
+                
+                        <p style="text-align:left;"> Write something interesting potentially here.
+                        </p>
+       
+                </aside>
+            </div>
+
+                <section id="hero">
+
+                    <h2 style="color: white;">Heading 2</h2>  
+                
+                    <h3>Heading 3</h3>
+                    
+                    <p id="red-paragraph">  
+                        Write something interesting potentially here. </p>
+
+                    <h3>Heading 3</h3>
+
+                    <!--<a style="font-weight: bold; color: rgb(187, 243, 187);" href="https://www.somewhere.co.uk">Name That Place</a>  
+                        Write details about this subject.</p>-->
+                            
+                    <p id="red-paragraph">
+                        Write something interesting potentially here.
+                    </p> 
+                </section>
+
+            <div class="flex-container wrapper">
+ 
+                    <!-- Sidebar -->
+                    <aside id="l-sidebar" class="l-sidebar">
+
+                        <h2>Heading 2</h2>
+                                           
+                               
+                        <p style="text-align:left;"> Write something of interest.
+                        </p>
+                       
+                        <h2>Heading 2</h2>
+                
+                        <h3 style="color: #003f5c;">Heading 3</h3>
+
+                        <p style="text-align:left;"> Write something of interest.
+                        </p>
+
+                        <h3 style="color: #003f5c;">Heading 3</h3>
+
+                        <p style="text-align:left;"> Write something of interest.
+                        </p>
+                    
+                    </aside>
+                
+                    <!-- Content -->
+                    <section id="content" class="content">
+
+                        <div id="container3" style="width: 1100px; height: 650px; margin: 0 auto"></div>
+
+                    </section>  
+                </div>
+
+                <!-- Footer -->
+                <footer>
+
+                    <!--navigation banner-->
+                    <div class="topnav">
+                        <a class="active" href="index.html">Home</a>
+                        <a href="index.html">Further Details</a>
+                        <a href="index.html">Contact</a>
+                        <a href="index.html">About</a>
+                    </div>   
+
+                    <!--Footer - <p>Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas.</p>-->
+                </footer>
+
+            
+            </main>           
+    </body>
+</html>

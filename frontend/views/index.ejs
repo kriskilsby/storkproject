@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Stork Migration Data Visualisation</title>
+
+    <!-- Pyodide -->
+    <!-- <script src="https://cdn.jsdelivr.net/pyodide/v0.21.3/full/pyodide.js"></script> -->
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="/css/stork_styles.css" />
+    <link rel="stylesheet" href="/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@docsearch/css@3" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+
+  </head>
+
+  <body>
+    <!-- Navigation -->
+    <nav class="fixed-nav-bar">
+      <div class="container-fluid">
+        <a class="navbar-brand" href="#">Stork Data</a>
+        <button
+          class="navbar-toggler"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#navbarsExample09"
+        >
+          <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse" id="navbarsExample09">
+          <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+            <li class="nav-item"><a class="nav-link active" href="index.html">Home</a></li>
+            <li class="nav-item"><a class="nav-link" href="index.html">Link</a></li>
+            <li class="nav-item"><a class="nav-link disabled">Disabled</a></li>
+            <li class="nav-item dropdown">
+              <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">Dropdown</a>
+              <ul class="dropdown-menu">
+                <li><a class="dropdown-item" href="#">Action</a></li>
+                <li><a class="dropdown-item" href="#">Another action</a></li>
+              </ul>
+            </li>
+          </ul>
+          <form role="search">
+            <input class="form-control" type="search" placeholder="Search" />
+          </form>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main>
+      <section id="hero-top" class="text-center py-5">
+        <h1 class="display-5 fw-bold">Stork Migration Interactive Visualisation</h1>
+        <p class="lead">Run clustering on the Stork Migration database.</p>
+        <!-- <div>
+          <button class="btn btn-lg btn-primary me-2">Primary</button>
+          <button class="btn btn-lg btn-outline-secondary">Secondary</button>
+        </div> -->
+      </section>
+
+        <!-- Clustering Form -->
+        <!-- <section class="container my-4">
+        <h2>Run Clustering</h2>
+        <form id="clusteringForm" class="row g-3 align-items-center">
+          <div class="col-auto">
+            <label for="method" class="col-form-label">Method</label>
+          </div>
+          <div class="col-auto">
+            <select id="method" name="method" class="form-select">
+              <option value="kmeans">KMeans</option>
+              <option value="dbscan">DBSCAN</option>
+              <option value="hdbscan">HDBSCAN</option>
+            </select>
+          </div>
+
+          <div id="paramsContainer" class="col-auto d-flex flex-wrap gap-3"> -->
+            <!-- Parameter inputs will be injected here -->
+          <!-- </div>
+
+          <div class="col-auto">
+            <button type="submit" class="btn btn-primary">Run Clustering</button>
+          </div>
+        </form> -->
+      <!-- Clustering Form -->
+      <section class="container my-4">
+        <div class="card shadow-sm border-0">
+          <div class="card-body">
+            <h4 class="card-title mb-4">Select Your Parameters and Run Clustering</h4>
+
+            <form id="clusteringForm" class="row g-3">
+              <!-- Method -->
+              <div class="col-md-3">
+                <label for="method" class="form-label">Clustering Method</label>
+                <select id="method" name="method" class="form-select">
+                  <option value="kmeans">KMeans</option>
+                  <option value="dbscan">DBSCAN</option>
+                  <option value="hdbscan">HDBSCAN</option>
+                </select>
+              </div>
+
+              <!-- KMeans Params -->
+              <div id="kmeans-params" class="col-md-2 method-params">
+                <label for="n_clusters" class="form-label"># Clusters</label>
+                <input type="number" name="n_clusters" class="form-control" value="3" min="1">
+              </div>
+
+              <!-- DBSCAN Params -->
+              <div id="dbscan-params" class="method-params d-none col-md-4">
+                <div class="row">
+                  <div class="col">
+                    <label for="eps" class="form-label">EPS</label>
+                    <input type="number" name="eps" step="0.01" min="0" max="10" class="form-control" value="0.5">
+                  </div>
+                  <div class="col">
+                    <label for="min_samples" class="form-label">Min Samples</label>
+                    <input type="number" name="min_samples" class="form-control" value="5">
+                  </div>
+                </div>
+              </div>
+               
+              <!-- HDBSCAN Params -->
+              <div id="hdbscan-params" class="method-params d-none col-md-2">
+                <label for="min_cluster_size" class="form-label">Min Cluster Size</label>
+                <input type="number" name="min_cluster_size" class="form-control" value="5">
+              </div>
+
+              <!-- Decimal Precision -->
+              <div class="col-md-2">
+                <label for="decimal_places" class="form-label">Decimal Precision</label>
+                <select name="decimal_places" class="form-select">
+                  <option value="3" selected>3 (≈111m)</option>
+                  <option value="4">4 (≈11m)</option>
+                  <option value="5">5 (≈1.1m)</option>
+                </select>
+              </div>
+
+              <!-- Interval Grouping -->
+              <div class="col-md-2">
+                <label for="interval_minutes" class="form-label">Time Interval</label>
+                <select name="interval_minutes" class="form-select">
+                  <option value="5">5 min</option>
+                  <option value="10">10 min</option>
+                  <option value="15" selected>15 min</option>
+                  <option value="20">20 min</option>
+                  <option value="30">30 min</option>
+                </select>
+              </div>
+
+              <!-- Sample Rate -->
+              <div class="col-md-2">
+                <label for="sample_rate" class="form-label">Sample Rate</label>
+                <input type="number" name="sample_rate" class="form-control" value="20" min="1">
+              </div>
+
+              <!-- Submit Button -->
+              <div class="col-12 d-flex align-items-center">
+                <button type="submit" class="btn btn-primary me-3">Run Clustering</button>
+                <span id="clustering-timer" class="text-muted fw-bold"></span>
+              </div>
+
+              <!-- Test the clustering success -->
+              <div id="clusteringMetrics" style="margin-top: 1rem; font-size: 0.95rem;">
+                <h6>Clustering Metrics</h6>
+                <ul id="metricsList" style="padding-left: 1.2rem;"></ul>
+              </div>
+
+
+            </form>
+
+            <!-- REMOVE THE BELOW DATA VISUAL IN THE BROWSER FOR NOW-->
+            <!-- <pre id="clusteringResults" class="mt-3 p-3 bg-light border rounded" style="white-space: pre-wrap;"></pre> -->
+
+          </div>
+        </div>
+      </section>
+
+      <!-- No longer required -->
+      <!-- <section class="container py-4"> -->
+        <!-- Leaflet Map -->
+        <!-- <div id="map" style="width: 100%; height: 100vh;"></div>
+        <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+      </section> -->
+
+      <!-- No longer required -->
+      <!-- <section class="container my-4">
+        <div class="card shadow-sm border-0">
+          <div class="card-body">
+            <h4 class="card-title mb-4">Toggle Layers</h4> -->
+            <!-- Layer Toggles -->
+            <!-- <div id="radio-buttons" class="mb-4"> -->
+              <!-- <h4>Toggle Layers</h4> -->
+              <!-- <% if (layer_mapping) { %>
+                <% Object.entries(layer_mapping).forEach(([group, layers]) => { %>
+                  <h5><%= group %></h5>
+                  <% layers.forEach(layer => { %>
+                    <label class="me-2">
+                      <input type="checkbox" name="<%= group %>" value="<%= layer %>" checked onclick="toggleLayer('<%= layer %>')" />
+                      <%= layer %>
+                    </label>
+                  <% }); %>
+                <% }); %>
+              <% } %>
+            </div>
+          </div>
+        </div>
+      </section> -->
+
+      <!-- Old Map Filter Section -->
+      <!-- <section class="container my-4">
+        <div class="card shadow-sm border-0">
+          <div class="card-body">
+            <h4 class="card-title mb-4">Map Filters</h4>
+              <div id="filters" class="mb-4">
+                <label for="year-select">Select Year:</label>
+                <select id="year-select" class="form-select d-inline w-auto mx-2">
+                  <option value="all">All Years</option>
+              </select>
+
+              <label for="bird-select">Select Bird ID:</label>
+              <select id="bird-select" class="form-select d-inline w-auto mx-2">
+                <option value="all">All Birds</option>
+              </select>
+            </div>
+
+          </div>
+        </div>
+      </section> -->
+
+      <!-- Old Map Section -->
+      <!-- <div class="card mb-4"></div>    
+        <div class="card-body"></div>   -->
+          <!-- Leaflet Map Section -->
+          <!-- <section id="map-section">
+            <div id="main-container" style="display: flex; height: 80vh;"> -->
+              <!-- Legend Sidebar -->
+              <!-- <div id="legend" class="legend me-3"></div> -->
+
+              <!-- Leaflet Map -->
+              <!-- <div id="map" style="flex: 1;"></div>
+            </div>
+          </section>
+        </div>
+      </div> -->
+
+      <!-- New Map Section -->
+      <section id="map-section">
+        <div id="map-controls" style="display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; margin-bottom: 1rem;">
+          <div>
+            <label for="year-select" class="form-label mb-0 me-2">Year:</label>
+            <select id="year-select" class="form-select d-inline w-auto">
+              <option value="all">All Years</option>
+            </select>
+          </div>
+
+          <div>
+            <label for="bird-select" class="form-label mb-0 me-2">Bird:</label>
+            <select id="bird-select" class="form-select d-inline w-auto">
+              <option value="all">All Birds</option>
+            </select>
+          </div>
+        </div>
+
+        <div id="main-container" style="display: flex; height: 80vh;">
+          <!-- Legend Sidebar -->
+          <div id="legend" class="legend me-3"></div>
+
+          <!-- Leaflet Map -->
+          <div id="map" style="flex: 1;"></div>
+        </div>
+      </section>
+
+        <!-- Leaflet JS -->
+        <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+
+       <!-- Not used currently -->
+      <!-- <section class="flex-container wrapper">
+        <aside class="l-sidebar">
+          <h2>Sidebar Left</h2>
+          <p>Left sidebar content</p>
+        </aside>
+
+        <aside class="r-sidebar">
+          <h2>Sidebar Right</h2>
+          <p>Right sidebar content</p>
+        </aside>
+      </section> -->
+
+    </main>
+
+    <!-- Footer -->
+    <!-- <footer>
+      <div class="topnav">
+        <a class="active" href="index.html">Home</a>
+        <a href="index.html">Further Details</a>
+        <a href="index.html">Contact</a>
+        <a href="index.html">About</a>
+      </div>
+    </footer> -->
+
+    <!-- JavaScript -->
+    <!-- <script src="/js/data.js"></script> -->
+    <script type="module" src="/js/app.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+
+  </body>
+</html>

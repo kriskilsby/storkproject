@@ -1,0 +1,35 @@
+# Python bytecode
+__pycache__/
+*.py[cod]
+
+# Virtual environments
+venv/
+.env/
+ENV/
+env/
+
+# VS Code settings
+.vscode/
+
+# OS-specific files
+.DS_Store
+
+# Environment and secrets
+.env
+*.env
+
+# Jupyter notebook checkpoints (if you're using them)
+.ipynb_checkpoints/
+
+# Log and temp files
+*.log
+*.tmp
+
+# Node modules
+frontend/node_modules/
+
+# Bootstrap test files
+frontend/public/bootstrap_test/
+
+# dont add for now
+datasets/

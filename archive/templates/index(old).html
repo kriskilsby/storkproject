@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Run Python with Pyodide</title>
+        <!-- Include Pyodide -->
+        <script src="https://cdn.jsdelivr.net/pyodide/v0.21.3/full/pyodide.js"></script>
+        <!-- Related css files -->
+        <link rel="stylesheet" type="text/css" href="../static/css/visual_styling.css"/>
+    </head>
+    <body>
+        <nav class="fixed-nav-bar"><!-- Fixed navigation bar content --></nav>
+            <!-- Main Content -->
+            <main>
+                <!-- Header -->
+            <header>
+                <!--navigation banner-->
+                <div class="topnav">
+                    <a class="active" href="index.html">Home</a>
+                    <a href="index.html">Further Details</a>
+                    <a href="index.html">Contact</a>
+                    <a href="index.html">About</a>
+                </div>               
+            </header>
+
+            <!-- Hero -->
+            <section id="hero">
+
+                <h1>Heading 1</h1>  
+                
+                    <p id="red-paragraph">Example drop-down selections below. 
+                        
+                    </p>
+             
+                <!-- Drop-down options selections setup -->
+                <div id="drop-down">
+                    <label for="year-select">Select Year:</label>
+                    <select id="year-select">
+                        <option value="spendingPower">Year 2015</option>
+                        <option value="annualInflation">Year 2016</option>
+                        <option value="compoundInflation">Year 2017</option>
+                        <option value="annualWages">Year 2018</option>
+                        <option value="foodInflation">Year 2019</option>
+                    </select>
+    
+                    <label for="bird-select">Select Bird ID:</label>
+                    <select id="bird-select">
+                        <option value="all">All Birds</option>
+                        <option value="Canada">Bird 001</option>
+                        <option value="France">Bird 002</option>
+                        <option value="Germany">Bird 003</option>
+                        <option value="Italy">Bird 004</option>
+                        <option value="Japan">Bird 005</option>
+                        <option value="United Kingdom">Bird 006</option>
+                        <option value="United States">Bird 007</option>
+                        
+                    </select>
+                    
+                </div>
+            </section>
+
+            <div class="flex-container wrapper">
+                <!-- Content -->
+                <section id="content" class="content">
+
+                    <div id="radio-buttons">
+                        <h4>Toggle Layers</h4>
+                        {% for group, layers in layer_mapping.items() %}
+                            <h5>{{ group }}</h5>
+                            {% for layer in layers %}
+                                <label>
+                                    <!--<input type="radio" name="{{ group }}" value="{{ layer }}" onclick="toggleLayer('{{ layer }}')">-->
+                                    <input type="checkbox" name="{{ group }}" value="{{ layer }}" checked onclick="toggleLayer('{{ layer }}')">
+                                    {{ layer }}
+                                </label><br>
+                            {% endfor %}
+                        {% endfor %}
+                    </div>
+                    <h1>Run Python Script from Browser</h1>
+                    <button onclick="runPythonScript()">Run Python Script</button>
+                    <div id="output"></div> <!-- To display script output -->
+
+                    <script>
+                        function runPythonScript() {
+                            fetch('http://127.0.0.1:5000/run-script')
+                                .then(response => response.text())
+                                .then(data => {
+                                    document.getElementById("output").innerHTML = data;  // Show the script output in the div
+                                })
+                                .catch(error => {
+                                    document.getElementById("output").innerHTML = 'Error: ' + error;  // Display any error in the div
+                                });
+                        }
+                    </script>
+                   
+                    <button id="theButton">Test Post to Python</button>
+                    <h3 id = "info"></h3>
+
+                    <div id="map" style="width: 100%; height: 100vh;"></div>
+                    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+                    <strong><!-- Link to the JavaScript file here: --></strong>
+                    <script type="text/javascript" src="../static/js/data.js"></script>
+
+                    <!--<div id="container" style="width: 1100px; height: 520px; margin: 0 auto"></div>-->
+                 
+
+                    <figure class="highcharts-figure">
+                    <!--<div id="container1"></div>-->
+                        <p id="dataset-description">
+                        Write something interesting potentially here.
+                        </p>
+                    </figure>
+
+                </section>
+
+                <!-- Sidebar -->
+                <aside id="r-sidebar" class="r-sidebar">
+                    
+                    <h2>Heading 2</h2>   
+                    
+                        <p style="text-align:left;">Write something interesting potentially here.
+                        </p>
+
+                    <h2>Heading 2</h2>
+                
+                        <p style="text-align:left;">Write something interesting potentially here.   
+                        </p>
+                    
+                    <h2>Heading 2</h2>
+                
+                        <p style="text-align:left;">Write something interesting potentially here.</p>
+                        <p> Write something interesting potentially here.</p>
+                     
+                    <h2>Heading 2</h2>
+                
+                        <p style="text-align:left;"> Write something interesting potentially here.
+                        </p>
+       
+                </aside>
+            </div>
+
+                <section id="hero">
+
+                    <h2 style="color: white;">Heading 2</h2>  
+                
+                    <h3>Heading 3</h3>
+                    
+                    <p id="red-paragraph">  
+                        Write something interesting potentially here. </p>
+
+                    <h3>Heading 3</h3>
+
+                    <!--<a style="font-weight: bold; color: rgb(187, 243, 187);" href="https://www.somewhere.co.uk">Name That Place</a>  
+                        Write details about this subject.</p>-->
+                            
+                    <p id="red-paragraph">
+                        Write something interesting potentially here.
+                    </p> 
+                </section>
+
+            <div class="flex-container wrapper">
+ 
+                    <!-- Sidebar -->
+                    <aside id="l-sidebar" class="l-sidebar">
+
+                        <h2>Heading 2</h2>
+                                           
+                               
+                        <p style="text-align:left;"> Write something of interest.
+                        </p>
+                       
+                        <h2>Heading 2</h2>
+                
+                        <h3 style="color: #003f5c;">Heading 3</h3>
+
+                        <p style="text-align:left;"> Write something of interest.
+                        </p>
+
+                        <h3 style="color: #003f5c;">Heading 3</h3>
+
+                        <p style="text-align:left;"> Write something of interest.
+                        </p>
+                    
+                    </aside>
+                
+                    <!-- Content -->
+                    <section id="content" class="content">
+
+                        <div id="container3" style="width: 1100px; height: 650px; margin: 0 auto"></div>
+
+                    </section>  
+                </div>
+
+                <!-- Footer -->
+                <footer>
+
+                    <!--navigation banner-->
+                    <div class="topnav">
+                        <a class="active" href="index.html">Home</a>
+                        <a href="index.html">Further Details</a>
+                        <a href="index.html">Contact</a>
+                        <a href="index.html">About</a>
+                    </div>   
+
+                    <!--Footer - <p>Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas.</p>-->
+                </footer>
+
+            
+            </main>           
+    </body>
+</html>
