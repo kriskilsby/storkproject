@@ -9,6 +9,12 @@ let currentBird = "all";
 let currentYear = "all";
 let mapHasBeenCentered = false;
 
+function getSelectedCheckboxValues(name) {
+  return Array.from(document.querySelectorAll(`input[name="${name}"]:checked`))
+    .map(cb => parseInt(cb.value, 10));
+}
+
+
 function initMap() {
   map = L.map('map').setView([48.0, 10.0], 5);
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -30,14 +36,17 @@ function formatTimestamp(iso) {
   });
 }
 
+
+
+
 function updateMapForTimeIndex(groupedPoints, timestamps, index) {
   clusterLayerGroup.clearLayers();
   const points = groupedPoints[timestamps[index]] || [];
 
   points.forEach((point) => {
-    const lat = point.location_lat;
-    const lon = point.location_long;
-    const cluster = point.cluster;
+    // const lat = point.location_lat;
+    // const lon = point.location_long;
+    // const cluster = point.cluster;
 
     const marker = L.circleMarker([lat, lon], {
       radius: 6,
@@ -100,7 +109,6 @@ function animateCountUp(element, targetNumber, duration = 1000) {
     const elapsed = Date.now() - startTime;
     let progress = Math.min(elapsed / duration, 1);
     let current = Math.floor(progress * targetNumber);
-
     element.textContent = `(${current} pts)`;
 
     if (progress < 1) {
@@ -111,10 +119,16 @@ function animateCountUp(element, targetNumber, duration = 1000) {
   update();
 }
 
+function toggleAll(type, check) {
+  const checkboxes = document.querySelectorAll(`input[type="checkbox"][id^="${type}-"]`);
+  checkboxes.forEach(cb => cb.checked = check);
+
+  // Optionally, update filters or map here
+  // updateFilters();
+}
 
 function renderClustersOnMap(data) {
   clusterLayerGroup.clearLayers();
-
   const legendContainer = document.getElementById("legend");
   legendContainer.innerHTML = ""; // Clear old legend entries
   const uniqueClusters = new Set();
@@ -139,12 +153,30 @@ function renderClustersOnMap(data) {
   populateDropdowns(allPoints);
 
   // Filtered points
+  // const filteredPoints = allPoints.filter(p => {
+  //   const year = new Date(p.timestamp).getFullYear().toString();
+  //   const birdMatch = currentBird === "all" || p.individual_local_identifier === currentBird;
+  //   const yearMatch = currentYear === "all" || year === currentYear;
+  //   return birdMatch && yearMatch;
+  // });
+  const selectedMonths = getSelectedCheckboxValues("month"); // from checkboxes
+  const selectedSlots = getSelectedCheckboxValues("hour");   // from checkboxes
+
   const filteredPoints = allPoints.filter(p => {
-    const year = new Date(p.timestamp).getFullYear().toString();
+    const date = new Date(p.timestamp);
+    const year = date.getFullYear().toString();
+    const month = date.getUTCMonth() + 1; // JS months: 0–11
+    const hour = date.getUTCHours();
+    const timeslot = Math.floor(hour / 3); // 3-hour buckets: 0–7
+
     const birdMatch = currentBird === "all" || p.individual_local_identifier === currentBird;
     const yearMatch = currentYear === "all" || year === currentYear;
-    return birdMatch && yearMatch;
+    const monthMatch = selectedMonths.length === 0 || selectedMonths.includes(month);
+    const slotMatch = selectedSlots.length === 0 || selectedSlots.includes(timeslot);
+
+    return birdMatch && yearMatch && monthMatch && slotMatch;
   });
+
 
   // Rebuild groupedPoints with filtered data
   const groupedPoints = {};
@@ -198,8 +230,7 @@ function renderClustersOnMap(data) {
     legendContainer.appendChild(item);
 
     // Animate count up on the span element
-    const countSpan = item.querySelector("span");
-    animateCountUp(countSpan, count, 1500);
+    animateCountUp(item.querySelector("span"), count, 1500);
   });
 
 
@@ -294,6 +325,171 @@ function getColorForCluster(clusterId) {
   return palette[clusterId % palette.length];
 }
 
+// ################# REMOVE FULL document.addEventListener("DOMContentLoaded" PART BELOW TEST FIRST #######################################
+// document.addEventListener("DOMContentLoaded", () => {
+//   initMap();
+
+//   const form = document.getElementById("clusteringForm");
+
+//   document.getElementById("method").addEventListener("change", function () {
+//     const selected = this.value;
+//     document.querySelectorAll(".method-params").forEach(el => el.classList.add("d-none"));
+//     const visible = document.getElementById(`${selected}-params`);
+//     if (visible) visible.classList.remove("d-none");
+//   });
+
+//     document.getElementById("bird-select").addEventListener("change", (e) => {
+//     currentBird = e.target.value;
+//     renderClustersOnMap({ all_points: allPoints });
+//   });
+
+//   document.getElementById("year-select").addEventListener("change", (e) => {
+//     currentYear = e.target.value;
+//     renderClustersOnMap({ all_points: allPoints });
+//   });
+
+//   // Form block Handling
+//   form.addEventListener("submit", async (e) => {
+//     e.preventDefault();
+
+//     const timerDisplay = document.getElementById("clustering-timer");
+//     timerDisplay.textContent = "Running...";
+//     const startTime = performance.now(); // Start timer    
+
+//     const formData = new FormData(form);
+//     const method = formData.get("method");
+    
+//     // const decimal_places = parseInt(formData.get("decimal_places"));
+//     // const interval_minutes = parseInt(formData.get("interval_minutes"));
+//     // const sample_rate = parseInt(formData.get("sample_rate"));
+
+//     let params = {};
+//     if (method === "kmeans") {
+//       params.n_clusters = parseInt(formData.get("n_clusters"));
+//     } else if (method === "dbscan") {
+//       params.eps = parseFloat(formData.get("eps"));
+//       params.min_samples = parseInt(formData.get("min_samples"));
+//     } else if (method === "hdbscan") {
+//       params.min_cluster_size = parseInt(formData.get("min_cluster_size"));
+//     }
+
+//     // Initial parameter confirmation for the backend
+//     params.decimal_places = decimal_places;
+//     params.interval_minutes = interval_minutes;
+//     params.sample_rate = sample_rate;
+//     // Feature selection parameters
+//     params.use_distance = formData.get("use_distance") === "on";
+//     params.use_heading = formData.get("use_heading") === "on";
+//     params.use_year = formData.get("use_year") === "on";
+//     params.use_month = formData.get("use_month") === "on";
+//     params.use_scaling = formData.get("use_scaling") === "on";
+
+//     const requestBody = {
+//       method,
+//       params
+//     };
+
+//     try {
+//       const response = await fetch("/api/cluster", {
+//         method: "POST",
+//         headers: {
+//           "Content-Type": "application/json"
+//         },
+//         body: JSON.stringify(requestBody)
+//       });
+
+//       const endTime = performance.now(); // End timer
+//       const duration = ((endTime - startTime) / 1000).toFixed(2); // in seconds
+//       // timerDisplay.textContent = `Completed in ${duration} sec`;
+//       const rawSeconds = (endTime - startTime) / 1000;
+//       const minutes = Math.floor(rawSeconds / 60);
+//       const seconds = (rawSeconds % 60).toFixed(2);
+
+//       let timeText = '';
+//       if (minutes > 0) {
+//         timeText = `Completed in ${minutes} min, ${seconds} sec`;
+//       } else {
+//         timeText = `Completed in ${seconds} sec`;
+//       }
+//       timerDisplay.textContent = timeText;
+
+
+//       if (!response.ok) {
+//         throw new Error(`HTTP error! Status: ${response.status}`);
+//       }
+
+//       const data = await response.json();
+//       console.log("Clustering result:", data);
+//       renderClustersOnMap(data);
+
+//       const resultsBox = document.getElementById("clusteringResults");
+//       if (resultsBox) {
+//         resultsBox.textContent = JSON.stringify(data, null, 2);
+//       }
+//       // Clustering success metrics
+//       if (data.metrics) {
+//       const metricsList = document.getElementById("metricsList");
+//       metricsList.innerHTML = "";  // Clear old results
+
+//       const metrics = data.metrics;
+
+//       const formatMetric = (name, value, decimals = 3) =>
+//         `<li><strong>${name}:</strong> ${value !== null && !isNaN(value) ? value.toFixed(decimals) : 'N/A'}</li>`;
+
+//       metricsList.innerHTML += formatMetric("Silhouette Score", metrics.silhouette_score);
+//       metricsList.innerHTML += formatMetric("Adjusted Rand Index", metrics.adjusted_rand_index); // PERHAPS REMOVE IF YOU HAVE NO GROUND TRUTH
+//       metricsList.innerHTML += formatMetric("Calinski-Harabasz Index", metrics.calinski_harabasz);
+//       metricsList.innerHTML += formatMetric("Davies-Bouldin Index", metrics.davies_bouldin);
+//       metricsList.innerHTML += formatMetric("Number of Clusters", metrics.n_clusters, 0);
+//       metricsList.innerHTML += formatMetric("Noise Ratio", metrics.noise_ratio, 2);
+//     }
+
+//       // Persist form preferences using localStorage
+//     const fieldsToPersist = [
+//       "method", "n_clusters", "eps", "min_samples", "min_cluster_size",
+//       "decimal_places", "interval_minutes", "sample_rate",
+//       "use_distance", "use_heading", "use_year", "use_month", "use_scaling"
+//     ];
+
+//     // Restore saved values on load
+//     fieldsToPersist.forEach((key) => {
+//       const input = document.querySelector(`[name="${key}"]`);
+//       if (!input) return;
+
+//       const savedValue = localStorage.getItem(`clustering_${key}`);
+//       if (savedValue !== null) {
+//         if (input.type === "checkbox") {
+//           input.checked = savedValue === "true";
+//         } else {
+//           input.value = savedValue;
+//         }
+
+//         // Show correct method parameters if method was saved
+//         if (key === "method") {
+//           document.querySelectorAll(".method-params").forEach(el => el.classList.add("d-none"));
+//           const visible = document.getElementById(`${savedValue}-params`);
+//           if (visible) visible.classList.remove("d-none");
+//         }
+//       }
+//     });
+
+//     // Save values on form change
+//     document.getElementById("clusteringForm").addEventListener("change", () => {
+//       fieldsToPersist.forEach((key) => {
+//         const input = document.querySelector(`[name="${key}"]`);
+//         if (!input) return;
+
+//         const value = input.type === "checkbox" ? input.checked : input.value;
+//         localStorage.setItem(`clustering_${key}`, value);
+//       });
+//     });
+
+//     } catch (error) {
+//       console.error("Error running clustering:", error);
+//       alert("There was an error running clustering.");
+//     }
+//   });
+// });
 
 document.addEventListener("DOMContentLoaded", () => {
   initMap();
@@ -301,13 +497,12 @@ document.addEventListener("DOMContentLoaded", () => {
   const form = document.getElementById("clusteringForm");
 
   document.getElementById("method").addEventListener("change", function () {
-    const selected = this.value;
     document.querySelectorAll(".method-params").forEach(el => el.classList.add("d-none"));
-    const visible = document.getElementById(`${selected}-params`);
+    const visible = document.getElementById(`${this.value}-params`);
     if (visible) visible.classList.remove("d-none");
   });
 
-    document.getElementById("bird-select").addEventListener("change", (e) => {
+  document.getElementById("bird-select").addEventListener("change", (e) => {
     currentBird = e.target.value;
     renderClustersOnMap({ all_points: allPoints });
   });
@@ -317,49 +512,48 @@ document.addEventListener("DOMContentLoaded", () => {
     renderClustersOnMap({ all_points: allPoints });
   });
 
-
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
 
     const timerDisplay = document.getElementById("clustering-timer");
     timerDisplay.textContent = "Running...";
-
-    const startTime = performance.now(); // Start timer    
+    const startTime = performance.now();
 
     const formData = new FormData(form);
     const method = formData.get("method");
-    const decimal_places = parseInt(formData.get("decimal_places"));
-    const interval_minutes = parseInt(formData.get("interval_minutes"));
-    const sample_rate = parseInt(formData.get("sample_rate"));
 
-    let params = {};
-    if (method === "kmeans") {
-      params.n_clusters = parseInt(formData.get("n_clusters"));
-    } else if (method === "dbscan") {
+    const params = {
+      decimal_places: parseInt(formData.get("decimal_places")),
+      interval_minutes: parseInt(formData.get("interval_minutes")),
+      sample_rate: parseInt(formData.get("sample_rate")),
+      use_distance: formData.get("use_distance") === "on",
+      use_heading: formData.get("use_heading") === "on",
+      use_year: formData.get("use_year") === "on",
+      use_month: formData.get("use_month") === "on",
+      use_scaling: formData.get("use_scaling") === "on",
+      use_timestamp: formData.get("use_timestamp") === "on",
+      use_interval_mins: formData.get("use_interval_mins") === "on"
+    };
+
+    if (method === "kmeans") params.n_clusters = parseInt(formData.get("n_clusters"));
+    if (method === "dbscan") {
       params.eps = parseFloat(formData.get("eps"));
       params.min_samples = parseInt(formData.get("min_samples"));
-    } else if (method === "hdbscan") {
-      params.min_cluster_size = parseInt(formData.get("min_cluster_size"));
     }
-
-    params.decimal_places = decimal_places;
-    params.interval_minutes = interval_minutes;
-    params.sample_rate = sample_rate;
-
-    const requestBody = {
-      method,
-      params
-    };
+    if (method === "hdbscan") params.min_cluster_size = parseInt(formData.get("min_cluster_size"));
 
     try {
       const response = await fetch("/api/cluster", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify(requestBody)
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ method, params })
       });
 
+      // const endTime = performance.now();
+      // const seconds = ((endTime - startTime) / 1000).toFixed(2);
+      // timerDisplay.textContent = `Completed in ${seconds} sec`;
+
+      // ####################### CHECK THIS #########################################
       const endTime = performance.now(); // End timer
       const duration = ((endTime - startTime) / 1000).toFixed(2); // in seconds
       // timerDisplay.textContent = `Completed in ${duration} sec`;
@@ -374,44 +568,81 @@ document.addEventListener("DOMContentLoaded", () => {
         timeText = `Completed in ${seconds} sec`;
       }
       timerDisplay.textContent = timeText;
+ // ####################### CHECK THIS #########################################
 
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! Status: ${response.status}`);
-      }
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
 
       const data = await response.json();
       console.log("Clustering result:", data);
       renderClustersOnMap(data);
 
       const resultsBox = document.getElementById("clusteringResults");
-      if (resultsBox) {
-        resultsBox.textContent = JSON.stringify(data, null, 2);
-      }
-      // Clustering success metrics
+      if (resultsBox) resultsBox.textContent = JSON.stringify(data, null, 2);
+
       if (data.metrics) {
-      const metricsList = document.getElementById("metricsList");
-      metricsList.innerHTML = "";  // Clear old results
+        const metricsList = document.getElementById("metricsList");
+        metricsList.innerHTML = "";
 
-      const metrics = data.metrics;
+        const m = data.metrics;
+        const metric = (n, v, d = 3) =>
+          `<li><strong>${n}:</strong> ${v != null && !isNaN(v) ? v.toFixed(d) : 'N/A'}</li>`;
 
-      const formatMetric = (name, value, decimals = 3) =>
-        `<li><strong>${name}:</strong> ${value !== null && !isNaN(value) ? value.toFixed(decimals) : 'N/A'}</li>`;
+        metricsList.innerHTML += metric("Silhouette Score", m.silhouette_score);
+        metricsList.innerHTML += metric("Adjusted Rand Index", m.adjusted_rand_index);
+        metricsList.innerHTML += metric("Calinski-Harabasz Index", m.calinski_harabasz);
+        metricsList.innerHTML += metric("Davies-Bouldin Index", m.davies_bouldin);
+        metricsList.innerHTML += metric("Number of Clusters", m.n_clusters, 0);
+        metricsList.innerHTML += metric("Noise Ratio", m.noise_ratio, 2);
+      }
 
-      metricsList.innerHTML += formatMetric("Silhouette Score", metrics.silhouette_score);
-      metricsList.innerHTML += formatMetric("Adjusted Rand Index", metrics.adjusted_rand_index);
-      metricsList.innerHTML += formatMetric("Calinski-Harabasz Index", metrics.calinski_harabasz);
-      metricsList.innerHTML += formatMetric("Davies-Bouldin Index", metrics.davies_bouldin);
-      metricsList.innerHTML += formatMetric("Number of Clusters", metrics.n_clusters, 0);
-      metricsList.innerHTML += formatMetric("Noise Ratio", metrics.noise_ratio, 2);
-    }
+      // Save settings
+      const fieldsToPersist = [
+        "method", "n_clusters", "eps", "min_samples", "min_cluster_size",
+        "decimal_places", "interval_minutes", "sample_rate",
+        "use_distance", "use_heading", "use_year", "use_month", "use_scaling",
+        "use_timestamp", "use_interval_mins"
+      ];
 
+      fieldsToPersist.forEach((key) => {
+        const input = document.querySelector(`[name="${key}"]`);
+        if (input) {
+          const value = input.type === "checkbox" ? input.checked : input.value;
+          localStorage.setItem(`clustering_${key}`, value);
+        }
+      });
 
-    } catch (error) {
-      console.error("Error running clustering:", error);
+    } catch (err) {
+      console.error("Clustering error:", err);
       alert("There was an error running clustering.");
     }
   });
+
+  document.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+    cb.addEventListener("change", () => {
+      renderClustersOnMap({ all_points: allPoints });
+    });
+  });
+
+  // Restore previous form state
+  const persistFields = [
+    "method", "n_clusters", "eps", "min_samples", "min_cluster_size",
+    "decimal_places", "interval_minutes", "sample_rate",
+    "use_distance", "use_heading", "use_year", "use_month", "use_scaling",
+    "use_timestamp", "use_interval_mins"
+  ];
+
+  persistFields.forEach((key) => {
+    const input = document.querySelector(`[name="${key}"]`);
+    const saved = localStorage.getItem(`clustering_${key}`);
+    if (!input || saved === null) return;
+
+    if (input.type === "checkbox") input.checked = saved === "true";
+    else input.value = saved;
+
+    if (key === "method") {
+      document.querySelectorAll(".method-params").forEach(el => el.classList.add("d-none"));
+      const visible = document.getElementById(`${saved}-params`);
+      if (visible) visible.classList.remove("d-none");
+    }
+  });
 });
-
-

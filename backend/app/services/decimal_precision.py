@@ -8,7 +8,7 @@ from app.services.database import get_db_connection  # Use your shared connectio
 
 def run():
     """Adds 5dp and 3dp latitude/longitude columns to stork_data with optional indexing."""
-    print("📏 Running decimal precision adjustments...")
+    print(" Running decimal precision adjustments...")
 
     conn, cur = get_db_connection()
     try:
@@ -24,7 +24,7 @@ def run():
                 location_long_5dp = ROUND(location_long::NUMERIC, 5)
             WHERE location_lat_5dp IS NULL OR location_long_5dp IS NULL;
         """)
-        print("✅ 5-decimal precision columns created and populated.")
+        print(" 5-decimal precision columns created and populated.")
 
         # Step 2: Add 3-decimal precision columns for grouping
         cur.execute("""
@@ -38,22 +38,22 @@ def run():
                 location_long_3dp = ROUND(location_long::NUMERIC, 3)
             WHERE location_lat_3dp IS NULL OR location_long_3dp IS NULL;
         """)
-        print("✅ 3-decimal grouping columns created and populated.")
+        print(" 3-decimal grouping columns created and populated.")
 
         # Step 3: Create index
         cur.execute("""
             CREATE INDEX IF NOT EXISTS idx_location_3dp 
             ON migration_data.stork_data (location_lat_3dp, location_long_3dp);
         """)
-        print("✅ Index on 3-decimal grouping columns created.")
+        print("Index on 3-decimal grouping columns created.")
 
         conn.commit()
 
     except Exception as e:
-        print(f"❌ Decimal precision adjustment failed: {e}")
+        print(f" Decimal precision adjustment failed: {e}")
         conn.rollback()
 
     finally:
         cur.close()
         conn.close()
-        print("🔒 Database connection closed.")
+        print(" Database connection closed.")

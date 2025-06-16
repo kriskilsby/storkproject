@@ -6,6 +6,7 @@ import pandas as pd
 import numpy as np
 from sklearn.cluster import KMeans, DBSCAN
 import hdbscan
+from sklearn.preprocessing import StandardScaler
 # from sklearn.metrics import silhouette_score, adjusted_rand_score
 from sklearn.metrics import (
     silhouette_score,
@@ -32,8 +33,7 @@ print("DB_HOST =", os.getenv("DB_HOST"), file=sys.stderr)
 print("DB_PORT =", os.getenv("DB_PORT"), file=sys.stderr)
 print("DB_NAME =", os.getenv("DB_NAME"), file=sys.stderr)
 
-
-
+# Function that connects to the database and runs an SQL query
 def fetch_data(query):
     conn, cur = database.get_db_connection()
     try:
@@ -51,48 +51,262 @@ def fetch_data(query):
         cur.close()
         conn.close()
 
+# New helper function to return the total numbers for debug checks
+def fetch_counts(interval_minutes, sample_rate):
+    time_bucket = f"""
+        date_trunc('hour', timestamp) +
+        INTERVAL '1 minute' * (FLOOR(EXTRACT(MINUTE FROM timestamp) / {interval_minutes}) * {interval_minutes})
+    """ if interval_minutes > 0 else "timestamp"
+
+    count_query = f"""
+    WITH 
+    filtered_base AS (
+        SELECT *
+        FROM migration_data.stork_data
+        WHERE sql_distance IS NOT NULL AND sql_heading IS NOT NULL
+    ),
+    deduped AS (
+        SELECT *,
+            {time_bucket} AS rounded_timestamp,
+            ROW_NUMBER() OVER (
+                PARTITION BY individual_local_identifier, {time_bucket}
+                ORDER BY timestamp
+            ) AS rn
+        FROM filtered_base
+    ),
+    filtered_deduped AS (
+        SELECT *
+        FROM deduped
+        WHERE rn = 1
+    ),
+    sampled AS (
+        SELECT *
+        FROM filtered_deduped
+        WHERE MOD(record_id, {sample_rate}) = 0
+    )
+    SELECT 
+        (SELECT COUNT(*) FROM filtered_base) AS count_after_filtering,
+        (SELECT COUNT(*) FROM filtered_deduped) AS count_after_deduplication,
+        (SELECT COUNT(*) FROM sampled) AS count_after_sampling;
+    """
+
+    counts_df = fetch_data(count_query)
+    if not counts_df.empty:
+        counts = counts_df.iloc[0].to_dict()
+        print("[DEBUG] Count summary from SQL:", file=sys.stderr)
+        for k, v in counts.items():
+            print(f"  {k}: {v}", file=sys.stderr)
+    else:
+        print("[DEBUG] Failed to fetch count summary", file=sys.stderr)
+
+
+# Function to run all the core clustering logic
 def run_clustering(method='kmeans', params={}):
-    # Defaults
+    
+    # Extracts parameters with defaults
     decimal_places = int(params.get('decimal_places', 3))
     interval_minutes = int(params.get('interval_minutes', 15))
     sample_rate = int(params.get('sample_rate', 20))
 
-    # Sanity check
-    interval_minutes = max(1, min(interval_minutes, 60))  # Clamp to [1, 60]
+    # Set interval_minutes between 1 and 60
+    interval_minutes = max(0, min(interval_minutes, 60))  
+
+       # Set Boolean flags to use additional features
+    def str_to_bool(val):
+        return str(val).lower() == 'true'
+
+    use_distance = str_to_bool(params.get('use_distance', False))
+    use_heading = str_to_bool(params.get('use_heading', False))
+    use_year = str_to_bool(params.get('use_year', False))
+    use_month = str_to_bool(params.get('use_month', False))
+    use_scaling = str_to_bool(params.get('use_scaling', False))
+    use_coordinates = str_to_bool(params.get('use_coordinates', True))
+    use_interval_mins = str_to_bool(params.get('use_interval_mins', True))
+
+
+    # Debug output to show parameters chosen
+    print("[DEBUG] Parameters after processing:", file=sys.stderr)
+    print(f"  decimal_places: {decimal_places}", file=sys.stderr)
+    print(f"  interval_minutes: {interval_minutes}", file=sys.stderr)
+    print(f"  sample_rate: {sample_rate}", file=sys.stderr)
+    print(f"  use_distance: {use_distance}", file=sys.stderr)
+    print(f"  use_heading: {use_heading}", file=sys.stderr)
+    print(f"  use_year: {use_year}", file=sys.stderr)
+    print(f"  use_month: {use_month}", file=sys.stderr)
+    print(f"  use_scaling: {use_scaling}", file=sys.stderr)
+    print(f"  use_coordinates: {use_coordinates}", file=sys.stderr)
+    print(f"  use_interval_mins: {use_interval_mins}", file=sys.stderr)
+
+
 
     # Use raw lat/long for full flexibility
-    sql_query = f"""
-    SELECT individual_local_identifier,
-        location_lat,
-        location_long,
-        calculated_heading,
-        distance,
-        compass_direction,
+    # sql_query = f"""
+    # SELECT individual_local_identifier,
+    #     location_lat,
+    #     location_long,
+    #     calculated_heading,
+    #     distance,
+    #     compass_direction,
+    #     date_trunc('hour', timestamp) +
+    #         INTERVAL '1 minute' * (FLOOR(EXTRACT(MINUTE FROM timestamp) / {interval_minutes}) * {interval_minutes}) AS timestamp
+    # FROM migration_data.stork_data
+    # WHERE distance IS NOT NULL
+    #   AND calculated_heading IS NOT NULL
+    #   AND NOT (calculated_heading = 0 AND distance = 0);
+    # """
+
+    ###### 2ND VERSION OF QUERY WITHOUT REMOVING THE CALC HEADING AND DISTANCE #######
+    # sql_query = f"""
+    # SELECT individual_local_identifier,
+    #     location_lat,
+    #     location_long,
+    #     sql_heading AS calculated_heading,
+    #     sql_distance AS distance,
+    #     compass_direction,
+    #     date_trunc('hour', timestamp) +
+    #         INTERVAL '1 minute' * (FLOOR(EXTRACT(MINUTE FROM timestamp) / {interval_minutes}) * {interval_minutes}) AS timestamp
+    # FROM migration_data.stork_data
+    # WHERE sql_distance IS NOT NULL
+    #   AND sql_heading IS NOT NULL;
+    # """
+
+    ##### 3RD VERSION OF QUERY THAT PROVIDES THE DE=-DUPLICATION IN THE QUERY INSTEAD
+
+    # fetch_counts(interval_minutes, sample_rate)
+
+    # sql_query = f"""
+    # WITH deduped AS (
+    # SELECT *,
+    #         date_trunc('hour', timestamp) +
+    #         INTERVAL '1 minute' * (FLOOR(EXTRACT(MINUTE FROM timestamp) / {interval_minutes}) * {interval_minutes}) AS rounded_timestamp,
+    #         ROW_NUMBER() OVER (
+    #             PARTITION BY individual_local_identifier,
+    #                         date_trunc('hour', timestamp) +
+    #                         INTERVAL '1 minute' * (FLOOR(EXTRACT(MINUTE FROM timestamp) / {interval_minutes}) * {interval_minutes})
+    #             ORDER BY timestamp
+    #         ) AS rn
+    # FROM migration_data.stork_data
+    # WHERE sql_distance IS NOT NULL
+    #     AND sql_heading IS NOT NULL
+    # ),
+    # filtered AS (
+    # SELECT *
+    # FROM deduped
+    # WHERE rn = 1
+    # )
+    # SELECT individual_local_identifier,
+    #     location_lat,
+    #     location_long,
+    #     sql_heading AS calculated_heading,
+    #     sql_distance AS distance,
+    # #     compass_direction,
+    #     rounded_timestamp AS timestamp
+    # FROM filtered
+    # WHERE MOD(record_id, {sample_rate}) = 0;
+    # """
+#### 4TH ATTEMPT AT A FAB AND AMAZING QUERY    
+    if interval_minutes > 0:
+        time_bucket = f"""
         date_trunc('hour', timestamp) +
-            INTERVAL '1 minute' * (FLOOR(EXTRACT(MINUTE FROM timestamp) / {interval_minutes}) * {interval_minutes}) AS timestamp
-    FROM migration_data.stork_data
-    WHERE distance IS NOT NULL
-      AND calculated_heading IS NOT NULL
-      AND NOT (calculated_heading = 0 AND distance = 0);
+        INTERVAL '1 minute' * (FLOOR(EXTRACT(MINUTE FROM timestamp) / {interval_minutes}) * {interval_minutes})
+        """
+    else:
+        time_bucket = "timestamp"
+
+    sql_query = f"""
+    WITH
+    filtered_base AS (
+    SELECT * FROM migration_data.stork_data
+    WHERE sql_distance IS NOT NULL AND sql_heading IS NOT NULL
+    ),
+    deduped AS (
+    SELECT *,
+        {time_bucket} AS rounded_timestamp,
+        ROW_NUMBER() OVER (
+        PARTITION BY individual_local_identifier, {time_bucket}, location_lat, location_long  
+        ORDER BY timestamp
+        ) AS rn
+    FROM filtered_base
+    ),
+    filtered_deduped AS (
+    SELECT * FROM deduped WHERE rn = 1
+    ),
+    sampled AS (
+    SELECT * FROM filtered_deduped WHERE MOD(record_id, {sample_rate}) = 0
+    ),
+    counts AS (
+    SELECT
+        (SELECT COUNT(*) FROM filtered_base) AS count_after_filtering,
+        (SELECT COUNT(*) FROM filtered_deduped) AS count_after_deduplication,
+        (SELECT COUNT(*) FROM sampled) AS count_after_sampling
+    )
+    SELECT
+    s.individual_local_identifier,
+    s.location_lat,
+    s.location_long,
+    s.sql_heading AS calculated_heading,
+    s.sql_distance AS distance,
+    s.compass_direction,
+    s.rounded_timestamp AS timestamp,
+    c.count_after_filtering,
+    c.count_after_deduplication,
+    c.count_after_sampling
+    FROM sampled s
+    CROSS JOIN counts c;
     """
-    
+
     data = fetch_data(sql_query)
-    print(f"[DEBUG] Fetched {len(data)} rows from SQL", file=sys.stderr)
+    # print(f"[DEBUG] Fetched {len(data)} rows from SQL", file=sys.stderr)
 
     if data.empty:
         return pd.DataFrame(), {"error": "No data fetched from database"}
 
     # Deduplicate: one point per bird per rounded timestamp
-    df = data.drop_duplicates(subset=["individual_local_identifier", "timestamp"])
-    print(f"[DEBUG] After deduplication: {len(df)} rows", file=sys.stderr)
+    # df = data.drop_duplicates(subset=["individual_local_identifier", "timestamp"])
+    # print(f"[DEBUG] After deduplication: {len(df)} rows", file=sys.stderr)
 
+    ### COMMENT OUT CURRENTLY AS NOT REQUIRED ON 3RD SQL QUERY OPTION
     # Sample
-    df = df.iloc[::sample_rate].copy()
-    print(f"[DEBUG] After sampling (rate={sample_rate}): {len(df)} rows", file=sys.stderr)
+    # df = df.iloc[::sample_rate].copy()
+    # print(f"[DEBUG] After sampling (rate={sample_rate}): {len(df)} rows", file=sys.stderr)
 
-    # Round coordinates
-    df['location_lat_rounded'] = df['location_lat'].round(decimal_places)
-    df['location_long_rounded'] = df['location_long'].round(decimal_places)
+    df = data.copy()
+
+    # Right after fetching the DataFrame
+    count_after_filtering = df['count_after_filtering'].iloc[0]
+    count_after_deduplication = df['count_after_deduplication'].iloc[0]
+    count_after_sampling = df['count_after_sampling'].iloc[0]
+
+    # Optional: print them for debugging/logging
+    print(f"[DEBUG] Count summary from SQL:", file=sys.stderr)
+    print(f"  count_after_filtering: {count_after_filtering}", file=sys.stderr)
+    print(f"  count_after_deduplication: {count_after_deduplication}", file=sys.stderr)
+    print(f"  count_after_sampling: {count_after_sampling}", file=sys.stderr)
+
+    # Then drop these before clustering
+    df = df.drop(columns=['count_after_filtering', 'count_after_deduplication', 'count_after_sampling'])
+
+    USE_DISTANCE = use_distance
+    USE_HEADING = use_heading
+    USE_YEAR = use_year
+    USE_MONTH = use_month
+    USE_SCALING = use_scaling    
+    
+ 
+    decimal_places = int(params.get('decimal_places', -1))
+    use_coordinates = str_to_bool(params.get('use_coordinates', True))
+    use_interval_mins = str_to_bool(params.get('use_interval_mins', False))
+    interval_minutes = int(params.get('interval_minutes', 0))  # already coming from frontend   
+    
+    # Round lat/lon
+    if decimal_places < 0:
+        # Use full precision
+        df['location_lat_rounded'] = df['location_lat']
+        df['location_long_rounded'] = df['location_long']
+    else:
+        # Round coordinates
+        df['location_lat_rounded'] = df['location_lat'].round(decimal_places)
+        df['location_long_rounded'] = df['location_long'].round(decimal_places)
 
     # Convert timestamp to datetime, ensuring all timezone-aware datetimes are converted to UTC
     df['timestamp'] = pd.to_datetime(df['timestamp'], utc=True)
@@ -100,10 +314,48 @@ def run_clustering(method='kmeans', params={}):
     # Add year and month to the clustering
     # df['year'] = df['timestamp'].dt.year
     # df['month'] = df['timestamp'].dt.month
+    # features = ['location_lat_rounded', 'location_long_rounded']
+
+    features = []
+
+    if use_coordinates:
+        features += ['location_lat_rounded', 'location_long_rounded']
+
+    if USE_DISTANCE and 'distance' in df.columns:
+        features.append('distance')
+
+    if USE_HEADING and 'calculated_heading' in df.columns:
+        features.append('calculated_heading')
+
+    if USE_YEAR:
+        df['year'] = df['timestamp'].dt.year
+        features.append('year')
+
+    if USE_MONTH:
+        df['month'] = df['timestamp'].dt.month
+        features.append('month')
+
+    if use_interval_mins and interval_minutes > 0:
+        # Convert to a bucket index (integer)
+        df['interval_bucket'] = (df['timestamp'].astype('int64') // (interval_minutes * 60 * 10**9)).astype(int)
+        features.append('interval_bucket')
+
+    X = df[features]
 
     # Select only numeric fields for clustering
-    X = df.select_dtypes(include=[np.number])
-    print(f"[DEBUG] Clustering on {len(X)} rows, columns: {X.columns.tolist()}", file=sys.stderr)
+    # X = df.select_dtypes(include=[np.number])
+    # print(f"[DEBUG] Clustering on {len(X)} rows, columns: {X.columns.tolist()}", file=sys.stderr)
+    # print(f"[DEBUG] Clustering on {len(X)} rows, features: {features}", file=sys.stderr)
+
+    # Normalize only for kmeans
+    if USE_SCALING:
+        print(f"[DEBUG] Scaling features with StandardScaler (method = {method})", file=sys.stderr)
+        X = StandardScaler().fit_transform(X)
+    else:
+        print(f"[DEBUG] Skipping feature scaling (method = {method})", file=sys.stderr)
+
+    # if method == 'kmeans':
+    #     X = StandardScaler().fit_transform(X)
 
     try:
         if method == 'kmeans':
@@ -144,7 +396,7 @@ def run_clustering(method='kmeans', params={}):
             "params": params,
             "metrics": {
                 "silhouette_score": silhouette_avg,
-                "adjusted_rand_index": ari_score,
+                "adjusted_rand_index": ari_score, 
                 "calinski_harabasz": ch_score,
                 "davies_bouldin": db_score,
                 "n_clusters": len(set(labels)) - (1 if -1 in labels else 0),

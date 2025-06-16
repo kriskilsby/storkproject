@@ -18,19 +18,19 @@ def run_data_upload_pipeline():
     engine = database.get_engine()
 
     for dataset_number in [1, 2, 3, 4]:
-        print(f"\n📦 Processing Dataset {dataset_number}...")
+        print(f"\n Processing Dataset {dataset_number}...")
 
         try:
             df = data_processing.load_and_clean_data(dataset_number, engine)
-            print(f"✅ Dataset {dataset_number} uploaded.")
+            print(f" Dataset {dataset_number} uploaded.")
         except Exception as e:
-            print(f"❌ Failed to process Dataset {dataset_number}: {e}")
+            print(f" Failed to process Dataset {dataset_number}: {e}")
 
-    # ✅ Count and print total number of records after upload
+    #  Count and print total number of records after upload
     from sqlalchemy import text
     with engine.connect() as connection:
         result = connection.execute(text("SELECT COUNT(*) FROM migration_data.stork_data;")).scalar()
-        print(f"\n📊 Total records now in 'stork_data': {result}")
+        print(f"\n Total records now in 'stork_data': {result}")
 
 def run_post_upload_transforms():
     print("\n🛠 Running database transformation scripts...")
@@ -42,15 +42,15 @@ def run_post_upload_transforms():
         ("Distance calculation", calculate_distance.run),
     ]:
         try:
-            print(f"🔧 Running {name}...")
+            print(f" Running {name}...")
             func()
-            print(f"✅ {name} complete.")
+            print(f" {name} complete.")
         except Exception as e:
-            print(f"❌ {name} failed: {e}")
+            print(f" {name} failed: {e}")
 
 def run_pipeline():
     start_time = time.time()
-    print("🚀 Starting pipeline...")
+    print(" Starting pipeline...")
     run_data_upload_pipeline()
     run_post_upload_transforms()
     end_time = time.time()

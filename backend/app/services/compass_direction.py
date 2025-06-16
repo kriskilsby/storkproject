@@ -1,6 +1,6 @@
 """
 ##################################################################
-🧭 Step 4: Calculate compass direction and update
+ Step 4: Calculate compass direction and update
 ##################################################################
 """
 
@@ -13,9 +13,9 @@ def add_compass_column(cur):
             ALTER TABLE migration_data.stork_data
             ADD COLUMN IF NOT EXISTS compass_direction VARCHAR(15);
         """)
-        print("✅ Column 'compass_direction' ensured.")
+        print(" Column 'compass_direction' ensured.")
     except Exception as e:
-        print(f"❌ Error adding column 'compass_direction': {e}")
+        print(f" Error adding column 'compass_direction': {e}")
         raise
 
 
@@ -35,9 +35,9 @@ def update_compass_directions(cur):
                 ELSE 'Undefined'
             END;
         """)
-        print("✅ Compass directions updated.")
+        print(" Compass directions updated.")
     except Exception as e:
-        print(f"❌ Error updating compass directions: {e}")
+        print(f" Error updating compass directions: {e}")
         raise
 
 
@@ -52,9 +52,9 @@ def run():
         update_compass_directions(cur)
 
         conn.commit()
-        print("✅ Compass direction transformation committed.")
+        print(" Compass direction transformation committed.")
     except Exception as e:
-        print(f"❌ Compass direction processing failed: {e}")
+        print(f" Compass direction processing failed: {e}")
         if conn:
             conn.rollback()
     finally:
