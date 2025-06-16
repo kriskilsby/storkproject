@@ -1,6 +1,6 @@
 """
 #####################################################################
-🧭 Step 3: Calculate headings and populate calculated_heading column
+ Step 3: Calculate headings and populate calculated_heading column
 #####################################################################
 """
 
@@ -41,9 +41,9 @@ def create_calculated_heading_column():
             ADD COLUMN IF NOT EXISTS calculated_heading NUMERIC;
         """)
         conn.commit()
-        print("✅ 'calculated_heading' column ensured in stork_data.")
+        print(" 'calculated_heading' column ensured in stork_data.")
     except Exception as e:
-        print(f"❌ Error creating 'calculated_heading' column: {e}")
+        print(f" Error creating 'calculated_heading' column: {e}")
         conn.rollback()
     finally:
         cur.close()
@@ -52,7 +52,7 @@ def create_calculated_heading_column():
 
 def calculate_heading():
     """Calculate and update headings for each movement in stork_data table."""
-    print("🧭 Starting heading calculation...")
+    print(" Starting heading calculation...")
 
     conn, cur = connect_with_cursor()
 
@@ -80,7 +80,7 @@ def calculate_heading():
                 heading = calc_bearing(lat1, long1, lat2, long2)
                 updates.append((heading, record_id))
 
-        print(f"📐 Calculated headings for {len(updates)} records.")
+        print(f" Calculated headings for {len(updates)} records.")
 
         # Step 3: Update the table with new heading values
         cur.executemany("""
@@ -90,16 +90,16 @@ def calculate_heading():
         """, updates)
         conn.commit()
 
-        print("✅ Heading calculations committed to database.")
+        print(" Heading calculations committed to database.")
 
     except Exception as e:
-        print(f"❌ Error calculating headings: {e}")
+        print(f" Error calculating headings: {e}")
         conn.rollback()
 
     finally:
         cur.close()
         conn.close()
-        print("🔒 Database connection closed.")
+        print(" Database connection closed.")
 
 
 def run():
