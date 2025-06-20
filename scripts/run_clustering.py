@@ -45,7 +45,8 @@ def fetch_data(query):
         df = pd.DataFrame(rows, columns=colnames)
         return df
     except Exception as e:
-        print(f"Error fetching data: {e}")
+        # print(f"Error fetching data: {e}")
+        print(f"[ERROR] fetching data: {e}", file=sys.stderr)
         return pd.DataFrame()  # Return empty DataFrame on error
     finally:
         cur.close()
@@ -126,6 +127,7 @@ def run_clustering(method='kmeans', params={}):
 
     # Debug output to show parameters chosen
     print("[DEBUG] Parameters after processing:", file=sys.stderr)
+    print(f"  method: {method}", file=sys.stderr)
     print(f"  decimal_places: {decimal_places}", file=sys.stderr)
     print(f"  interval_minutes: {interval_minutes}", file=sys.stderr)
     print(f"  sample_rate: {sample_rate}", file=sys.stderr)
@@ -316,6 +318,17 @@ def run_clustering(method='kmeans', params={}):
     # df['month'] = df['timestamp'].dt.month
     # features = ['location_lat_rounded', 'location_long_rounded']
 
+    # print(f"location_lat_rounded type confirmed: {df['location_lat_rounded'].apply(type).value_counts()}")
+    # print(json.dumps({
+    #     "location_lat_rounded_types": df["location_lat_rounded"].apply(lambda x: str(type(x))).value_counts().to_dict()
+    # }))
+
+    print("[DEBUG] location_lat_rounded_types:",
+      df["location_lat_rounded"].apply(lambda x: str(type(x))).value_counts().to_dict(),
+      file=sys.stderr)
+
+
+
     features = []
 
     if use_coordinates:
@@ -347,9 +360,22 @@ def run_clustering(method='kmeans', params={}):
     # print(f"[DEBUG] Clustering on {len(X)} rows, columns: {X.columns.tolist()}", file=sys.stderr)
     # print(f"[DEBUG] Clustering on {len(X)} rows, features: {features}", file=sys.stderr)
 
+   
+
+    # print("[DEBUG] features:", json.dumps(features))
+    # print("[DEBUG] X sample data:\n", X.head().to_json(orient="records"))
+    # print("[DEBUG] X dtypes:\n", json.dumps(X.dtypes.astype(str).to_dict()))
+    # print("[DEBUG] Any strings in X?", json.dumps(X.applymap(lambda x: isinstance(x, str)).any().to_dict()))
+
+
+
+
     # Normalize only for kmeans
     if USE_SCALING:
         print(f"[DEBUG] Scaling features with StandardScaler (method = {method})", file=sys.stderr)
+        # print("[DEBUG] type(X):", type(X), file=sys.stderr)
+        # print("[DEBUG] X.head():", X[:5] if hasattr(X, '__getitem__') else X, file=sys.stderr)
+        # print("[DEBUG] X.dtypes:\n", X.dtypes, file=sys.stderr)
         X = StandardScaler().fit_transform(X)
     else:
         print(f"[DEBUG] Skipping feature scaling (method = {method})", file=sys.stderr)
@@ -357,21 +383,116 @@ def run_clustering(method='kmeans', params={}):
     # if method == 'kmeans':
     #     X = StandardScaler().fit_transform(X)
 
+    ################# OLD CODE TO REMOVE WHEN REQUIRED ##################################
+    # try:
+    #     if method == 'kmeans':
+    #         n_clusters = int(params.get('n_clusters', 5))
+    #         model = KMeans(n_clusters=n_clusters)
+    #     elif method == 'dbscan':
+    #         model = DBSCAN(
+    #             eps=float(params.get('eps', 0.5)),
+    #             min_samples=int(params.get('min_samples', 5))
+    #         )
+    #     elif method == 'hdbscan':
+    #         model = hdbscan.HDBSCAN(min_cluster_size=int(params.get('min_cluster_size', 5)))
+    #     else:
+    #         return pd.DataFrame(), {"error": f"Unsupported clustering method '{method}'"}
+
+    #     labels = model.fit_predict(X)
+    ################# OLD CODE TO REMOVE WHEN REQUIRED ##################################
+
     try:
+        labels = None
+        model = None
+        metrics = {} # this was added as new
+
         if method == 'kmeans':
-            n_clusters = int(params.get('n_clusters', 5))
-            model = KMeans(n_clusters=n_clusters)
+            print("[DEBUG] Running KMeans clustering...", file=sys.stderr)
+            if params.get('auto_silhouette'):
+                print("  Auto silhouette analysis enabled", file=sys.stderr)
+                # Auto silhouette analysis to find best k
+                best_score = -1
+                best_k = 2
+                best_labels = None
+
+                for k in range(2, 21):  # Try 2 to 10 clusters
+                    km = KMeans(n_clusters=k, random_state=42, n_init="auto")
+                    lbls = km.fit_predict(X)
+                    score = silhouette_score(X, lbls)
+                    if score > best_score:
+                        best_score = score
+                        best_k = k
+                        best_labels = lbls
+
+                labels = best_labels
+                metrics["silhouette_score"] = best_score
+                metrics["n_clusters"] = best_k
+
+                print("[DEBUG] Silhouette Analysis (KMeans)", file=sys.stderr)
+                print(f"  Best silhouette score: {best_score:.4f}", file=sys.stderr)
+                print(f"  Optimal number of clusters: {best_k}", file=sys.stderr)
+
+            else:
+                n_clusters = int(params.get('n_clusters', 5))
+                print(f"  n_clusters: {n_clusters}", file=sys.stderr)
+                model = KMeans(n_clusters=n_clusters, random_state=42, n_init="auto")
+
         elif method == 'dbscan':
-            model = DBSCAN(
-                eps=float(params.get('eps', 0.5)),
-                min_samples=int(params.get('min_samples', 5))
-            )
+            eps = float(params.get('eps', 0.5))
+            min_samples = int(params.get('min_samples', 5))
+            leaf_size = int(params.get('leaf_size', 40))
+            print("[DEBUG] Running DBSCAN clustering...", file=sys.stderr)
+            print(f"  eps: {eps}", file=sys.stderr)
+            print(f"  min_samples: {min_samples}", file=sys.stderr)
+            print(f"  leaf_size: {leaf_size}", file=sys.stderr)
+            model = DBSCAN(eps=eps, min_samples=min_samples, leaf_size=leaf_size)
+
         elif method == 'hdbscan':
-            model = hdbscan.HDBSCAN(min_cluster_size=int(params.get('min_cluster_size', 5)))
+            min_cluster_size = int(params.get('min_cluster_size', 5))
+            max_cluster_size_param = params.get('max_cluster_size')
+            leaf_size = int(params.get('leaf_size', 40))
+
+            print("[DEBUG] Running HDBSCAN clustering...", file=sys.stderr)
+            print(f"  min_cluster_size: {min_cluster_size}", file=sys.stderr)
+            print(f"  max_cluster_size: {max_cluster_size_param}", file=sys.stderr)
+            print(f"  leaf_size: {leaf_size}", file=sys.stderr)
+
+            # Build kwargs dynamically
+            hdbscan_kwargs = {
+                "min_cluster_size": min_cluster_size,
+                "leaf_size": leaf_size,
+                "prediction_data": True
+            }
+
+            if max_cluster_size_param:  # Only add if provided
+                hdbscan_kwargs["max_cluster_size"] = int(max_cluster_size_param)
+
+            model = hdbscan.HDBSCAN(**hdbscan_kwargs)
+
         else:
             return pd.DataFrame(), {"error": f"Unsupported clustering method '{method}'"}
 
-        labels = model.fit_predict(X)
+        # Only fit model if not using silhouette-based KMeans
+        if model:
+            labels = model.fit_predict(X)
+
+        # Log the output of the clustering
+        print("[DEBUG] Clustering completed.", file=sys.stderr)
+        print(f"  Number of data points: {len(labels)}", file=sys.stderr)
+
+        unique_labels = set(labels)
+        n_clusters_found = len(unique_labels - {-1})  # Exclude noise label (-1)
+        n_noise = list(labels).count(-1)
+
+        # print(f"  Unique labels: {unique_labels}", file=sys.stderr)
+        print(f"  Clusters found (excluding noise): {n_clusters_found}", file=sys.stderr)
+        print(f"  Noise points: {n_noise}", file=sys.stderr)
+
+        # Optionally save in metrics dictionary
+        metrics["n_clusters_found"] = n_clusters_found
+        metrics["n_noise"] = n_noise
+
+
         df['cluster'] = labels.tolist()
         counts = df['cluster'].value_counts().to_dict()
 

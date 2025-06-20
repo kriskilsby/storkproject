@@ -22,9 +22,9 @@ body {
     font-size: 85%;
   }
   
-  .dropdown-toggle:not(:focus) {
+  /* .dropdown-toggle:not(:focus) {hero
     outline: 0;
-  }
+  } */
 
   
 
@@ -44,18 +44,20 @@ body {
       font-size: 3.5rem;
     }
   }
-
+/* kk colour */
   #hero-top {
-  background: linear-gradient(135deg, #e3f2fd, #bbdefb);
-  padding: 4rem 2rem;
+  /* background: linear-gradient(135deg, #e3f2fd, #bbdefb); */
+  background:#bccfff;
+  padding-top: 1rem;
+  padding-bottom: 1rem;
   border-radius: 1rem;
   margin: 2rem auto;
-  max-width: 900px;
+  max-width: 1100px;
   box-shadow: 0 4px 10px rgba(0,0,0,0.1);
 }
-
+/* kk colour */
   #clusteringForm {
-  background-color: #f8f9fa;
+  background-color: #ffcadd;
   padding: 2rem;
   border-radius: 1rem;
   box-shadow: 0 4px 8px rgba(0,0,0,0.05);
@@ -83,7 +85,8 @@ body {
   }
 
   .fixed-nav-bar {
-    background-color: #0d6efd; /* Bootstrap primary */
+    background-color: #7c47cb;
+    color: black;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     z-index: 1000;
   }
@@ -145,6 +148,10 @@ body {
 
   #map {
   min-height: 500px;
+  /* height: 700px; */
+  width: 100%;
+  border: 1px solid #ccc;
+  border-radius: 8px;
 }
 
 /* .legend {
@@ -195,7 +202,8 @@ body {
 #legend {
   width: 220px;
   padding: 10px;
-  background: #f9f9f9;
+  padding-bottom: 0.75rem;
+  background-color: #d5f7bd;
   border-right: 1px solid #ccc;
   font-family: sans-serif;
   font-size: 14px;
@@ -211,6 +219,7 @@ body {
   display: flex;
   align-items: center;
   gap: 6px;
+  padding-bottom: 0.0rem;
 }
 
 .color-box {
@@ -271,6 +280,7 @@ body {
   flex: 1;
   border-radius: 4px;
   overflow: hidden;
+  margin-bottom: 0.75rem;
 }
 
 /* Optional: give a max-width to prevent map overflow on huge screens */
@@ -313,3 +323,35 @@ body {
     box-sizing: border-box; */
   }
 }
+/* kk colour */
+#map-section {
+  background-color: #d5f7bd;
+  margin-bottom: 1em;
+}
+
+
+  button.btn.btn-contrast-green {
+    background-color: #e4f1d8 !important; /* default */
+    color: #2e4d1f !important;
+    border: 1px solid #88c057 !important;
+    font-weight: 600;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    transition: all 0.2s ease-in-out;
+  }
+
+  button.btn.btn-contrast-green:hover,
+  button.btn.btn-contrast-green:focus {
+    background-color: #e9a6cd !important; /* hover */
+    color: #1f3511 !important;
+    border-color: #6ca63e !important;
+  }
+
+  button.btn.btn-contrast-green.active,
+  button.btn.btn-contrast-green:active,
+  .btn-check:checked + .btn.btn-contrast-green {
+    background-color: #88c057 !important; /* active/selected */
+    color: #fff !important;
+    border-color: #6ca63e !important;
+  }
+
+
