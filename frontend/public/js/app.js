@@ -1,5 +1,23 @@
 console.log(" app.js loaded");
 
+const customSlots = [
+  { id: 0, ranges: [[22, 24], [0, 4]] },  // Night slot
+  { id: 1, ranges: [[4, 10]] },
+  { id: 2, ranges: [[10, 13]] },
+  { id: 3, ranges: [[13, 16]] },
+  { id: 4, ranges: [[16, 19]] },
+  { id: 5, ranges: [[19, 22]] }
+];
+
+window.toggleAll = function(type, check) {
+  const checkboxes = document.querySelectorAll(`input[type="checkbox"][id^="${type}-"]`);
+  checkboxes.forEach(cb => {
+    cb.checked = check;
+    cb.dispatchEvent(new Event('change')); // Trigger filter update
+  });
+};
+
+// Top level global variables
 let map;
 let clusterLayerGroup;
 let timeSlider;
@@ -8,13 +26,15 @@ let allPoints = [];
 let currentBird = "all";
 let currentYear = "all";
 let mapHasBeenCentered = false;
+let originalAllPoints = []; // unfiltered data source
 
+// Returns the selected checkbox values
 function getSelectedCheckboxValues(name) {
   return Array.from(document.querySelectorAll(`input[name="${name}"]:checked`))
     .map(cb => parseInt(cb.value, 10));
 }
 
-
+// Initialise the map and add tile layers
 function initMap() {
   map = L.map('map').setView([48.0, 10.0], 5);
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -25,6 +45,7 @@ function initMap() {
   clusterLayerGroup = L.layerGroup().addTo(map);
 }
 
+// Re-formats the timestamps to a date time string
 function formatTimestamp(iso) {
   const date = new Date(iso);
   return date.toLocaleString('en-GB', {
@@ -36,17 +57,15 @@ function formatTimestamp(iso) {
   });
 }
 
-
-
-
+// Updates the map to show points
 function updateMapForTimeIndex(groupedPoints, timestamps, index) {
   clusterLayerGroup.clearLayers();
   const points = groupedPoints[timestamps[index]] || [];
 
   points.forEach((point) => {
-    // const lat = point.location_lat;
-    // const lon = point.location_long;
-    // const cluster = point.cluster;
+    const lat = point.location_lat;
+    const lon = point.location_long;
+    const cluster = point.cluster;
 
     const marker = L.circleMarker([lat, lon], {
       radius: 6,
@@ -80,6 +99,7 @@ function updateMapForTimeIndex(groupedPoints, timestamps, index) {
   }
 }
 
+//Populates the bird and year dropdowns based on the data set
 function populateDropdowns(points) {
   const birdSelect = document.getElementById("bird-select");
   const yearSelect = document.getElementById("year-select");
@@ -100,6 +120,7 @@ function populateDropdowns(points) {
   yearSelect.value = currentYear;
 }
 
+// Animates the number shown in the cluster legend
 function animateCountUp(element, targetNumber, duration = 1000) {
   let start = 0;
   const stepTime = Math.abs(Math.floor(duration / targetNumber));
@@ -119,14 +140,37 @@ function animateCountUp(element, targetNumber, duration = 1000) {
   update();
 }
 
-function toggleAll(type, check) {
-  const checkboxes = document.querySelectorAll(`input[type="checkbox"][id^="${type}-"]`);
-  checkboxes.forEach(cb => cb.checked = check);
+// function toggleAll(type, check) {
+//   const checkboxes = document.querySelectorAll(`input[type="checkbox"][id^="${type}-"]`);
+//   checkboxes.forEach(cb => {
+//     cb.checked = check;
+//     cb.dispatchEvent(new Event('change')); // to trigger UI update
+//     console.log("toggleAll called for:", type, "->", check);
+//   });
+// }
 
-  // Optionally, update filters or map here
-  // updateFilters();
-}
+  // Now update the map using the same method as single checkbox changes:
+//   if (allPoints.length > 0) {
+//     renderClustersOnMap({ all_points: allPoints });
+//   }
+// }
 
+  // Re-filter and re-render using original (raw) data
+//   renderClustersOnMap({ all_points: originalAllPoints });
+// }
+
+// Make toggleAll available globally for inline onclick handlers
+// window.toggleAll = toggleAll;
+
+// document.querySelectorAll('button[data-toggle-type]').forEach(button => {
+//   button.addEventListener('click', () => {
+//     const type = button.dataset.toggleType;
+//     const check = button.dataset.toggleCheck === 'true';
+//     toggleAll(type, check);
+//   });
+// });
+
+// Main function responsible for rendering filtered points
 function renderClustersOnMap(data) {
   clusterLayerGroup.clearLayers();
   const legendContainer = document.getElementById("legend");
@@ -167,7 +211,23 @@ function renderClustersOnMap(data) {
     const year = date.getFullYear().toString();
     const month = date.getUTCMonth() + 1; // JS months: 0–11
     const hour = date.getUTCHours();
-    const timeslot = Math.floor(hour / 3); // 3-hour buckets: 0–7
+    // const timeslot = Math.floor(hour / 3); // 3-hour buckets: 0–7
+
+    // Map hour to one of the custom time slots
+    let timeslot = null;
+    for (const slot of customSlots) {
+      for (const [start, end] of slot.ranges) {
+        if (
+          (start <= end && hour >= start && hour < end) ||  // e.g., 4–10
+          (start > end && (hour >= start || hour < end))    // e.g., 22–04 wrap-around
+        ) {
+          timeslot = slot.id;
+          break;
+        }
+      }
+      if (timeslot !== null) break;
+    }
+
 
     const birdMatch = currentBird === "all" || p.individual_local_identifier === currentBird;
     const yearMatch = currentYear === "all" || year === currentYear;
@@ -187,29 +247,16 @@ function renderClustersOnMap(data) {
     uniqueClusters.add(point.cluster);
   });
 
-  // data.all_points.forEach(point => {
-  //   const time = point.timestamp;
-  //   if (!groupedPoints[time]) groupedPoints[time] = [];
-  //   groupedPoints[time].push(point);
-  //   uniqueClusters.add(point.cluster);
-  // });
-
-  // Build legend
-  // [...uniqueClusters].sort((a, b) => a - b).forEach((clusterId) => {
-  //   const color = getColorForCluster(clusterId);
-  //   const item = document.createElement("div");
-  //   item.innerHTML = `
-  //     <div class="color-box" style="background:${color}"></div>
-  //     Cluster ${clusterId}
-  //   `;
-  //   legendContainer.appendChild(item);
-  // });
-
+  
   // Count cluster sizes
   const clusterCounts = {};
-  data.all_points.forEach(p => {
-    clusterCounts[p.cluster] = (clusterCounts[p.cluster] || 0) + 1;
-  });
+  // data.all_points.forEach(p => {
+  //   clusterCounts[p.cluster] = (clusterCounts[p.cluster] || 0) + 1;
+  // });
+  filteredPoints.forEach(p => {
+  clusterCounts[p.cluster] = (clusterCounts[p.cluster] || 0) + 1;
+});
+
 
   // Sort clusters by size, descending
   const sortedClusters = Object.entries(clusterCounts)
@@ -250,35 +297,6 @@ function renderClustersOnMap(data) {
   }
 
 
-
-
-  // Build time slider
-  // const timestamps = Object.keys(groupedPoints).sort();
-  // const container = document.getElementById("timeSliderContainer") || document.createElement("div");
-  // container.id = "timeSliderContainer";
-  // container.style.margin = "10px";
-
-  // Clear and rebuild
-  // container.innerHTML = `
-  //   <input type="range" min="0" max="${timestamps.length - 1}" value="0" id="timeSlider" style="width:300px;">
-  //   <span id="timeSliderLabel">Time: ${formatTimestamp(timestamps[0])}</span>
-  // `;
-
-  // Append if not present
-  // if (!document.getElementById("timeSliderContainer")) {
-  //   document.body.appendChild(container);
-  // }
-
-  // timeSlider = document.getElementById("timeSlider");
-  // timeSliderLabel = document.getElementById("timeSliderLabel");
-
-  // timeSlider.addEventListener("input", () => {
-  //   updateMapForTimeIndex(groupedPoints, timestamps, parseInt(timeSlider.value));
-  // });
-
-  // Initial render
-//   updateMapForTimeIndex(groupedPoints, timestamps, 0);
-
 // Show all points without filtering by time
 Object.values(groupedPoints).flat().forEach((point) => {
   const lat = point.location_lat;
@@ -304,7 +322,9 @@ Object.values(groupedPoints).flat().forEach((point) => {
         <strong>Bird ID:</strong> ${point.individual_local_identifier}<br/>
         <strong>Heading:</strong> ${heading}° (${compass})<br/>
         <strong>Distance:</strong> ${distance} m<br/>
-        <strong>Time:</strong> ${timestamp}
+        <strong>Time:</strong> ${timestamp}<br/>
+        <strong>Latitude:</strong> ${lat}<br/>
+        <strong>Longitude:</strong> ${lon}
       </div>
     `;
   });
@@ -314,205 +334,48 @@ Object.values(groupedPoints).flat().forEach((point) => {
 
 }
 
-
-// function getColorForCluster(clusterId) {
-//   const colors = ['#e41a1c', '#377eb8', '#4daf4a', '#984ea3', '#ff7f00'];
-//   return colors[clusterId % colors.length];
-// }
-
+// Returns a color for a given cluster ID using a D3 palette
 function getColorForCluster(clusterId) {
   const palette = d3.schemeCategory10.concat(d3.schemePaired); // Needs D3.js
   return palette[clusterId % palette.length];
 }
 
-// ################# REMOVE FULL document.addEventListener("DOMContentLoaded" PART BELOW TEST FIRST #######################################
-// document.addEventListener("DOMContentLoaded", () => {
-//   initMap();
-
-//   const form = document.getElementById("clusteringForm");
-
-//   document.getElementById("method").addEventListener("change", function () {
-//     const selected = this.value;
-//     document.querySelectorAll(".method-params").forEach(el => el.classList.add("d-none"));
-//     const visible = document.getElementById(`${selected}-params`);
-//     if (visible) visible.classList.remove("d-none");
-//   });
-
-//     document.getElementById("bird-select").addEventListener("change", (e) => {
-//     currentBird = e.target.value;
-//     renderClustersOnMap({ all_points: allPoints });
-//   });
-
-//   document.getElementById("year-select").addEventListener("change", (e) => {
-//     currentYear = e.target.value;
-//     renderClustersOnMap({ all_points: allPoints });
-//   });
-
-//   // Form block Handling
-//   form.addEventListener("submit", async (e) => {
-//     e.preventDefault();
-
-//     const timerDisplay = document.getElementById("clustering-timer");
-//     timerDisplay.textContent = "Running...";
-//     const startTime = performance.now(); // Start timer    
-
-//     const formData = new FormData(form);
-//     const method = formData.get("method");
-    
-//     // const decimal_places = parseInt(formData.get("decimal_places"));
-//     // const interval_minutes = parseInt(formData.get("interval_minutes"));
-//     // const sample_rate = parseInt(formData.get("sample_rate"));
-
-//     let params = {};
-//     if (method === "kmeans") {
-//       params.n_clusters = parseInt(formData.get("n_clusters"));
-//     } else if (method === "dbscan") {
-//       params.eps = parseFloat(formData.get("eps"));
-//       params.min_samples = parseInt(formData.get("min_samples"));
-//     } else if (method === "hdbscan") {
-//       params.min_cluster_size = parseInt(formData.get("min_cluster_size"));
-//     }
-
-//     // Initial parameter confirmation for the backend
-//     params.decimal_places = decimal_places;
-//     params.interval_minutes = interval_minutes;
-//     params.sample_rate = sample_rate;
-//     // Feature selection parameters
-//     params.use_distance = formData.get("use_distance") === "on";
-//     params.use_heading = formData.get("use_heading") === "on";
-//     params.use_year = formData.get("use_year") === "on";
-//     params.use_month = formData.get("use_month") === "on";
-//     params.use_scaling = formData.get("use_scaling") === "on";
-
-//     const requestBody = {
-//       method,
-//       params
-//     };
-
-//     try {
-//       const response = await fetch("/api/cluster", {
-//         method: "POST",
-//         headers: {
-//           "Content-Type": "application/json"
-//         },
-//         body: JSON.stringify(requestBody)
-//       });
-
-//       const endTime = performance.now(); // End timer
-//       const duration = ((endTime - startTime) / 1000).toFixed(2); // in seconds
-//       // timerDisplay.textContent = `Completed in ${duration} sec`;
-//       const rawSeconds = (endTime - startTime) / 1000;
-//       const minutes = Math.floor(rawSeconds / 60);
-//       const seconds = (rawSeconds % 60).toFixed(2);
-
-//       let timeText = '';
-//       if (minutes > 0) {
-//         timeText = `Completed in ${minutes} min, ${seconds} sec`;
-//       } else {
-//         timeText = `Completed in ${seconds} sec`;
-//       }
-//       timerDisplay.textContent = timeText;
-
-
-//       if (!response.ok) {
-//         throw new Error(`HTTP error! Status: ${response.status}`);
-//       }
-
-//       const data = await response.json();
-//       console.log("Clustering result:", data);
-//       renderClustersOnMap(data);
-
-//       const resultsBox = document.getElementById("clusteringResults");
-//       if (resultsBox) {
-//         resultsBox.textContent = JSON.stringify(data, null, 2);
-//       }
-//       // Clustering success metrics
-//       if (data.metrics) {
-//       const metricsList = document.getElementById("metricsList");
-//       metricsList.innerHTML = "";  // Clear old results
-
-//       const metrics = data.metrics;
-
-//       const formatMetric = (name, value, decimals = 3) =>
-//         `<li><strong>${name}:</strong> ${value !== null && !isNaN(value) ? value.toFixed(decimals) : 'N/A'}</li>`;
-
-//       metricsList.innerHTML += formatMetric("Silhouette Score", metrics.silhouette_score);
-//       metricsList.innerHTML += formatMetric("Adjusted Rand Index", metrics.adjusted_rand_index); // PERHAPS REMOVE IF YOU HAVE NO GROUND TRUTH
-//       metricsList.innerHTML += formatMetric("Calinski-Harabasz Index", metrics.calinski_harabasz);
-//       metricsList.innerHTML += formatMetric("Davies-Bouldin Index", metrics.davies_bouldin);
-//       metricsList.innerHTML += formatMetric("Number of Clusters", metrics.n_clusters, 0);
-//       metricsList.innerHTML += formatMetric("Noise Ratio", metrics.noise_ratio, 2);
-//     }
-
-//       // Persist form preferences using localStorage
-//     const fieldsToPersist = [
-//       "method", "n_clusters", "eps", "min_samples", "min_cluster_size",
-//       "decimal_places", "interval_minutes", "sample_rate",
-//       "use_distance", "use_heading", "use_year", "use_month", "use_scaling"
-//     ];
-
-//     // Restore saved values on load
-//     fieldsToPersist.forEach((key) => {
-//       const input = document.querySelector(`[name="${key}"]`);
-//       if (!input) return;
-
-//       const savedValue = localStorage.getItem(`clustering_${key}`);
-//       if (savedValue !== null) {
-//         if (input.type === "checkbox") {
-//           input.checked = savedValue === "true";
-//         } else {
-//           input.value = savedValue;
-//         }
-
-//         // Show correct method parameters if method was saved
-//         if (key === "method") {
-//           document.querySelectorAll(".method-params").forEach(el => el.classList.add("d-none"));
-//           const visible = document.getElementById(`${savedValue}-params`);
-//           if (visible) visible.classList.remove("d-none");
-//         }
-//       }
-//     });
-
-//     // Save values on form change
-//     document.getElementById("clusteringForm").addEventListener("change", () => {
-//       fieldsToPersist.forEach((key) => {
-//         const input = document.querySelector(`[name="${key}"]`);
-//         if (!input) return;
-
-//         const value = input.type === "checkbox" ? input.checked : input.value;
-//         localStorage.setItem(`clustering_${key}`, value);
-//       });
-//     });
-
-//     } catch (error) {
-//       console.error("Error running clustering:", error);
-//       alert("There was an error running clustering.");
-//     }
-//   });
-// });
-
+// Initialises the app when the DOM is fully loaded
 document.addEventListener("DOMContentLoaded", () => {
+  // Initialise the map
   initMap();
 
   const form = document.getElementById("clusteringForm");
-
+  // Event listener for clustering method drop-downs
   document.getElementById("method").addEventListener("change", function () {
     document.querySelectorAll(".method-params").forEach(el => el.classList.add("d-none"));
     const visible = document.getElementById(`${this.value}-params`);
     if (visible) visible.classList.remove("d-none");
   });
-
+  // Event listener for Bird drop-downs
   document.getElementById("bird-select").addEventListener("change", (e) => {
     currentBird = e.target.value;
     renderClustersOnMap({ all_points: allPoints });
   });
-
+  // Event listener for year drop-downs
   document.getElementById("year-select").addEventListener("change", (e) => {
     currentYear = e.target.value;
     renderClustersOnMap({ all_points: allPoints });
   });
 
+  // Attach listeners after DOM loads
+  // Event listener for toggle buttons
+  document.querySelectorAll('button[data-toggle-type]').forEach(button => {
+    button.addEventListener('click', () => {
+      const type = button.dataset.toggleType;
+      const check = button.dataset.toggleCheck === 'true';
+      toggleAll(type, check);
+    });
+  });
+  
+  // Event listener for form submission - form submission handler
   form.addEventListener("submit", async (e) => {
+    // prevents form default behaviour
     e.preventDefault();
 
     const timerDisplay = document.getElementById("clustering-timer");
@@ -531,29 +394,51 @@ document.addEventListener("DOMContentLoaded", () => {
       use_year: formData.get("use_year") === "on",
       use_month: formData.get("use_month") === "on",
       use_scaling: formData.get("use_scaling") === "on",
-      use_timestamp: formData.get("use_timestamp") === "on",
+      use_coordinates: formData.get("use_coordinates") === "on",
       use_interval_mins: formData.get("use_interval_mins") === "on"
     };
 
-    if (method === "kmeans") params.n_clusters = parseInt(formData.get("n_clusters"));
+    console.log("Clustering method:", method);
+    console.log("Params being sent:", params);
+
+    // ####### OLD METHOD CODE ################################
+    // if (method === "kmeans") params.n_clusters = parseInt(formData.get("n_clusters"));
+    // if (method === "dbscan") {
+    //   params.eps = parseFloat(formData.get("eps"));
+    //   params.min_samples = parseInt(formData.get("min_samples"));
+    // }
+    // if (method === "hdbscan") params.min_cluster_size = parseInt(formData.get("min_cluster_size"));
+    // ####### OLD METHOD CODE ################################
+
+    if (method === "kmeans") {
+      const autoSilhouette = formData.get("auto_silhouette") === "on";
+      if (autoSilhouette) {
+        params.auto_silhouette = true;
+      } else {
+        params.n_clusters = parseInt(formData.get("n_clusters"));
+      }
+    }
     if (method === "dbscan") {
       params.eps = parseFloat(formData.get("eps"));
       params.min_samples = parseInt(formData.get("min_samples"));
+      params.leaf_size = parseInt(formData.get("leaf_size_dbscan")) || 40;
     }
-    if (method === "hdbscan") params.min_cluster_size = parseInt(formData.get("min_cluster_size"));
+    if (method === "hdbscan") {
+      params.min_cluster_size = parseInt(formData.get("min_cluster_size"));
+      const mcs = formData.get("max_cluster_size");
+      if (mcs) params.max_cluster_size = parseInt(mcs);
+      params.leaf_size = parseInt(formData.get("leaf_size_hdbscan")) || 40;
+    }
 
     try {
+      // Sends a POST request to /api/cluster with method & params
       const response = await fetch("/api/cluster", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ method, params })
       });
 
-      // const endTime = performance.now();
-      // const seconds = ((endTime - startTime) / 1000).toFixed(2);
-      // timerDisplay.textContent = `Completed in ${seconds} sec`;
-
-      // ####################### CHECK THIS #########################################
+      // Clustering timer
       const endTime = performance.now(); // End timer
       const duration = ((endTime - startTime) / 1000).toFixed(2); // in seconds
       // timerDisplay.textContent = `Completed in ${duration} sec`;
@@ -568,17 +453,18 @@ document.addEventListener("DOMContentLoaded", () => {
         timeText = `Completed in ${seconds} sec`;
       }
       timerDisplay.textContent = timeText;
- // ####################### CHECK THIS #########################################
 
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
 
       const data = await response.json();
       console.log("Clustering result:", data);
+      // Render received data 
       renderClustersOnMap(data);
 
       const resultsBox = document.getElementById("clusteringResults");
       if (resultsBox) resultsBox.textContent = JSON.stringify(data, null, 2);
 
+      // Update cluster metrics if present
       if (data.metrics) {
         const metricsList = document.getElementById("metricsList");
         metricsList.innerHTML = "";
@@ -595,18 +481,19 @@ document.addEventListener("DOMContentLoaded", () => {
         metricsList.innerHTML += metric("Noise Ratio", m.noise_ratio, 2);
       }
 
-      // Save settings
+      // Save key settings to localStorage
       const fieldsToPersist = [
         "method", "n_clusters", "eps", "min_samples", "min_cluster_size",
         "decimal_places", "interval_minutes", "sample_rate",
         "use_distance", "use_heading", "use_year", "use_month", "use_scaling",
-        "use_timestamp", "use_interval_mins"
+        "use_timestamp", "use_interval_mins", "auto_silhouette", "max_cluster_size", 
+        "leaf_size_dbscan", "leaf_size_hdbscan" 
       ];
 
       fieldsToPersist.forEach((key) => {
         const input = document.querySelector(`[name="${key}"]`);
         if (input) {
-          const value = input.type === "checkbox" ? input.checked : input.value;
+          const value = input.type === "checkbox" ? input.checked : input.value; 
           localStorage.setItem(`clustering_${key}`, value);
         }
       });
@@ -619,6 +506,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   document.querySelectorAll('input[type="checkbox"]').forEach(cb => {
     cb.addEventListener("change", () => {
+      if (allPoints.length === 0) return; // <- skip if no data has been loaded yet
       renderClustersOnMap({ all_points: allPoints });
     });
   });
@@ -628,7 +516,8 @@ document.addEventListener("DOMContentLoaded", () => {
     "method", "n_clusters", "eps", "min_samples", "min_cluster_size",
     "decimal_places", "interval_minutes", "sample_rate",
     "use_distance", "use_heading", "use_year", "use_month", "use_scaling",
-    "use_timestamp", "use_interval_mins"
+    "use_timestamp", "use_interval_mins", "auto_silhouette", "max_cluster_size", 
+    "leaf_size_dbscan", "leaf_size_hdbscan" 
   ];
 
   persistFields.forEach((key) => {
