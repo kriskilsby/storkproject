@@ -126,18 +126,21 @@ def run_clustering(method='kmeans', params={}):
 
 
     # Debug output to show parameters chosen
-    print("[DEBUG] Parameters after processing:", file=sys.stderr)
+    print("[INFO] Parameters used for clustering:", file=sys.stderr)
     print(f"  method: {method}", file=sys.stderr)
     print(f"  decimal_places: {decimal_places}", file=sys.stderr)
     print(f"  interval_minutes: {interval_minutes}", file=sys.stderr)
     print(f"  sample_rate: {sample_rate}", file=sys.stderr)
+    print(f"  use_scaling: {use_scaling}", file=sys.stderr)
+    print("[INFO] Data collection setup:", file=sys.stderr)
+    print(f"  use_coordinates: {use_coordinates}", file=sys.stderr)
+    print(f"  use_interval_mins: {use_interval_mins}", file=sys.stderr)
     print(f"  use_distance: {use_distance}", file=sys.stderr)
     print(f"  use_heading: {use_heading}", file=sys.stderr)
     print(f"  use_year: {use_year}", file=sys.stderr)
     print(f"  use_month: {use_month}", file=sys.stderr)
-    print(f"  use_scaling: {use_scaling}", file=sys.stderr)
-    print(f"  use_coordinates: {use_coordinates}", file=sys.stderr)
-    print(f"  use_interval_mins: {use_interval_mins}", file=sys.stderr)
+    
+    
 
 
 

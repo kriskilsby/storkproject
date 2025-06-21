@@ -178,6 +178,7 @@ function renderClustersOnMap(data) {
   const uniqueClusters = new Set();
 
   if (!data || !data.all_points || data.all_points.length === 0) {
+
     alert('No preview data returned');
     return;
   }
@@ -228,13 +229,17 @@ function renderClustersOnMap(data) {
       if (timeslot !== null) break;
     }
 
+    const distanceMin = parseFloat(document.getElementById('distanceMin').value) || 0;
+    const distanceMax = parseFloat(document.getElementById('distanceMax').value) || Infinity;
 
     const birdMatch = currentBird === "all" || p.individual_local_identifier === currentBird;
     const yearMatch = currentYear === "all" || year === currentYear;
     const monthMatch = selectedMonths.length === 0 || selectedMonths.includes(month);
     const slotMatch = selectedSlots.length === 0 || selectedSlots.includes(timeslot);
+    const distance = p.distance ?? 0;
+    const distanceMatch = distance >= distanceMin && distance <= distanceMax;
 
-    return birdMatch && yearMatch && monthMatch && slotMatch;
+    return birdMatch && yearMatch && monthMatch && slotMatch && distanceMatch;
   });
 
 
@@ -372,6 +377,12 @@ document.addEventListener("DOMContentLoaded", () => {
       toggleAll(type, check);
     });
   });
+
+  // ✅ Distance filter listener
+  document.getElementById("applyDistanceFilter").addEventListener("click", () => {
+    renderClustersOnMap({ all_points: allPoints });
+  });
+
   
   // Event listener for form submission - form submission handler
   form.addEventListener("submit", async (e) => {
