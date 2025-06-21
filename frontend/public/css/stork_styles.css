@@ -203,7 +203,7 @@ body {
   width: 220px;
   padding: 10px;
   padding-bottom: 0.75rem;
-  background-color: #d5f7bd;
+  /* background-color: #d5f7bd; */
   border-right: 1px solid #ccc;
   font-family: sans-serif;
   font-size: 14px;
@@ -325,10 +325,25 @@ body {
 }
 /* kk colour */
 #map-section {
-  background-color: #d5f7bd;
+  background-color: white;
   margin-bottom: 1em;
 }
 
+#map-card {
+  /* background-color: #d5f7bd; */
+}
+
+#mapFiltersForm {
+  /* padding: 32px; */
+  background-color: #d5f7bd;
+  padding: 2rem;
+  border-radius: 1rem;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+}
+
+#testing {
+  padding: 0px;
+}
 
   button.btn.btn-contrast-green {
     background-color: #e4f1d8 !important; /* default */
