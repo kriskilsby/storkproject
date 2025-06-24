@@ -1,33 +1,16 @@
-// routes/cluster.js
+// routes/metadata.js
 const express = require('express');
 const router = express.Router();
 const { spawn } = require('child_process');
 const path = require('path');
 
-router.post('/', (req, res) => {
-  const method = req.body.method || 'kmeans';
-  const params = req.body.params || {};
-  const scriptPath = path.join(__dirname, '../../scripts/run_clustering.py');
+router.get('/', (req, res) => {
+  const scriptPath = path.join(__dirname, '../../scripts/get_metadata.py');
   const pythonWorkingDir = path.join(__dirname, '../../');
-  const paramsStr = JSON.stringify(params);
 
-  console.log('[DEBUG] Running python script with:');
-  console.log('  method:', method);
-  // console.log('  params:', params);
-  console.log('  params:', JSON.stringify(params, null, 2));  // Nicely formatted
-  if (params.selected_years) {
-    console.log('  selected_years:', params.selected_years);
-  }
-  if (params.selected_birds) {
-    console.log('  selected_birds:', params.selected_birds);
-  }
-  console.log('  scriptPath:', scriptPath);
-  console.log('  cwd:', pythonWorkingDir);
-
-  // const python = spawn('python3', [scriptPath, method, paramsStr], {
   const python = spawn(
-    'C:\\Users\\krist\\OneDrive\\UEA Folder\\Dissertation\\stork_project\\venv\\Scripts\\python.exe', 
-    [scriptPath, method, paramsStr], 
+    'C:\\Users\\krist\\OneDrive\\UEA Folder\\Dissertation\\stork_project\\venv\\Scripts\\python.exe',
+    [scriptPath],
     { cwd: pythonWorkingDir }
   );
 
@@ -66,7 +49,4 @@ router.post('/', (req, res) => {
   });
 });
 
-
 module.exports = router;
-
-

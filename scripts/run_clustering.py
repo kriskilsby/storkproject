@@ -139,77 +139,7 @@ def run_clustering(method='kmeans', params={}):
     print(f"  use_heading: {use_heading}", file=sys.stderr)
     print(f"  use_year: {use_year}", file=sys.stderr)
     print(f"  use_month: {use_month}", file=sys.stderr)
-    
-    
-
-
-
-    # Use raw lat/long for full flexibility
-    # sql_query = f"""
-    # SELECT individual_local_identifier,
-    #     location_lat,
-    #     location_long,
-    #     calculated_heading,
-    #     distance,
-    #     compass_direction,
-    #     date_trunc('hour', timestamp) +
-    #         INTERVAL '1 minute' * (FLOOR(EXTRACT(MINUTE FROM timestamp) / {interval_minutes}) * {interval_minutes}) AS timestamp
-    # FROM migration_data.stork_data
-    # WHERE distance IS NOT NULL
-    #   AND calculated_heading IS NOT NULL
-    #   AND NOT (calculated_heading = 0 AND distance = 0);
-    # """
-
-    ###### 2ND VERSION OF QUERY WITHOUT REMOVING THE CALC HEADING AND DISTANCE #######
-    # sql_query = f"""
-    # SELECT individual_local_identifier,
-    #     location_lat,
-    #     location_long,
-    #     sql_heading AS calculated_heading,
-    #     sql_distance AS distance,
-    #     compass_direction,
-    #     date_trunc('hour', timestamp) +
-    #         INTERVAL '1 minute' * (FLOOR(EXTRACT(MINUTE FROM timestamp) / {interval_minutes}) * {interval_minutes}) AS timestamp
-    # FROM migration_data.stork_data
-    # WHERE sql_distance IS NOT NULL
-    #   AND sql_heading IS NOT NULL;
-    # """
-
-    ##### 3RD VERSION OF QUERY THAT PROVIDES THE DE=-DUPLICATION IN THE QUERY INSTEAD
-
-    # fetch_counts(interval_minutes, sample_rate)
-
-    # sql_query = f"""
-    # WITH deduped AS (
-    # SELECT *,
-    #         date_trunc('hour', timestamp) +
-    #         INTERVAL '1 minute' * (FLOOR(EXTRACT(MINUTE FROM timestamp) / {interval_minutes}) * {interval_minutes}) AS rounded_timestamp,
-    #         ROW_NUMBER() OVER (
-    #             PARTITION BY individual_local_identifier,
-    #                         date_trunc('hour', timestamp) +
-    #                         INTERVAL '1 minute' * (FLOOR(EXTRACT(MINUTE FROM timestamp) / {interval_minutes}) * {interval_minutes})
-    #             ORDER BY timestamp
-    #         ) AS rn
-    # FROM migration_data.stork_data
-    # WHERE sql_distance IS NOT NULL
-    #     AND sql_heading IS NOT NULL
-    # ),
-    # filtered AS (
-    # SELECT *
-    # FROM deduped
-    # WHERE rn = 1
-    # )
-    # SELECT individual_local_identifier,
-    #     location_lat,
-    #     location_long,
-    #     sql_heading AS calculated_heading,
-    #     sql_distance AS distance,
-    # #     compass_direction,
-    #     rounded_timestamp AS timestamp
-    # FROM filtered
-    # WHERE MOD(record_id, {sample_rate}) = 0;
-    # """
-#### 4TH ATTEMPT AT A FAB AND AMAZING QUERY    
+      
     if interval_minutes > 0:
         time_bucket = f"""
         date_trunc('hour', timestamp) +
@@ -218,11 +148,22 @@ def run_clustering(method='kmeans', params={}):
     else:
         time_bucket = "timestamp"
 
+        # KK new added - Build WHERE clause
+    filter_clauses = ["sql_distance IS NOT NULL", "sql_heading IS NOT NULL"]
+    if selected_years:
+        year_str = ', '.join(str(y) for y in selected_years)
+        filter_clauses.append(f"EXTRACT(YEAR FROM timestamp) IN ({year_str})")
+    if selected_birds:
+        bird_str = ', '.join(f"'{b}'" for b in selected_birds)
+        filter_clauses.append(f"individual_local_identifier IN ({bird_str})")
+
+    where_clause = " AND ".join(filter_clauses)
+
     sql_query = f"""
     WITH
     filtered_base AS (
     SELECT * FROM migration_data.stork_data
-    WHERE sql_distance IS NOT NULL AND sql_heading IS NOT NULL
+    WHERE {where_clause}
     ),
     deduped AS (
     SELECT *,
@@ -246,16 +187,16 @@ def run_clustering(method='kmeans', params={}):
         (SELECT COUNT(*) FROM sampled) AS count_after_sampling
     )
     SELECT
-    s.individual_local_identifier,
-    s.location_lat,
-    s.location_long,
-    s.sql_heading AS calculated_heading,
-    s.sql_distance AS distance,
-    s.compass_direction,
-    s.rounded_timestamp AS timestamp,
-    c.count_after_filtering,
-    c.count_after_deduplication,
-    c.count_after_sampling
+        s.individual_local_identifier,
+        s.location_lat,
+        s.location_long,
+        s.sql_heading AS calculated_heading,
+        s.sql_distance AS distance,
+        s.compass_direction,
+        s.rounded_timestamp AS timestamp,
+        c.count_after_filtering,
+        c.count_after_deduplication,
+        c.count_after_sampling
     FROM sampled s
     CROSS JOIN counts c;
     """
@@ -265,15 +206,6 @@ def run_clustering(method='kmeans', params={}):
 
     if data.empty:
         return pd.DataFrame(), {"error": "No data fetched from database"}
-
-    # Deduplicate: one point per bird per rounded timestamp
-    # df = data.drop_duplicates(subset=["individual_local_identifier", "timestamp"])
-    # print(f"[DEBUG] After deduplication: {len(df)} rows", file=sys.stderr)
-
-    ### COMMENT OUT CURRENTLY AS NOT REQUIRED ON 3RD SQL QUERY OPTION
-    # Sample
-    # df = df.iloc[::sample_rate].copy()
-    # print(f"[DEBUG] After sampling (rate={sample_rate}): {len(df)} rows", file=sys.stderr)
 
     df = data.copy()
 
@@ -316,21 +248,9 @@ def run_clustering(method='kmeans', params={}):
     # Convert timestamp to datetime, ensuring all timezone-aware datetimes are converted to UTC
     df['timestamp'] = pd.to_datetime(df['timestamp'], utc=True)
 
-    # Add year and month to the clustering
-    # df['year'] = df['timestamp'].dt.year
-    # df['month'] = df['timestamp'].dt.month
-    # features = ['location_lat_rounded', 'location_long_rounded']
-
-    # print(f"location_lat_rounded type confirmed: {df['location_lat_rounded'].apply(type).value_counts()}")
-    # print(json.dumps({
-    #     "location_lat_rounded_types": df["location_lat_rounded"].apply(lambda x: str(type(x))).value_counts().to_dict()
-    # }))
-
     print("[DEBUG] location_lat_rounded_types:",
       df["location_lat_rounded"].apply(lambda x: str(type(x))).value_counts().to_dict(),
       file=sys.stderr)
-
-
 
     features = []
 
@@ -358,51 +278,12 @@ def run_clustering(method='kmeans', params={}):
 
     X = df[features]
 
-    # Select only numeric fields for clustering
-    # X = df.select_dtypes(include=[np.number])
-    # print(f"[DEBUG] Clustering on {len(X)} rows, columns: {X.columns.tolist()}", file=sys.stderr)
-    # print(f"[DEBUG] Clustering on {len(X)} rows, features: {features}", file=sys.stderr)
-
-   
-
-    # print("[DEBUG] features:", json.dumps(features))
-    # print("[DEBUG] X sample data:\n", X.head().to_json(orient="records"))
-    # print("[DEBUG] X dtypes:\n", json.dumps(X.dtypes.astype(str).to_dict()))
-    # print("[DEBUG] Any strings in X?", json.dumps(X.applymap(lambda x: isinstance(x, str)).any().to_dict()))
-
-
-
-
     # Normalize only for kmeans
     if USE_SCALING:
         print(f"[DEBUG] Scaling features with StandardScaler (method = {method})", file=sys.stderr)
-        # print("[DEBUG] type(X):", type(X), file=sys.stderr)
-        # print("[DEBUG] X.head():", X[:5] if hasattr(X, '__getitem__') else X, file=sys.stderr)
-        # print("[DEBUG] X.dtypes:\n", X.dtypes, file=sys.stderr)
         X = StandardScaler().fit_transform(X)
     else:
         print(f"[DEBUG] Skipping feature scaling (method = {method})", file=sys.stderr)
-
-    # if method == 'kmeans':
-    #     X = StandardScaler().fit_transform(X)
-
-    ################# OLD CODE TO REMOVE WHEN REQUIRED ##################################
-    # try:
-    #     if method == 'kmeans':
-    #         n_clusters = int(params.get('n_clusters', 5))
-    #         model = KMeans(n_clusters=n_clusters)
-    #     elif method == 'dbscan':
-    #         model = DBSCAN(
-    #             eps=float(params.get('eps', 0.5)),
-    #             min_samples=int(params.get('min_samples', 5))
-    #         )
-    #     elif method == 'hdbscan':
-    #         model = hdbscan.HDBSCAN(min_cluster_size=int(params.get('min_cluster_size', 5)))
-    #     else:
-    #         return pd.DataFrame(), {"error": f"Unsupported clustering method '{method}'"}
-
-    #     labels = model.fit_predict(X)
-    ################# OLD CODE TO REMOVE WHEN REQUIRED ##################################
 
     try:
         labels = None
@@ -508,12 +389,6 @@ def run_clustering(method='kmeans', params={}):
         # Count noise points (label = -1), if any
         noise_ratio = (labels == -1).sum() / len(labels) if -1 in labels else 0
 
-        # return df, {
-        #     "clusters": counts,
-        #     "method": method,
-        #     "params": params,
-        # }
-    
         meta = {
             "clusters": counts,
             "method": method,
@@ -534,7 +409,6 @@ def run_clustering(method='kmeans', params={}):
         return pd.DataFrame(), {"error": str(e)}
 
 
-
 if __name__ == "__main__":
     # Read command-line args
     method = sys.argv[1] if len(sys.argv) > 1 else 'kmeans'
@@ -542,12 +416,13 @@ if __name__ == "__main__":
 
     try:
         params = json.loads(params_json)
+        # KK new added
+        selected_years = params.get('selected_years')  # list of ints, e.g., [2021, 2022]
+        selected_birds = params.get('selected_birds')  # list of bird IDs
+
     except json.JSONDecodeError:
         print(json.dumps({"error": "Invalid JSON in parameters"}))
         sys.exit(1)
-
-    # result = run_clustering(method, params)
-    # print(json.dumps(result))
 
     df, meta = run_clustering(method, params)
 
@@ -567,5 +442,3 @@ if __name__ == "__main__":
         return str(o)
 
     print(json.dumps(meta, default=default_converter))
-
-

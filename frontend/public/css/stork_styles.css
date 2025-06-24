@@ -1,77 +1,130 @@
 
-@media (max-width: 768px) {
+/* @media (max-width: 768px) {
   #filters select {
     margin-bottom: 0.5rem;
     width: 100% !important;
   }
-}
+} */
 
 body {
     font-family: 'Inter', sans-serif;
+    background-color: #F9F9F9 !important;
   }
 
-.form-control-dark {
+/* .form-control-dark {
     border-color: var(--bs-gray);
   }
   .form-control-dark:focus {
     border-color: #fff;
     box-shadow: 0 0 0 .25rem rgba(255, 255, 255, .25);
-  }
+  } */
   
-  .text-small {
+  /* Doesn't currently exist in index.ejs  */
+  /* .text-small {
     font-size: 85%;
-  }
+  } */
   
   /* .dropdown-toggle:not(:focus) {hero
     outline: 0;
   } */
 
   
-
-  @media (min-width: 992px) {
+/* Doesn't currently exist in index.ejs  */
+  /* @media (min-width: 992px) {
     .rounded-lg-3 { border-radius: .3rem; }
-  }
-  .bd-placeholder-img {
+  } */
+/* Doesn't currently exist in index.ejs  */
+  /* .bd-placeholder-img {
     font-size: 1.125rem;
     text-anchor: middle;
     -webkit-user-select: none;
     -moz-user-select: none;
     user-select: none;
-  }
-
-  @media (min-width: 768px) {
+  } */
+/* Doesn't currently exist in index.ejs  */
+  /* @media (min-width: 768px) {
     .bd-placeholder-img-lg {
       font-size: 3.5rem;
     }
-  }
+  } */
 /* kk colour */
   #hero-top {
   /* background: linear-gradient(135deg, #e3f2fd, #bbdefb); */
-  background:#bccfff;
+  background-color:#B5426E;
+  color: #F9F9F9;
   padding-top: 1rem;
   padding-bottom: 1rem;
   border-radius: 1rem;
-  margin: 2rem auto;
+  margin: 1rem auto;
   max-width: 1100px;
   box-shadow: 0 4px 10px rgba(0,0,0,0.1);
 }
-/* kk colour */
+
+/* Setup for any div. with the main-card class */
+div.main-card {
+  background-color: #F9F9F9;
+  color: #3A2F51;
+  border-radius: 16px !important;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+
+
+/* Setup for the main clustering form box */
   #clusteringForm {
-  background-color: #ffcadd;
+  background-color: #A1D6BF;
+  color: #3A2F51;
   padding: 2rem;
   border-radius: 1rem;
   box-shadow: 0 4px 8px rgba(0,0,0,0.05);
 }
 
 
-  .b-example-divider {
+/* Doesn't currently exist in index.ejs  */
+  /* .b-example-divider {
     width: 100%;
     height: 3rem;
     background-color: rgba(0, 0, 0, .1);
     border: solid rgba(0, 0, 0, .15);
     border-width: 1px 0;
     box-shadow: inset 0 .5em 1.5em rgba(0, 0, 0, .1), inset 0 .125em .5em rgba(0, 0, 0, .15);
-  }
+  } */
+
+  /* ##### OMIT - WAY TOO AGRESSIVE AT OVERWRITTING ALL BUTTONS WITH A COLOUR */
+  /* For standard unpressed Bootstrap buttons */
+/* .btn:not(.active):not(:hover):not(:focus) {
+  background-color: #F6F6F2 !important;
+  border-color: #ccc;
+  color: #000; 
+} */
+
+/* For checkbox-style buttons (like .btn-check) */
+/* input.btn-check + .btn {
+  background-color: #F6F6F2 !important;
+  color: #000;
+} */
+
+/* Optional: make sure active buttons stand out */
+/* input.btn-check:checked + .btn {
+  background-color: #dbe4da; 
+  color: #000;
+} */
+/* ##### OMIT - WAY TOO AGRESSIVE AT OVERWRITTING ALL BUTTONS WITH A COLOUR */
+
+
+/* Dropdowns / select elements */
+/* select.form-select,
+select {
+  background-color: #F6F6F2;
+} */
+
+/* Select2 dropdown */
+/* .select2-container .select2-selection {
+  background-color: #F6F6F2 !important;
+} */
+
+/* button.btn.btn-primary {
+  background-color: yellow !important;
+} */
 
   .b-example-vr {
     flex-shrink: 0;
@@ -85,8 +138,8 @@ body {
   }
 
   .fixed-nav-bar {
-    background-color: #7c47cb;
-    color: black;
+    background-color: #3C3B3A;
+    color: #F9F9F9;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     z-index: 1000;
   }
@@ -121,7 +174,7 @@ body {
     -webkit-overflow-scrolling: touch;
   }
 
-  .btn-bd-primary {
+  /* .btn-bd-primary {
     --bd-violet-bg: #712cf9;
     --bd-violet-rgb: 112.520718, 44.062154, 249.437846;
 
@@ -136,7 +189,7 @@ body {
     --bs-btn-active-color: var(--bs-btn-hover-color);
     --bs-btn-active-bg: #5a23c8;
     --bs-btn-active-border-color: #5a23c8;
-  }
+  } */
 
   .bd-mode-toggle {
     z-index: 1500;
@@ -151,7 +204,16 @@ body {
   /* height: 700px; */
   width: 100%;
   border: 1px solid #ccc;
-  border-radius: 8px;
+  /* border-radius: 8px; */
+  margin-bottom: 0 !important;
+}
+
+#map-div {
+  padding-right: 0 !important;
+}
+
+#map-card {
+  padding: 16px 16px;
 }
 
 /* .legend {
@@ -199,8 +261,15 @@ body {
   align-items: center;
 } */
 
+.legend {
+  background-color: #A1D6BF;
+  padding: 10px;
+  /* min-height: 500px; */
+}
+
 #legend {
-  width: 220px;
+  width: 200px;
+  margin-right: 10px;
   padding: 10px;
   padding-bottom: 0.75rem;
   /* background-color: #d5f7bd; */
@@ -211,7 +280,7 @@ body {
   box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 3px;
 }
 
 
@@ -220,7 +289,7 @@ body {
   align-items: center;
   gap: 6px;
   padding-bottom: 0.0rem;
-}
+} 
 
 .color-box {
   width: 16px;
@@ -230,19 +299,19 @@ body {
   border-radius: 3px;
 }
 
-#map {
+/* #map {
   flex: 1;
-}
+} */
 
-#time-slider-container {
+/* #time-slider-container {
   margin: 10px 0;
   display: flex;
   align-items: center;
   gap: 10px;
   font-family: sans-serif;
-}
+} */
 
-  #filters, #radio-buttons {
+  /* #filters, #radio-buttons {
   background-color: #ffffff;
   padding: 1.5rem;
   border-radius: 1rem;
@@ -251,7 +320,7 @@ body {
 #filters label, #radio-buttons label {
   font-weight: 500;
   margin-right: 0.5rem;
-}
+} */
 
   .btn, .form-select, .form-control {
   transition: all 0.3s ease-in-out;
@@ -311,10 +380,6 @@ body {
     margin: 1rem;
   }
 
-  #legend {
-    margin-bottom: 1rem;
-  }
-
   #map-controls {
     flex-direction: column;
     align-items: flex-start;
@@ -325,8 +390,14 @@ body {
 }
 /* kk colour */
 #map-section {
-  background-color: white;
+  background-color: #F9F9F9;
+  color: #3A2F51;
   margin-bottom: 1em;
+  padding: 0 0px;
+}
+
+.container my-4 {
+  background-color: #6ca63e;
 }
 
 #map-card {
@@ -335,15 +406,17 @@ body {
 
 #mapFiltersForm {
   /* padding: 32px; */
-  background-color: #d5f7bd;
+  background-color: #D9A957;
+  color: #3A2F51;
   padding: 2rem;
   border-radius: 1rem;
   box-shadow: 0 4px 8px rgba(0,0,0,0.05);
 }
 
-#testing {
+/* #testing {
   padding: 0px;
-}
+  background-color: #7c47cb;
+} */
 
   button.btn.btn-contrast-green {
     background-color: #e4f1d8 !important; /* default */

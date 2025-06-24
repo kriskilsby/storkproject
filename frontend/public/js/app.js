@@ -27,6 +27,10 @@ let currentBird = "all";
 let currentYear = "all";
 let mapHasBeenCentered = false;
 let originalAllPoints = []; // unfiltered data source
+let metadata = {
+  birds: {},
+  years: {}
+};
 
 // Returns the selected checkbox values
 function getSelectedCheckboxValues(name) {
@@ -99,7 +103,7 @@ function updateMapForTimeIndex(groupedPoints, timestamps, index) {
   }
 }
 
-//Populates the bird and year dropdowns based on the data set
+//Populates the bird and year drop-downs based on the data set
 function populateDropdowns(points) {
   const birdSelect = document.getElementById("bird-select");
   const yearSelect = document.getElementById("year-select");
@@ -119,6 +123,158 @@ function populateDropdowns(points) {
   birdSelect.value = currentBird;
   yearSelect.value = currentYear;
 }
+
+// Update filtered dropdowns 
+// function updateFilteredDropdowns() {
+//   const selectedYears = getSelectedValues("year-select-clustering");
+//   const selectedBirds = getSelectedValues("bird-select-clustering");
+
+//   // Filtering logic
+//   const filteredYears = Object.entries(metadata.years).filter(([year, data]) => {
+//     if (selectedBirds.length === 0) return true;
+//     return data.birds.some(bird => selectedBirds.includes(bird));
+//   });
+
+//   const filteredBirds = Object.entries(metadata.birds).filter(([bird, data]) => {
+//     if (selectedYears.length === 0) return true;
+//     return data.years.some(year => selectedYears.includes(year));
+//   });
+
+//   // Populate Year dropdown
+//   const yearSelect = document.getElementById("year-select-clustering");
+//   yearSelect.innerHTML = "";
+//   filteredYears.forEach(([year, data]) => {
+//     const option = document.createElement("option");
+//     option.value = year;
+//     option.textContent = `${year} (${data.count})`;
+//     if (selectedYears.includes(year)) option.selected = true;
+//     yearSelect.appendChild(option);
+//   });
+
+//   // Populate Bird dropdown
+//   const birdSelect = document.getElementById("bird-select-clustering");
+//   birdSelect.innerHTML = "";
+//   filteredBirds.forEach(([bird, data]) => {
+//     const option = document.createElement("option");
+//     option.value = bird;
+//     option.textContent = `${bird} (${data.count})`;
+//     if (selectedBirds.includes(bird)) option.selected = true;
+//     birdSelect.appendChild(option);
+//   });
+// }
+
+function updateFilteredDropdowns() {
+  const selectedYears = getSelectedValues("year-select-clustering");
+  const selectedBirds = getSelectedValues("bird-select-clustering");
+
+  console.log("Selected Years:", selectedYears);
+  console.log("Selected Birds:", selectedBirds);
+
+  // Filter years: keep only years that have at least one selected bird (or all years if no bird selected)
+  const filteredYears = Object.entries(metadata.years).filter(([year, birdsObj]) => {
+    if (selectedBirds.length === 0) return true;
+    // birdsObj keys are bird names, check if any selected bird is present
+    return selectedBirds.some(bird => birdsObj.hasOwnProperty(bird));
+  });
+
+  // Filter birds: keep only birds that have data in at least one selected year (or all birds if no year selected)
+  const filteredBirds = Object.entries(metadata.birds).filter(([bird, yearsObj]) => {
+    if (selectedYears.length === 0) return true;
+    // yearsObj keys are years (numbers or strings), check if any selected year is present
+    return selectedYears.some(year => yearsObj.hasOwnProperty(year));
+  });
+
+  // Update Year dropdown
+  const yearSelect = document.getElementById("year-select-clustering");
+  yearSelect.innerHTML = "";
+  filteredYears.forEach(([year, birdsObj]) => {
+    // Count total bird points in this year (sum of bird counts)
+    const count = Object.values(birdsObj).reduce((a, b) => a + b, 0);
+    const option = document.createElement("option");
+    option.value = year;
+    option.textContent = `${year} (${count})`;
+    if (selectedYears.includes(year)) option.selected = true;
+    yearSelect.appendChild(option);
+  });
+
+  // Update Bird dropdown
+  const birdSelect = document.getElementById("bird-select-clustering");
+  birdSelect.innerHTML = "";
+  filteredBirds.forEach(([bird, yearsObj]) => {
+    // Count total points for this bird (sum of counts over all years)
+    const count = Object.values(yearsObj).reduce((a, b) => a + b, 0);
+    const option = document.createElement("option");
+    option.value = bird;
+    option.textContent = `${bird} (${count})`;
+    if (selectedBirds.includes(bird)) option.selected = true;
+    birdSelect.appendChild(option);
+  });
+}
+
+
+
+// Update to use populateMultiSelectWithCounts function
+function renderYearOptions(yearList) {
+  const yearCounts = {};
+  yearList.forEach(year => {
+    const birdData = metadata.years[year];
+    const total = Object.values(birdData || {}).reduce((a, b) => a + b, 0);
+    yearCounts[year] = total;
+  });
+  populateMultiSelectWithCounts("year-select-clustering", yearList, yearCounts);
+}
+
+// Update to use populateMultiSelectWithCounts function
+function renderBirdOptions(birdList) {
+  const birdCounts = {};
+  birdList.forEach(bird => {
+    const yearData = metadata.birds[bird];
+    const total = Object.values(yearData || {}).reduce((a, b) => a + b, 0);
+    birdCounts[bird] = total;
+  });
+  populateMultiSelectWithCounts("bird-select-clustering", birdList, birdCounts);
+}
+
+
+function getSelectedValues(selectId) {
+  const select = document.getElementById(selectId);
+  return Array.from(select.selectedOptions).map(opt => opt.value);
+}
+
+
+
+// To populate the drop-downs with all available years and birds
+
+// async function fetchAndPopulateDropdowns() {
+//   try {
+//     const response = await fetch('/api/metadata');
+//     const data = await response.json();
+
+//     const availableYears = data.years;
+//     const availableBirds = data.birds;
+
+//     populateMultiSelect("year-select-clustering", availableYears);
+//     populateMultiSelect("bird-select-clustering", availableBirds);
+//   } catch (err) {
+//     console.error("Error fetching metadata:", err);
+//   }
+// }
+
+async function fetchAndPopulateDropdowns() {
+  try {
+    const response = await fetch('/api/metadata');
+    const data = await response.json();
+
+    metadata = data;
+
+    renderYearOptions(Object.keys(data.years));
+    renderBirdOptions(Object.keys(data.birds));
+  } catch (err) {
+    console.error("Error fetching metadata:", err);
+  }
+}
+
+
 
 // Animates the number shown in the cluster legend
 function animateCountUp(element, targetNumber, duration = 1000) {
@@ -140,35 +296,6 @@ function animateCountUp(element, targetNumber, duration = 1000) {
   update();
 }
 
-// function toggleAll(type, check) {
-//   const checkboxes = document.querySelectorAll(`input[type="checkbox"][id^="${type}-"]`);
-//   checkboxes.forEach(cb => {
-//     cb.checked = check;
-//     cb.dispatchEvent(new Event('change')); // to trigger UI update
-//     console.log("toggleAll called for:", type, "->", check);
-//   });
-// }
-
-  // Now update the map using the same method as single checkbox changes:
-//   if (allPoints.length > 0) {
-//     renderClustersOnMap({ all_points: allPoints });
-//   }
-// }
-
-  // Re-filter and re-render using original (raw) data
-//   renderClustersOnMap({ all_points: originalAllPoints });
-// }
-
-// Make toggleAll available globally for inline onclick handlers
-// window.toggleAll = toggleAll;
-
-// document.querySelectorAll('button[data-toggle-type]').forEach(button => {
-//   button.addEventListener('click', () => {
-//     const type = button.dataset.toggleType;
-//     const check = button.dataset.toggleCheck === 'true';
-//     toggleAll(type, check);
-//   });
-// });
 
 // Main function responsible for rendering filtered points
 function renderClustersOnMap(data) {
@@ -198,12 +325,7 @@ function renderClustersOnMap(data) {
   populateDropdowns(allPoints);
 
   // Filtered points
-  // const filteredPoints = allPoints.filter(p => {
-  //   const year = new Date(p.timestamp).getFullYear().toString();
-  //   const birdMatch = currentBird === "all" || p.individual_local_identifier === currentBird;
-  //   const yearMatch = currentYear === "all" || year === currentYear;
-  //   return birdMatch && yearMatch;
-  // });
+  
   const selectedMonths = getSelectedCheckboxValues("month"); // from checkboxes
   const selectedSlots = getSelectedCheckboxValues("hour");   // from checkboxes
 
@@ -345,10 +467,165 @@ function getColorForCluster(clusterId) {
   return palette[clusterId % palette.length];
 }
 
+// duplicate function call
+// function fetchAndPopulateDropdowns() {
+//   fetch('/api/metadata')
+//     .then(res => res.json())
+//     .then(data => {
+//       populateMultiSelect("year-select-clustering", data.years);
+//       populateMultiSelect("bird-select-clustering", data.birds);
+//     })
+//     .catch(err => console.error("Error loading metadata:", err));
+// }
+
+function populateMultiSelect(id, values) {
+  const select = document.getElementById(id);
+  select.innerHTML = "";
+  values.forEach(val => {
+    const option = document.createElement("option");
+    option.value = val;
+    option.textContent = val;
+    select.appendChild(option);
+  });
+}
+
+function selectAll(id) {
+  const select = document.getElementById(id);
+  for (let opt of select.options) opt.selected = true;
+  $(`#${id}`).trigger('change'); // <- Trigger UI update
+}
+
+function deselectAll(id) {
+  const select = document.getElementById(id);
+  for (let opt of select.options) opt.selected = false;
+  $(`#${id}`).trigger('change'); // <- Trigger UI update
+}
+
+// Filter birds by years
+function filterBirdsByYears(years) {
+  if (years.length === 0) {
+    renderBirdOptions(Object.keys(metadata.birds));
+    return;
+  }
+
+  const filtered = new Set();
+  years.forEach(year => {
+    const birdsInYear = metadata.years[year];
+    if (birdsInYear) {
+      Object.keys(birdsInYear).forEach(bird => filtered.add(bird));
+    }
+  });
+
+  renderBirdOptions(Array.from(filtered));
+}
+
+// Function to add options with record counts
+function populateMultiSelectWithCounts(id, values, countMap) {
+  const select = document.getElementById(id);
+  select.innerHTML = "";
+
+  values.forEach(val => {
+    const option = document.createElement("option");
+    option.value = val;
+    const count = countMap[val] || 0;
+    option.textContent = `${val} (${count})`;
+    select.appendChild(option);
+  });
+
+  $(`#${id}`).trigger('change.select2');
+}
+
+
+function filterYearsByBirds(birds) {
+  if (birds.length === 0) {
+    renderYearOptions(Object.keys(metadata.years));
+    return;
+  }
+
+  const filtered = new Set();
+  birds.forEach(bird => {
+    const yearsForBird = metadata.birds[bird];
+    if (yearsForBird) {
+      Object.keys(yearsForBird).forEach(year => filtered.add(year));
+    }
+  });
+
+  renderYearOptions(Array.from(filtered));
+}
+
+
+
+
+// ################# ONLY ADD WHAT NEEDS TO GO INTO DOM BELOW #################
 // Initialises the app when the DOM is fully loaded
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
   // Initialise the map
   initMap();
+
+  // Wait until dropdowns are populated
+  await fetchAndPopulateDropdowns();
+
+   // Initialise Select2 on the clustering dropdowns
+  $('#year-select-clustering').select2({
+    placeholder: "Select year(s)",
+    width: '100%'
+  });
+
+  $('#bird-select-clustering').select2({
+    placeholder: "Select bird(s)",
+    width: '100%'
+  });
+
+  // Attach event listeners
+  // document.getElementById("selectAllYears").addEventListener("click", () => selectAll("year-select-clustering"));
+  // document.getElementById("deselectAllYears").addEventListener("click", () => deselectAll("year-select-clustering"));
+  // document.getElementById("selectAllBirds").addEventListener("click", () => selectAll("bird-select-clustering"));
+  // document.getElementById("deselectAllBirds").addEventListener("click", () => deselectAll("bird-select-clustering"));
+
+  document.getElementById("selectAllYears").addEventListener("click", () => {
+  selectAll("year-select-clustering");
+  updateFilteredDropdowns();
+  });
+
+  document.getElementById("deselectAllYears").addEventListener("click", () => {
+    deselectAll("year-select-clustering");
+    updateFilteredDropdowns();
+  });
+
+  document.getElementById("selectAllBirds").addEventListener("click", () => {
+    selectAll("bird-select-clustering");
+    updateFilteredDropdowns();
+  });
+
+  document.getElementById("deselectAllBirds").addEventListener("click", () => {
+    deselectAll("bird-select-clustering");
+    updateFilteredDropdowns();
+  });
+
+
+  // document.getElementById("year-select-clustering").addEventListener("change", updateFilteredDropdowns);
+  // document.getElementById("bird-select-clustering").addEventListener("change", updateFilteredDropdowns);
+
+//   ["change", "click", "keyup"].forEach(eventType => {
+//   document.getElementById("year-select-clustering").addEventListener(eventType, updateFilteredDropdowns);
+//   document.getElementById("bird-select-clustering").addEventListener(eventType, updateFilteredDropdowns);
+// });
+
+  $("#year-select-clustering").on("select2:select select2:unselect", updateFilteredDropdowns);
+  $("#bird-select-clustering").on("select2:select select2:unselect", updateFilteredDropdowns);
+
+
+
+  // Attach dropdown change listeners
+  // document.getElementById("year-select-clustering").addEventListener("change", () => {
+  //   const selectedYears = Array.from(document.getElementById("year-select-clustering").selectedOptions).map(opt => opt.value);
+  //   filterBirdsByYears(selectedYears);
+  // });
+
+  // document.getElementById("bird-select-clustering").addEventListener("change", () => {
+  //   const selectedBirds = Array.from(document.getElementById("bird-select-clustering").selectedOptions).map(opt => opt.value);
+  //   filterYearsByBirds(selectedBirds);
+  // });
 
   const form = document.getElementById("clusteringForm");
   // Event listener for clustering method drop-downs
@@ -377,6 +654,8 @@ document.addEventListener("DOMContentLoaded", () => {
       toggleAll(type, check);
     });
   });
+
+
 
   // ✅ Distance filter listener
   document.getElementById("applyDistanceFilter").addEventListener("click", () => {
@@ -412,15 +691,7 @@ document.addEventListener("DOMContentLoaded", () => {
     console.log("Clustering method:", method);
     console.log("Params being sent:", params);
 
-    // ####### OLD METHOD CODE ################################
-    // if (method === "kmeans") params.n_clusters = parseInt(formData.get("n_clusters"));
-    // if (method === "dbscan") {
-    //   params.eps = parseFloat(formData.get("eps"));
-    //   params.min_samples = parseInt(formData.get("min_samples"));
-    // }
-    // if (method === "hdbscan") params.min_cluster_size = parseInt(formData.get("min_cluster_size"));
-    // ####### OLD METHOD CODE ################################
-
+   
     if (method === "kmeans") {
       const autoSilhouette = formData.get("auto_silhouette") === "on";
       if (autoSilhouette) {
@@ -442,6 +713,18 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     try {
+      // Grab selected year and bird values
+      const selectedYears = getSelectedValues("year-select-clustering").map(y => parseInt(y));
+      const selectedBirds = getSelectedValues("bird-select-clustering");
+
+      // Add to params object
+      params.selected_years = selectedYears;
+      params.selected_birds = selectedBirds;
+
+      // Log to console for terminal debugging
+      console.log("Selected Years for clustering:", selectedYears);
+      console.log("Selected Birds for clustering:", selectedBirds);
+      
       // Sends a POST request to /api/cluster with method & params
       const response = await fetch("/api/cluster", {
         method: "POST",
