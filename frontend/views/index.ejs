@@ -14,6 +14,7 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@docsearch/css@3" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 
   </head>
 
@@ -64,12 +65,36 @@
 
    
       <!-- Clustering Form -->
-      <section class="container my-4">
-        <div class="card shadow-sm border-0">
+      <section id="cluster-section" class="container my-4">
+        <div class="main-card card shadow-sm border-0 rounded">
           <div class="card-body">
             <h3 class="card-title mb-4 mt-1">Select Your Parameters and Run Clustering</h3>
 
             <form id="clusteringForm" class="row g-3">
+              <div class="row mt-3">
+                <!-- Year Selection -->
+                <div class="col-md-6">
+                  <label for="year-select-clustering" class="form-label"><strong>Select Year(s)</strong></label>
+                  <div class="d-flex gap-2 mb-2">
+                    <button type="button" class="btn btn-sm btn-primary" id="selectAllYears">Select All</button>
+                    <button type="button" class="btn btn-sm btn-secondary" id="deselectAllYears">Deselect All</button>
+                  </div>
+                  <select id="year-select-clustering" name="years" class="form-select" multiple></select>
+                </div>
+
+                <!-- Bird Selection -->
+                <div class="col-md-6">
+                  <label for="bird-select-clustering" class="form-label"><strong>Select Bird(s)</strong></label>
+                  <div class="d-flex gap-2 mb-2">
+                    <button type="button" class="btn btn-sm btn-primary" id="selectAllBirds">Select All</button>
+                    <button type="button" class="btn btn-sm btn-secondary" id="deselectAllBirds">Deselect All</button>
+                  </div>
+                  <select id="bird-select-clustering" name="birds" class="form-select" multiple></select>
+                </div>
+              </div>
+
+
+
               <!-- Method -->
               <label class="form-label"><h5>Clustering Setup</h5></label>
               <div class="col-md-2">
@@ -205,7 +230,7 @@
 
               <!-- Submit Button -->
               <div class="col-12 d-flex align-items-center">
-                <button type="submit" class="btn btn-primary me-3">Run Clustering</button>
+                <button type="submit" class="btn btn-success btn_lg me-3">Run Clustering</button>
                 <span id="clustering-timer" class="text-muted fw-bold"></span>
               </div>
 
@@ -228,40 +253,43 @@
           
       <!-- Map Section -->
       <section id="map-section" class="container my-4">
-        <div id="testing" class="card shadow-sm border-0">
-          <div class="card-body">
+        <div class="main-card card shadow-sm border-0 rounded">
+          <div id="map-card" class="card-body">
             <h3 class="card-title mb-4 mt-1">Filter GPS Points On Map</h3>
 
             <!-- Filter Form -->
             <form id="mapFiltersForm" class="row g-3">
-              <!-- Column 1: Year -->
-              <div class="col-md-2">
-                <label for="year-select" class="form-label">Year:</label>
-                <select id="year-select" class="form-select form-select-sm">
-                  <option value="all">All Years</option>
-                </select>
-              </div>
+              <!-- Column: Year + Bird stacked vertically -->
+              <div class="col-md-2 d-flex flex-column gap-3">
+                <!-- Year -->
+                <div>
+                  <label for="year-select" class="form-label">Year:</label>
+                  <select id="year-select" class="form-select form-select-sm">
+                    <option value="all">All Years</option>
+                  </select>
+                </div>
 
-              <!-- Column 2: Bird -->
-              <div class="col-md-2">
-                <label for="bird-select" class="form-label">Bird:</label>
-                <select id="bird-select" class="form-select form-select-sm">
-                  <option value="all">All Birds</option>
-                </select>
+                <!-- Bird -->
+                <div>
+                  <label for="bird-select" class="form-label">Bird:</label>
+                  <select id="bird-select" class="form-select form-select-sm">
+                    <option value="all">All Birds</option>
+                  </select>
+                </div>
               </div>
 
               <!-- Column 3: Months Filter -->
-              <div class="col-md-4">
+              <div class="col-md-3">
                 <label class="form-label">Months:</label>
                 <div class="mb-2">
-                  <button type="button" class="btn btn-sm btn-contrast-green me-2" data-toggle-type="month" data-toggle-check="true">Select All</button>
-                  <button type="button" class="btn btn-sm btn-contrast-green" data-toggle-type="month" data-toggle-check="false">Deselect All</button>
+                  <button type="button" class="btn btn-sm btn-primary me-2" data-toggle-type="month" data-toggle-check="true">Select All</button>
+                  <button type="button" class="btn btn-sm btn-secondary" data-toggle-type="month" data-toggle-check="false">Deselect All</button>
                 </div>
                 <div class="btn-group btn-group-sm flex-wrap" role="group" aria-label="Month Filter">
                   <% const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]; %>
                   <% months.forEach((m, i) => { %>
                     <input type="checkbox" class="btn-check" name="month" id="month-<%= i %>" value="<%= i + 1 %>">
-                    <label class="btn btn-outline-primary" for="month-<%= i %>"><%= m %></label>
+                    <label class="btn btn-outline-dark w-fixed text-center" style="width: 45px;" for="month-<%= i %>"><%= m %></label>
                   <% }); %>
                 </div>
               </div>
@@ -270,8 +298,8 @@
               <div class="col-md-4">
                 <label class="form-label">Time Slots:</label>
                 <div class="mb-2">
-                  <button type="button" class="btn btn-sm btn-contrast-green me-2" data-toggle-type="hour" data-toggle-check="true">Select All</button>
-                  <button type="button" class="btn btn-sm btn-contrast-green" data-toggle-type="hour" data-toggle-check="false">Deselect All</button>
+                  <button type="button" class="btn btn-sm btn-primary me-2" data-toggle-type="hour" data-toggle-check="true">Select All</button>
+                  <button type="button" class="btn btn-sm btn-secondary" data-toggle-type="hour" data-toggle-check="false">Deselect All</button>
                 </div>
                 <div class="btn-group btn-group-sm flex-wrap" role="group" aria-label="Hour Filter">
                   <% const slots = [
@@ -284,31 +312,31 @@
                   ]; %>
                   <% slots.forEach(slot => { %>
                     <input type="checkbox" class="btn-check" name="hour" id="hour-<%= slot.id %>" value="<%= slot.id %>">
-                    <label class="btn btn-outline-secondary" for="hour-<%= slot.id %>"><%= slot.label %></label>
+                    <label class="btn btn-outline-dark text-center" style="width: 110px;" for="hour-<%= slot.id %>"><%= slot.label %></label>
                   <% }); %>
                 </div>
               </div>
-
+ 
               <!-- Distance Filter (new row for spacing) -->
-              <div class="col-md-6">
+              <div class="col-md-3">
                 <label class="form-label">Filter by Distance (meters):</label>
                 <div class="d-flex align-items-center gap-2">
                   <input type="number" id="distanceMin" class="form-control form-control-sm" placeholder="From" step="0.1">
                   <span>to</span>
                   <input type="number" id="distanceMax" class="form-control form-control-sm" placeholder="To" step="0.1">
-                  <button type="button" class="btn btn-sm btn-primary" id="applyDistanceFilter">Apply</button>
+                  <button type="button" class="btn btn-sm btn-success" id="applyDistanceFilter">Apply</button>
                 </div>
               </div>
             </form>
 
             <!-- Map & Legend (outside form) -->
-            <div class="row mt-4">
-              <div class="col-md-3">
+            <div class="row mt-2 ms-0 me-0">
+              <div class="legend col-md-2 rounded" style="min-height: 500px;">
                 <h6>Cluster Legend</h6>
                 <div id="legend" class="legend"></div>
               </div>
-              <div class="col-md-9">
-                <div id="map" style="min-height: 500px; padding-bottom: 0.75rem;"></div>
+              <div id="map-div" class="col-md-10 me-0">
+                <div id="map" style="min-height: 500px; padding-bottom: 0rem;"></div>
               </div>
             </div>
           </div>
@@ -354,6 +382,8 @@
     <script type="module" src="/js/app.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
   </body>
 </html>

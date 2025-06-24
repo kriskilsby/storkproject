@@ -5,19 +5,12 @@ const path = require('path');
 const fs = require('fs');
 // const { Pool } = require('pg');
 const clusterRoute = require('./routes/cluster'); // Clustering API route
+const metadataRouter = require('./routes/metadata'); // <== NEW: metadata route
 const bodyParser = require('body-parser');
 
 const app = express();
 
-// CONNECTING TO THE DATABASE VIA PYTHON INSTEAD
-// PostgreSQL config
-// const pool = new Pool({
-//   user: 'postgres',
-//   host: 'localhost',
-//   database: 'stork_migration_data',
-//   password: 'Firetrap77',
-//   port: 5432,
-// });
+
 
 // View engine setup
 app.set('view engine', 'ejs');
@@ -29,7 +22,9 @@ app.use(bodyParser.json());
 
 // Routes
 app.use('/api/cluster', clusterRoute); // <== ✅ connects your clustering endpoint
+app.use('/api/metadata', metadataRouter); // <== Mounts Python metadata script
 
+// Sample test route
 app.get('/api/hello', (req, res) => {
   res.json({ message: 'Hello from Express backend!' });
 });
@@ -41,23 +36,6 @@ app.get('/', (req, res) => {
   };
   res.render('index', { layer_mapping });
 });
-
-// CONNECTING TO THE DATABASE VIA PYTHON INSTEAD
-// Run SQL file helper
-// async function runSqlFile(filename) {
-//   try {
-//     const sql = fs.readFileSync(path.join(__dirname, filename), 'utf8');
-//     await pool.query('SET search_path TO migration_data');
-//     const result = await pool.query(sql);
-//     console.log('Query result:', result.rows);
-//     console.log('SQL file executed successfully');
-//   } catch (err) {
-//     console.error('Error executing SQL file:', err);
-//   }
-// }
-
-
-
 
 
 
