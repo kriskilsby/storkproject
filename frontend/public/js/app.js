@@ -668,6 +668,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     // prevents form default behaviour
     e.preventDefault();
 
+    document.getElementById("logsOutput").textContent = "";
+
     const timerDisplay = document.getElementById("clustering-timer");
     timerDisplay.textContent = "Running...";
     const startTime = performance.now();
@@ -752,6 +754,30 @@ document.addEventListener("DOMContentLoaded", async () => {
 
       const data = await response.json();
       console.log("Clustering result:", data);
+
+      // Display logs if available
+      if (data?.logs) {
+        const logsBox = document.getElementById("logsOutput");
+        if (logsBox) {
+          // Step 3: Ensure logs are displayed properly even if not a plain string
+          logsBox.textContent = typeof data.logs === 'string'
+            ? data.logs
+            : JSON.stringify(data.logs, null, 2);
+
+          // Optional: Scroll to bottom for long logs
+          logsBox.scrollTop = logsBox.scrollHeight;
+
+          // Debug log to confirm it worked
+          console.log(" Logs displayed in frontend:", logsBox.textContent);
+        } else {
+          console.warn(" logsBox element not found");
+        }
+      } else {
+        console.warn(" No logs found in data.logs:", data?.logs);
+      }
+
+
+
       // Render received data 
       renderClustersOnMap(data);
 

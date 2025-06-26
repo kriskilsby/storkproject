@@ -5,9 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Stork Migration Data Visualisation</title>
 
-    <!-- Pyodide -->
-    <!-- <script src="https://cdn.jsdelivr.net/pyodide/v0.21.3/full/pyodide.js"></script> -->
-
     <!-- CSS -->
     <link rel="stylesheet" href="/css/stork_styles.css" />
     <link rel="stylesheet" href="/css/bootstrap.min.css" />
@@ -57,12 +54,7 @@
       <section id="hero-top" class="text-center py-5">
         <h1 class="display-5 fw-bold">Stork Migration Interactive Visualisation</h1>
         <p class="lead">Run clustering on the Stork Migration database.</p>
-        <!-- <div>
-          <button class="btn btn-lg btn-primary me-2">Primary</button>
-          <button class="btn btn-lg btn-outline-secondary">Secondary</button>
-        </div> -->
       </section>
-
    
       <!-- Clustering Form -->
       <section id="cluster-section" class="container my-4">
@@ -71,7 +63,17 @@
             <h3 class="card-title mb-4 mt-1">Select Your Parameters and Run Clustering</h3>
 
             <form id="clusteringForm" class="row g-3">
-              <div class="row mt-3">
+              <label class="form-label-h"><h5>PostgresSQL Query Selection</h5></label>
+              <div class="row">
+                <div class="col-12">
+                  <p class="form-p">Select the year(s) and bird(s) from the dataset to include in the query.  
+                    You can select multiple entries or use the buttons to select or deselect all.  
+                    If no selection is made, all available years and birds will be included.  
+                    (Record counts for each option are shown in brackets.)
+                  </p>
+                </div>
+              </div>
+              <div class="row mt-0">
                 <!-- Year Selection -->
                 <div class="col-md-6">
                   <label for="year-select-clustering" class="form-label"><strong>Select Year(s)</strong></label>
@@ -96,71 +98,95 @@
 
 
               <!-- Method -->
-              <label class="form-label"><h5>Clustering Setup</h5></label>
-              <div class="col-md-2">
-                <label for="method" class="form-label">Clustering Method</label>
-                <select id="method" name="method" class="form-select">
-                  <option value="kmeans">KMeans</option>
-                  <option value="dbscan">DBSCAN</option>
-                  <option value="hdbscan">HDBSCAN</option>
-                </select>
-              </div>
-
-              <!-- KMeans Params -->
-              <div id="kmeans-params" class="method-params d-none col-md-10">
+              <div class="row mt-3">
+                <label class="form-label-h"><h5>Clustering Setup</h5></label>
                 <div class="row">
-                  <div class="col-md-2">
-                    <label for="n_clusters" class="form-label"># Clusters</label>
-                    <input type="number" name="n_clusters" class="form-control" value="3" min="1">
-                  </div>
-                  <div class="col-md-5">
-                    <input class="form-check-input" type="checkbox" name="auto_silhouette" id="auto_silhouette">
-                    <label class="form-check-label" for="auto_silhouette">
-                       Use Silhouette Analysis to Find Best Cluster #
-                    </label>
+                  <div class="col-12">
+                    <p class="form-p">Choose a clustering method and adjust its settings as needed.  
+                      Each method has its own parameters, which can affect how clusters are identified in the data.   
+                    </p>
                   </div>
                 </div>
-              </div>
+                <div class="col-md-2">
+                  <label for="method" class="form-label">Clustering Method</label>
+                  <select id="method" name="method" class="form-select">
+                    <option value="kmeans">KMeans</option>
+                    <option value="dbscan">DBSCAN</option>
+                    <option value="hdbscan">HDBSCAN</option>
+                  </select>
+                </div>
 
-              <!-- DBSCAN Params -->
-              <div id="dbscan-params" class="method-params d-none col-md-10">
-                <div class="row">
-                  <div class="col-md-2">
-                    <label for="eps" class="form-label">EPS</label>
-                    <input type="number" name="eps" step="0.01" min="0" max="10" class="form-control" value="0.5">
-                  </div>
-                  <div class="col-md-2">
-                    <label for="min_samples" class="form-label">Min Samples</label>
-                    <input type="number" name="min_samples" class="form-control" value="5">
-                  </div>
-                  <div class="col-md-2">
-                    <label for="leaf_size_dbscan" class="form-label">Leaf Size</label>
-                    <input type="number" name="leaf_size_dbscan" class="form-control" value="40">
+                <!-- KMeans Params -->
+                <div id="kmeans-params" class="method-params d-none col-md-10">
+                  <div class="row">
+                    <div class="col-md-2">
+                      <label for="n_clusters" class="form-label"># Clusters</label>
+                      <input type="number" name="n_clusters" class="form-control" value="3" min="1">
+                    </div>
+                    <div class="col-md-5">
+                      <input class="form-check-input" type="checkbox" name="auto_silhouette" id="auto_silhouette">
+                      <label class="form-check-label" for="auto_silhouette">
+                         Use Silhouette Analysis to find the best number of clusters (tests from 2 to 15)
+                      </label>
+                    </div>
                   </div>
                 </div>
-              </div>
-               
-              <!-- HDBSCAN Params -->
-              <div id="hdbscan-params" class="method-params d-none col-md-10">
-                <div class="row">
-                  <div class="col-md-2">
-                    <label for="min_cluster_size" class="form-label">Min Cluster Size</label>
-                    <input type="number" name="min_cluster_size" class="form-control" value="5">
+
+                <!-- DBSCAN Params -->
+                <div id="dbscan-params" class="method-params d-none col-md-10">
+                  <div class="row">
+                    <div class="col-md-2">
+                      <label for="eps" class="form-label">EPS</label>
+                      <input type="number" name="eps" step="0.01" min="0" max="10" class="form-control" value="0.5">
+                    </div>
+                    <div class="col-md-2">
+                      <label for="min_samples" class="form-label">Min Samples</label>
+                      <input type="number" name="min_samples" class="form-control" value="5">
+                    </div>
+                    <div class="col-md-2">
+                      <label for="leaf_size_dbscan" class="form-label">Leaf Size</label>
+                      <input type="number" name="leaf_size_dbscan" class="form-control" value="40">
+                    </div>
                   </div>
-                  <div class="col-md-2">
-                    <label for="max_cluster_size" class="form-label">Max Cluster Size</label>
-                    <input type="number" name="max_cluster_size" class="form-control" placeholder="None">
-                  </div>
-                  <div class="col-md-2">
-                    <label for="leaf_size_hdbscan" class="form-label">Leaf Size</label>
-                    <input type="number" name="leaf_size_hdbscan" class="form-control" value="40">
+                </div>
+                
+                <!-- HDBSCAN Params -->
+                <div id="hdbscan-params" class="method-params d-none col-md-10">
+                  <div class="row">
+                    <div class="col-md-2">
+                      <label for="min_cluster_size" class="form-label">Min Cluster Size</label>
+                      <input type="number" name="min_cluster_size" class="form-control" value="5">
+                    </div>
+                    <div class="col-md-2">
+                      <label for="max_cluster_size" class="form-label">Max Cluster Size</label>
+                      <input type="number" name="max_cluster_size" class="form-control" placeholder="None">
+                    </div>
+                    <div class="col-md-2">
+                      <label for="leaf_size_hdbscan" class="form-label">Leaf Size</label>
+                      <input type="number" name="leaf_size_hdbscan" class="form-control" value="40">
+                    </div>
                   </div>
                 </div>
               </div>
 
               <!-- <div id="standard-params" class="method-params d-none col-md-12"> -->
               <div class="row mt-4">
-                <label class="form-label"><h5>Data Collection Setup</h5></label>
+                <label class="form-label-h"><h5>Data Collection Setup</h5></label>
+                <div class="row">
+                  <div class="col-12">
+                    <p class="form-p">
+                      Choose how the data should be collected:
+                    </p>
+                    <ul class="form-p" style="margin-left: 2rem;">
+                      <li><strong>GPS Precision:</strong> Higher decimal values improve accuracy but increase processing time.</li>
+                      <li><strong>Time Interval:</strong> Larger intervals reduce sensitivity but speed up processing.</li>
+                      <li><strong>Sample Rate:</strong> Controls how many data points are used by selecting every Nth record. 
+                        Higher values speed up processing but may reduce location accuracy.</li>
+                    </ul>
+                  </div>
+                </div>    
+                
+                
                 <!-- Decimal Precision -->
                 <div class="col-md-2">
                   <label for="decimal_places" class="form-label">Decimal Precision</label>
@@ -194,7 +220,15 @@
 
               <div class="row mt-4">
                 <div class="col-md-12">
-                  <label class="form-label"><h5>Feature Selection for Clustering</h5></label>
+                  <label class="form-label-h"><h5>Feature Selection for Clustering</h5></label>
+                  <div class="row">
+                    <div class="col-12">
+                      <p class="form-p">Choose which features to include in the clustering process.  
+                        Feature Scaling adjusts values to a common scale so that no single feature dominates.  
+                        This can help distance-based methods like KMeans, DBSCAN, and HDBSCAN work more effectively. 
+                      </p>
+                    </div>
+                  </div>                  
                   <div style="display: flex; flex-wrap: wrap; gap: 1rem; margin-top: 0.5rem;">
                     <label class="form-check-label">
                       <input class="form-check-input me-1" type="checkbox" name="use_coordinates" id="use_coordinates" checked>
@@ -234,19 +268,38 @@
                 <span id="clustering-timer" class="text-muted fw-bold"></span>
               </div>
 
-              <!-- Test the clustering success -->
-              <div id="clusteringMetrics" style="margin-top: 1rem; font-size: 0.95rem;">
-                <h6>Clustering Metrics</h6>
-                <!-- <ul id="metricsList" style="padding-left: 1.2rem;"></ul> -->
-                <ul id="metricsList" style="display: flex; flex-wrap: wrap; gap: 1.2rem; list-style: none; padding-left: 0;"></ul>
+              <!-- Clustering Logs (Frontend Logs) -->
+              <div id="clusteringLogs" style="margin-top: 1rem; font-size: 0.95rem;">
+                <label for="logsOutput" class="form-label">Clustering Logs</label>
+                  <div class="row">
+                    <div class="col-12">
+                      <p class="form-p">This section displays a detailed log of all 
+                        selected dataset and clustering parameters, along with relevant data statistics. 
+                      </p>
+                    </div>
+                  </div>  
+                <pre id="logsOutput" class="p-2 bg-light border rounded" style="white-space: pre-wrap; max-height: 300px; overflow-y: auto;"></pre>
               </div>
 
 
+              <!-- Test the clustering success -->
+              <div id="clusteringMetrics" style="margin-top: 1rem; font-size: 0.95rem;">
+                <label for="metricsList" class="form-label">Clustering Metrics</label>
+                <ul id="metricsList" style="display: flex; flex-wrap: wrap; gap: 1.2rem; list-style: none; padding-left: 0;"></ul>
+                <div class="row">
+                  <div class="col-12">
+                    <ul class="form-p" style="margin-left: 2rem;">
+                      <li><strong>Silhouette Score:</strong> Higher values indicate better-defined and more distinct clusters.</li>
+                      <li><strong>Adjusted Rand Index:</strong> Measures how closely the clustering matches known labels (1 = perfect match).</li>
+                      <li><strong>Calinski-Harabasz Index:</strong> Higher scores suggest clusters are well-separated and compact.</li>
+                      <li><strong>Davies-Bouldin Index:</strong> Lower values reflect better clustering with less overlap between clusters.</li>
+                      <li><strong>Number of Clusters:</strong> Total clusters identified, excluding noise or outliers.</li>
+                      <li><strong>Noise Ratio:</strong> Proportion of data points labeled as noise (useful for DBSCAN/HDBSCAN).</li>
+                    </ul>
+                  </div>
+                </div>                
+              </div>
             </form>
-
-            <!-- REMOVE THE BELOW DATA VISUAL IN THE BROWSER FOR NOW-->
-            <!-- <pre id="clusteringResults" class="mt-3 p-3 bg-light border rounded" style="white-space: pre-wrap;"></pre> -->
-
           </div>
         </div>
       </section>
@@ -259,9 +312,17 @@
 
             <!-- Filter Form -->
             <form id="mapFiltersForm" class="row g-3">
+                <div class="row" style="padding: 0;">
+                  <div class="col-12">
+                    <p class="filterform-p">Filter the GPS points using any combination of the methods below. 
+                      You can narrow down the dataset by selecting specific years, birds, months, time slots, or a distance range.   
+                    </p>
+                  </div>
+                </div>              
               <!-- Column: Year + Bird stacked vertically -->
-              <div class="col-md-2 d-flex flex-column gap-3">
+              <div class="col-md-2 d-flex flex-column gap-4">
                 <!-- Year -->
+                 
                 <div>
                   <label for="year-select" class="form-label">Year:</label>
                   <select id="year-select" class="form-select form-select-sm">
@@ -279,17 +340,17 @@
               </div>
 
               <!-- Column 3: Months Filter -->
-              <div class="col-md-3">
+              <div class="col-md-4">
                 <label class="form-label">Months:</label>
                 <div class="mb-2">
                   <button type="button" class="btn btn-sm btn-primary me-2" data-toggle-type="month" data-toggle-check="true">Select All</button>
                   <button type="button" class="btn btn-sm btn-secondary" data-toggle-type="month" data-toggle-check="false">Deselect All</button>
                 </div>
-                <div class="btn-group btn-group-sm flex-wrap" role="group" aria-label="Month Filter">
+                <div class="btn-group flex-wrap gap-2" role="group" aria-label="Month Filter">
                   <% const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]; %>
                   <% months.forEach((m, i) => { %>
                     <input type="checkbox" class="btn-check" name="month" id="month-<%= i %>" value="<%= i + 1 %>">
-                    <label class="btn btn-outline-dark w-fixed text-center" style="width: 45px;" for="month-<%= i %>"><%= m %></label>
+                    <label class="btn btn-outline-dark uniform-btn" for="month-<%= i %>"><%= m %></label>
                   <% }); %>
                 </div>
               </div>
@@ -301,7 +362,7 @@
                   <button type="button" class="btn btn-sm btn-primary me-2" data-toggle-type="hour" data-toggle-check="true">Select All</button>
                   <button type="button" class="btn btn-sm btn-secondary" data-toggle-type="hour" data-toggle-check="false">Deselect All</button>
                 </div>
-                <div class="btn-group btn-group-sm flex-wrap" role="group" aria-label="Hour Filter">
+                <div class="btn-group flex-wrap gap-2" role="group" aria-label="Hour Filter">
                   <% const slots = [
                     { id: 0, label: "22–04 (Night)" },
                     { id: 1, label: "04–10" },
@@ -312,21 +373,21 @@
                   ]; %>
                   <% slots.forEach(slot => { %>
                     <input type="checkbox" class="btn-check" name="hour" id="hour-<%= slot.id %>" value="<%= slot.id %>">
-                    <label class="btn btn-outline-dark text-center" style="width: 110px;" for="hour-<%= slot.id %>"><%= slot.label %></label>
+                    <label class="btn btn-outline-dark uniform-btn-wide" for="hour-<%= slot.id %>"><%= slot.label %></label>
                   <% }); %>
                 </div>
               </div>
- 
-              <!-- Distance Filter (new row for spacing) -->
-              <div class="col-md-3">
-                <label class="form-label">Filter by Distance (meters):</label>
-                <div class="d-flex align-items-center gap-2">
-                  <input type="number" id="distanceMin" class="form-control form-control-sm" placeholder="From" step="0.1">
-                  <span>to</span>
-                  <input type="number" id="distanceMax" class="form-control form-control-sm" placeholder="To" step="0.1">
-                  <button type="button" class="btn btn-sm btn-success" id="applyDistanceFilter">Apply</button>
-                </div>
+
+              <div class="col-md-2 d-flex flex-column gap-1">
+                <label class="form-label">Filter by Distance (m):</label>
+                
+                <input type="number" id="distanceMin" class="form-control form-control-sm mb-2" placeholder="From" step="0.1">
+                
+                <input type="number" id="distanceMax" class="form-control form-control-sm mb-2" placeholder="To" step="0.1">
+                
+                <button type="button" class="btn btn-sm btn-success" id="applyDistanceFilter">Apply</button>
               </div>
+
             </form>
 
             <!-- Map & Legend (outside form) -->
@@ -342,11 +403,6 @@
           </div>
         </div>
       </section>
-
-
-
-
- 
 
       <!-- Leaflet JS -->
       <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
