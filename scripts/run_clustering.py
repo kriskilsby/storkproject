@@ -15,6 +15,13 @@ from sklearn.metrics import (
     davies_bouldin_score
 )
 import datetime
+from io import StringIO
+
+# Logging params and dataset settings to frontend ejs
+log_buffer = StringIO()
+def log(msg):
+    print(msg, file=sys.stderr)
+    print(msg, file=log_buffer)
 
 # Add services to path for import
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'backend', 'app', 'services')))
@@ -86,6 +93,7 @@ def fetch_counts(interval_minutes, sample_rate):
         WHERE MOD(record_id, {sample_rate}) = 0
     )
     SELECT 
+        (SELECT COUNT(*) FROM migration_data.stork_data) AS total_raw_count,
         (SELECT COUNT(*) FROM filtered_base) AS count_after_filtering,
         (SELECT COUNT(*) FROM filtered_deduped) AS count_after_deduplication,
         (SELECT COUNT(*) FROM sampled) AS count_after_sampling;
@@ -125,6 +133,7 @@ def run_clustering(method='kmeans', params={}):
     use_interval_mins = str_to_bool(params.get('use_interval_mins', True))
 
 
+    ############## TERMINAL DEBUG PRINTS ####################
     # Debug output to show parameters chosen
     print("[INFO] Parameters used for clustering:", file=sys.stderr)
     print(f"  method: {method}", file=sys.stderr)
@@ -139,6 +148,21 @@ def run_clustering(method='kmeans', params={}):
     print(f"  use_heading: {use_heading}", file=sys.stderr)
     print(f"  use_year: {use_year}", file=sys.stderr)
     print(f"  use_month: {use_month}", file=sys.stderr)
+
+    ############## FRONTEND INFO LOGS ####################
+    log("Parameters used for clustering:")
+    log(f"    method: {method}")
+    log(f"    decimal_places: {decimal_places}")
+    log(f"    interval_minutes: {interval_minutes}")
+    log(f"    sample_rate: {sample_rate}")
+    log(f"    use_scaling: {use_scaling}")
+    log(f"\nFeatures used in clustering:")
+    log(f"    use_coordinates: {use_coordinates}")
+    log(f"    use_interval_mins: {use_interval_mins}")
+    log(f"    use_distance: {use_distance}")
+    log(f"    use_heading: {use_heading}")
+    log(f"    use_year: {use_year}")
+    log(f"    use_month: {use_month}")
       
     if interval_minutes > 0:
         time_bucket = f"""
@@ -182,6 +206,7 @@ def run_clustering(method='kmeans', params={}):
     ),
     counts AS (
     SELECT
+        (SELECT COUNT(*) FROM migration_data.stork_data) AS total_raw_count,
         (SELECT COUNT(*) FROM filtered_base) AS count_after_filtering,
         (SELECT COUNT(*) FROM filtered_deduped) AS count_after_deduplication,
         (SELECT COUNT(*) FROM sampled) AS count_after_sampling
@@ -194,6 +219,7 @@ def run_clustering(method='kmeans', params={}):
         s.sql_distance AS distance,
         s.compass_direction,
         s.rounded_timestamp AS timestamp,
+        c.total_raw_count,
         c.count_after_filtering,
         c.count_after_deduplication,
         c.count_after_sampling
@@ -210,15 +236,25 @@ def run_clustering(method='kmeans', params={}):
     df = data.copy()
 
     # Right after fetching the DataFrame
+    total_raw_count = df['total_raw_count'].iloc[0]
     count_after_filtering = df['count_after_filtering'].iloc[0]
     count_after_deduplication = df['count_after_deduplication'].iloc[0]
     count_after_sampling = df['count_after_sampling'].iloc[0]
 
-    # Optional: print them for debugging/logging
+    ############## TERMINAL DEBUG PRINTS ####################
     print(f"[DEBUG] Count summary from SQL:", file=sys.stderr)
+    print(f"  Total record count: {total_raw_count}", file=sys.stderr)
     print(f"  count_after_filtering: {count_after_filtering}", file=sys.stderr)
     print(f"  count_after_deduplication: {count_after_deduplication}", file=sys.stderr)
     print(f"  count_after_sampling: {count_after_sampling}", file=sys.stderr)
+
+    ############## FRONTEND INFO LOGS ####################
+    log(f"\nCount summary from SQL:")
+    log(f"    Total record count: {total_raw_count}")
+    log(f"    Count after applying filtering and query selection: {count_after_filtering}")
+    log(f"    Count after de-duplication: {count_after_deduplication} (removing records with duplicate GPS location data and timestamp/time-interval)")
+    log(f"    Count after sampling: {count_after_sampling}")
+
 
     # Then drop these before clustering
     df = df.drop(columns=['count_after_filtering', 'count_after_deduplication', 'count_after_sampling'])
@@ -281,9 +317,11 @@ def run_clustering(method='kmeans', params={}):
     # Normalize only for kmeans
     if USE_SCALING:
         print(f"[DEBUG] Scaling features with StandardScaler (method = {method})", file=sys.stderr)
+        # log("Scaling features with StandardScaler...")
         X = StandardScaler().fit_transform(X)
     else:
         print(f"[DEBUG] Skipping feature scaling (method = {method})", file=sys.stderr)
+        # log("Not scaling any features using StandardScaler")
 
     try:
         labels = None
@@ -292,14 +330,16 @@ def run_clustering(method='kmeans', params={}):
 
         if method == 'kmeans':
             print("[DEBUG] Running KMeans clustering...", file=sys.stderr)
+            log(f"\nKMeans clustering Parameters")
             if params.get('auto_silhouette'):
                 print("  Auto silhouette analysis enabled", file=sys.stderr)
+                log(f"    Auto silhouette analysis enabled")
                 # Auto silhouette analysis to find best k
                 best_score = -1
                 best_k = 2
                 best_labels = None
 
-                for k in range(2, 21):  # Try 2 to 10 clusters
+                for k in range(2, 16):  # Try 2 to 15 clusters
                     km = KMeans(n_clusters=k, random_state=42, n_init="auto")
                     lbls = km.fit_predict(X)
                     score = silhouette_score(X, lbls)
@@ -312,13 +352,20 @@ def run_clustering(method='kmeans', params={}):
                 metrics["silhouette_score"] = best_score
                 metrics["n_clusters"] = best_k
 
+                ############## TERMINAL DEBUG PRINTS ####################
                 print("[DEBUG] Silhouette Analysis (KMeans)", file=sys.stderr)
                 print(f"  Best silhouette score: {best_score:.4f}", file=sys.stderr)
                 print(f"  Optimal number of clusters: {best_k}", file=sys.stderr)
 
+                ############## FRONTEND INFO LOGS ####################
+                log(f"\nSilhouette Analysis Details (KMeans only):")
+                log(f"    Best silhouette score: {best_score:.4f}")
+                log(f"    Optimal number of clusters: {best_k}")
+
             else:
                 n_clusters = int(params.get('n_clusters', 5))
                 print(f"  n_clusters: {n_clusters}", file=sys.stderr)
+                log(f"  n_clusters: {n_clusters}")
                 model = KMeans(n_clusters=n_clusters, random_state=42, n_init="auto")
 
         elif method == 'dbscan':
@@ -329,6 +376,10 @@ def run_clustering(method='kmeans', params={}):
             print(f"  eps: {eps}", file=sys.stderr)
             print(f"  min_samples: {min_samples}", file=sys.stderr)
             print(f"  leaf_size: {leaf_size}", file=sys.stderr)
+            log("\nDBSCAN clustering Parameters")
+            log(f"  eps: {eps}")
+            log(f"  min_samples: {min_samples}")
+            log(f"  leaf_size: {leaf_size}")
             model = DBSCAN(eps=eps, min_samples=min_samples, leaf_size=leaf_size)
 
         elif method == 'hdbscan':
@@ -340,6 +391,10 @@ def run_clustering(method='kmeans', params={}):
             print(f"  min_cluster_size: {min_cluster_size}", file=sys.stderr)
             print(f"  max_cluster_size: {max_cluster_size_param}", file=sys.stderr)
             print(f"  leaf_size: {leaf_size}", file=sys.stderr)
+            log(f"\nHDBSCAN clustering Parameters")
+            log(f"  min_cluster_size: {min_cluster_size}")
+            log(f"  max_cluster_size: {max_cluster_size_param}")
+            log(f"  leaf_size: {leaf_size}")
 
             # Build kwargs dynamically
             hdbscan_kwargs = {
@@ -363,6 +418,9 @@ def run_clustering(method='kmeans', params={}):
         # Log the output of the clustering
         print("[DEBUG] Clustering completed.", file=sys.stderr)
         print(f"  Number of data points: {len(labels)}", file=sys.stderr)
+        log(f"\nClustering statistics:")
+        log(f"    Number of data points: {len(labels)}")
+        
 
         unique_labels = set(labels)
         n_clusters_found = len(unique_labels - {-1})  # Exclude noise label (-1)
@@ -371,6 +429,8 @@ def run_clustering(method='kmeans', params={}):
         # print(f"  Unique labels: {unique_labels}", file=sys.stderr)
         print(f"  Clusters found (excluding noise): {n_clusters_found}", file=sys.stderr)
         print(f"  Noise points: {n_noise}", file=sys.stderr)
+        log(f"    Clusters found (excluding noise): {n_clusters_found}")
+        log(f"    Noise points: {n_noise}")
 
         # Optionally save in metrics dictionary
         metrics["n_clusters_found"] = n_clusters_found
@@ -426,13 +486,21 @@ if __name__ == "__main__":
 
     df, meta = run_clustering(method, params)
 
+    print("DEBUG: Log buffer contents:", file=sys.stderr)
+    print(log_buffer.getvalue(), file=sys.stderr)
+
+    
+    meta["logs"] = log_buffer.getvalue()  # Send logs to frontend
+
     # Check for errors and print to stderr if found
     if "error" in meta:
+        # meta["logs"] = log_buffer.getvalue()
         print(json.dumps(meta), file=sys.stderr)
         sys.exit(1)
 
     # Sent everything to the results
     meta["all_points"] = df.to_dict(orient="records")
+    
 
     def default_converter(o):
         if isinstance(o, (pd.Timestamp, np.datetime64)):

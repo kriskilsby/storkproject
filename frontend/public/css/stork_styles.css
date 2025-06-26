@@ -73,7 +73,7 @@ div.main-card {
   #clusteringForm {
   background-color: #A1D6BF;
   color: #3A2F51;
-  padding: 2rem;
+  padding: 0rem 1rem 1rem 1rem;
   border-radius: 1rem;
   box-shadow: 0 4px 8px rgba(0,0,0,0.05);
 }
@@ -408,9 +408,43 @@ select {
   /* padding: 32px; */
   background-color: #D9A957;
   color: #3A2F51;
-  padding: 2rem;
+  padding: 0.5rem 1rem 1rem 1rem;
   border-radius: 1rem;
   box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+}
+
+label.form-label {
+  font-size: 1rem !important;
+  font-weight: 700 !important;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif !important;
+}
+
+.form-label-h h5 {
+  font-size: 1.5rem;
+  margin-left: 1rem;
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+}
+
+/* div.col-md-2, div.row.mt-3, div.row.mt-4 {
+  margin-top: 0 !important;
+} */
+
+#kmeans-params, #dbscan-params, #hdbscan-params {
+  margin-top: 0;
+}
+
+p.form-p {
+  margin-top: 0;
+  margin-left: 2rem;
+  padding-right: 2rem;
+}
+
+p.filterform-p {
+  margin-top: 1rem;
+  margin-left: 0.25rem;
+  margin-bottom: 0;
+  padding-right: 0rem;
 }
 
 /* #testing {
@@ -442,4 +476,20 @@ select {
     border-color: #6ca63e !important;
   }
 
+/* Filter months buttons */  
+.uniform-btn {
+  width: 55px !important;
+  height: 35px !important;
+  border-radius: 0.5rem !important; /* pill-like rounded corners */
+  margin-bottom: 1px !important;  /* spacing between rows */
+  text-align: center !important;
+}
+/* Filter time-slot buttons */  
+.uniform-btn-wide {
+  width: 120px !important;
+  height: 35px !important;
+  border-radius: 0.5rem !important;
+  margin-bottom: 1px !important;
+  text-align: center !important;
+}
 
