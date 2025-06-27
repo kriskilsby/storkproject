@@ -63,7 +63,7 @@
             <h3 class="card-title mb-4 mt-1">Select Your Parameters and Run Clustering</h3>
 
             <form id="clusteringForm" class="row g-3">
-              <label class="form-label-h"><h5>PostgresSQL Query Selection</h5></label>
+              <label class="form-label-h"><h5>PostgreSQL Query Selection</h5></label>
               <div class="row">
                 <div class="col-12">
                   <p class="form-p">Select the year(s) and bird(s) from the dataset to include in the query.  
@@ -392,14 +392,21 @@
 
             <!-- Map & Legend (outside form) -->
             <div class="row mt-2 ms-0 me-0">
-              <div class="legend col-md-2 rounded" style="min-height: 500px;">
+              <div class="legend col-md-2 rounded" style="min-height: 600px;">
                 <h6>Cluster Legend</h6>
                 <div id="legend" class="legend"></div>
               </div>
               <div id="map-div" class="col-md-10 me-0">
-                <div id="map" style="min-height: 500px; padding-bottom: 0rem;"></div>
+                <div id="map" style="min-height: 600px; padding-bottom: 0rem;"></div>
               </div>
             </div>
+            <div id="time-animation-controls" class="my-3 d-flex align-items-center gap-3">
+              <label for="time-slider">Time:</label>
+              <input type="range" id="time-slider" min="0" max="0" step="1" value="0" style="flex-grow: 1;">
+              <button id="playButton" class="btn btn-sm btn-outline-primary">▶️ Play</button>
+              <span id="time-label" class="ms-2 text-muted">No time loaded</span>
+            </div>
+
           </div>
         </div>
       </section>

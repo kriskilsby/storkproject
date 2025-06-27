@@ -200,7 +200,7 @@ select {
   }  
 
   #map {
-  min-height: 500px;
+  min-height: 600px;
   /* height: 700px; */
   width: 100%;
   border: 1px solid #ccc;

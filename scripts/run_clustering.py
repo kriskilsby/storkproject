@@ -252,7 +252,8 @@ def run_clustering(method='kmeans', params={}):
     log(f"\nCount summary from SQL:")
     log(f"    Total record count: {total_raw_count}")
     log(f"    Count after applying filtering and query selection: {count_after_filtering}")
-    log(f"    Count after de-duplication: {count_after_deduplication} (removing records with duplicate GPS location data and timestamp/time-interval)")
+    # log(f"    Count after de-duplication: {count_after_deduplication} (removing records with duplicate GPS location data and timestamp/time-interval)")
+    log(f"    Count after de-duplication: {count_after_deduplication}")
     log(f"    Count after sampling: {count_after_sampling}")
 
 
