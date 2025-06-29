@@ -40,6 +40,8 @@ let animationGroupedPoints = null;
 let animationTimestamps = null;
 let animationTrail = [];
 let animationPolyline = null;
+let playPauseBtn;
+
 
 
 
@@ -53,15 +55,42 @@ function getSelectedCheckboxValues(name) {
 // Initialise the map and add tile layers
 function initMap() {
   map = L.map('map').setView([48.0, 10.0], 5);
+
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '&copy; OpenStreetMap contributors',
     maxZoom: 18
   }).addTo(map);
 
   clusterLayerGroup = L.layerGroup().addTo(map);
-
   animationLayerGroup = L.layerGroup().addTo(map);
+
+  
+
+  //   if (!timeDisplayControl) {
+  //   createTimeDisplayControl();  // Define once
+  //   timeDisplayControl.addTo(map);  // Add once
+  // }
 }
+
+// Adding an animated month and year visual to the map for the animated slider
+const timeDisplayControl = L.control({ position: 'bottomleft' });
+
+timeDisplayControl.onAdd = function (map) {
+  const div = L.DomUtil.create('div', 'map-time-label');
+  div.style.background = 'rgba(0,0,0,0.6)';
+  div.style.color = 'white';
+  div.style.padding = '4px 10px';
+  div.style.borderRadius = '8px';
+  div.style.fontSize = '16px';
+  div.style.fontWeight = 'bold';
+  div.style.pointerEvents = 'none'; // Prevent blocking map interaction
+  div.innerHTML = 'Month Year';
+  return div;
+};
+
+// timeDisplayControl.addTo(map);
+
+
 
 // Re-formats the timestamps to a date time string
 function formatTimestamp(iso) {
@@ -76,6 +105,58 @@ function formatTimestamp(iso) {
 }
 
 // Updates the map to show points
+// function updateMapForTimeIndex(groupedPoints, timestamps, index) {
+//   clusterLayerGroup.clearLayers();
+//   const points = groupedPoints[timestamps[index]] || [];
+
+//   points.forEach((point) => {
+//     const lat = point.location_lat;
+//     const lon = point.location_long;
+//     const cluster = point.cluster;
+
+//     const marker = L.circleMarker([lat, lon], {
+//       radius: 6,
+//       fillColor: getColorForCluster(cluster),
+//       color: '#333',
+//       weight: 1,
+//       opacity: 1,
+//       fillOpacity: 0.8
+//     }).bindPopup(() => {
+//       const heading = Math.round(point.calculated_heading);
+//       const distance = point.distance?.toFixed(1);
+//       const compass = point.compass_direction || 'N/A';
+//       const timestamp = point.timestamp ? formatTimestamp(point.timestamp) : 'N/A';
+
+//       return `
+//         <div>
+//           <strong>Cluster:</strong> ${cluster}<br/>
+//           <strong>Bird ID:</strong> ${point.individual_local_identifier}<br/>
+//           <strong>Heading:</strong> ${heading}° (${compass})<br/>
+//           <strong>Distance:</strong> ${distance} m<br/>
+//           <strong>Time:</strong> ${timestamp}
+//         </div>
+//       `;
+//     });
+
+//     // ✅ UPDATE SLIDER UI
+//     if (timeSlider) {
+//       timeSlider.value = index;
+//     }
+
+//     if (timeSliderLabel) {
+//       timeSliderLabel.textContent = `Time: ${formatTimestamp(timestamps[index])}`;
+//     }
+//   }
+
+//     clusterLayerGroup.addLayer(marker);
+//   });
+
+//   if (timeSliderLabel) {
+//     timeSliderLabel.textContent = `Time: ${formatTimestamp(timestamps[index])}`;
+//   }
+// }
+
+
 function updateMapForTimeIndex(groupedPoints, timestamps, index) {
   clusterLayerGroup.clearLayers();
   const points = groupedPoints[timestamps[index]] || [];
@@ -112,10 +193,15 @@ function updateMapForTimeIndex(groupedPoints, timestamps, index) {
     clusterLayerGroup.addLayer(marker);
   });
 
+  // ✅ UPDATE SLIDER UI
+  if (timeSlider) {
+    timeSlider.value = index;
+  }
+
   if (timeSliderLabel) {
     timeSliderLabel.textContent = `Time: ${formatTimestamp(timestamps[index])}`;
   }
-}
+} // ← this was missing
 
 //Populates the bird and year drop-downs based on the data set
 function populateDropdowns(points) {
@@ -379,9 +465,9 @@ function renderClustersOnMap(data) {
   legendContainer.innerHTML = ""; // Clear old legend entries
   const uniqueClusters = new Set();
 
-  const timeSlider = document.getElementById('time-slider');
-  const timeLabel = document.getElementById('time-label');
-  const playPauseBtn = document.getElementById('playButton');
+  timeSlider = document.getElementById('time-slider');
+  timeSliderLabel = document.getElementById('time-label');
+  playPauseBtn = document.getElementById('playButton');
 
   if (!data || !data.all_points || data.all_points.length === 0) {
 
@@ -393,7 +479,7 @@ function renderClustersOnMap(data) {
   if (animationInterval) {
     clearInterval(animationInterval);
     animationInterval = null;
-    document.getElementById('playButton').textContent = '▶️ Play';
+    if (playPauseBtn) playPauseBtn.textContent = '▶️ Play';
   }
   animationLayerGroup.clearLayers();
 
@@ -460,10 +546,11 @@ function renderClustersOnMap(data) {
   //   timeSliderLabel.textContent = formatTimestamp(allPoints[0].timestamp);
   // }
 
+  // KK CHECK
   if (timeSlider && sortedTimePoints.length) {
     timeSlider.max = sortedTimePoints.length - 1;
     timeSlider.value = 0;
-    timeLabel.textContent = formatTimestamp(sortedTimePoints[0].timestamp);
+    timeSliderLabel.textContent = formatTimestamp(sortedTimePoints[0].timestamp);
   }
 
   // centre on the map on first load
@@ -480,109 +567,7 @@ function renderClustersOnMap(data) {
   // Only animate if a single bird is selected
   const isSingleBird = currentBird !== "all";
 
-  // sortedTimePoints = isSingleBird
-  //   ? [...filteredPoints].sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp))
-  //   : [];
-  // if (isSingleBird && sortedTimePoints.length > 0) {
-  //   timeSlider.max = sortedTimePoints.length - 1;
-  //   timeSlider.value = 0;
-  //   animationIndex = 0;
-
-  //   updateAnimationMarker(animationIndex);
-
-  // if (sortedTimePoints.length > 0) {
-
-  // ######################## REMOVE ENTIRE BLOCK REMOVE WHEN IT WORKS OK ############################
-  // if (isSingleBird && sortedTimePoints.length > 0) {
-  //   // Show animation controls
-  //   document.getElementById('time-animation-controls').style.display = 'flex';
-
-  //   // timeSlider.max = sortedTimePoints.length - 1;
-  //   // timeSlider.value = 0;
-  //   animationIndex = 0;
-  //   // updateAnimationMarker(0);
-  //   updateAnimationMarker(animationIndex);
-    
-  //   timeSlider.oninput = () => {
-  //     animationIndex = parseInt(timeSlider.value);
-  //     updateAnimationMarker(animationIndex);
-  //   };
-
-  //   playPauseBtn.onclick = () => {
-  //     if (animationInterval) {
-  //       clearInterval(animationInterval);
-  //       animationInterval = null;
-  //       playPauseBtn.textContent = '▶️ Play';
-  //     } else {
-  //       playPauseBtn.textContent = '⏸️ Pause';
-  //       animationInterval = setInterval(() => {
-  //         if (animationIndex >= sortedTimePoints.length - 1) {
-  //           clearInterval(animationInterval);
-  //           animationInterval = null;
-  //           playPauseBtn.textContent = '▶️ Play';
-  //           return;
-  //         }
-  //         animationIndex++;
-  //         timeSlider.value = animationIndex;
-  //         updateAnimationMarker(animationIndex);
-  //       }, 500);
-  //     }
-  //   };
-
-  // } else {
-  //   // Hide animation controls if not applicable
-  //   document.getElementById('time-animation-controls').style.display = 'none';
-  // }
-  // ######################## REMOVE ENTIRE BLOCK REMOVE WHEN IT WORKS OK ############################
-
-  // if (isSingleBird && allSortedPoints.length > 0) {
-  //   document.getElementById('time-animation-controls').style.display = 'flex';
-
-  //   // ✅ Step 2: Generate animation points — one per month
-  //   const { groupedPoints: animationGroupedPoints, timestamps: animationTimestamps } =
-  //     getMonthlyAveragedPoints(allSortedPoints);
-
-  //   // ✅ Guard against bad data
-  //   if (!animationGroupedPoints || !animationTimestamps || !animationTimestamps.length) {
-  //     console.warn('No animation data available');
-  //     return;
-  //   }
-
-  //   // ✅ Step 3: Set up slider
-  //   timeSlider.max = animationTimestamps.length - 1;
-  //   timeSlider.value = 0;
-  //   animationIndex = 0;
-
-  //   // Format the first timestamp for label
-  //   const firstTimestamp = animationTimestamps[0] + '-01T00:00:00Z';
-  //   timeSliderLabel.textContent = formatTimestamp(firstTimestamp);
-
-  //   timeSlider.oninput = () => {
-  //     animationIndex = parseInt(timeSlider.value);
-  //     const currentTimestamp = animationTimestamps[animationIndex] + '-01T00:00:00Z';
-  //     timeSliderLabel.textContent = formatTimestamp(currentTimestamp);
-  //     updateMapForTimeIndex(animationGroupedPoints, animationTimestamps, animationIndex);
-  //   };
-
-  //   // ✅ Step 4: Hook up play/pause button
-  //   playPauseBtn.onclick = () => {
-  //     if (animationInterval) {
-  //       stopAnimation();
-  //       playPauseBtn.textContent = '▶️ Play';
-  //     } else {
-  //       playPauseBtn.textContent = '⏸️ Pause';
-  //       startAnimation(animationGroupedPoints, animationTimestamps);
-  //     }
-  //   };
-
-  //   // Show first frame
-  //   updateMapForTimeIndex(animationGroupedPoints, animationTimestamps, 0);
-
-  // } else {
-  //   document.getElementById('time-animation-controls').style.display = 'none';
-  // }
-
-
+ 
   // newer version
   if (isSingleBird && allSortedPoints.length > 0) {
     document.getElementById('time-animation-controls').style.display = 'flex';
@@ -824,33 +809,50 @@ function toggleGPSFilterLayer(show) {
   }
 }
 
+
 // Slider animation start
-function startAnimation(groupedPoints, timestamps) {
-  if (!groupedPoints || !Array.isArray(timestamps) || timestamps.length === 0) {
-    console.warn("Invalid animation data passed to startAnimation.");
+function startAnimation() {
+  if (!animationGroupedPoints || !Array.isArray(animationTimestamps) || animationTimestamps.length === 0) {
+    console.warn("Invalid animation data.");
     return;
   }
 
   toggleGPSFilterLayer(false); // Hide regular points
 
   animationIndex = 0;
+  animationTrail = [];
 
   // Clear old animation
   clusterLayerGroup.clearLayers(); // Optional — for clarity
   animationLayerGroup.clearLayers();
-  animationTrail = [];
-
+  if (animationPolyline) {
+    animationLayerGroup.removeLayer(animationPolyline);
+    animationPolyline = null;
+  }
+  if (animationMarker) {
+    animationLayerGroup.removeLayer(animationMarker);
+    animationMarker = null;
+  }
+  
   const legend = document.getElementById("legend");
   if (legend) legend.style.display = "none";
 
+  if (timeSlider) {
+    timeSlider.min = 0;
+    timeSlider.max = animationTimestamps.length - 1;
+    timeSlider.value = 0; // Reset to start
+  }
+
+  timeDisplayControl.addTo(map);
+
   animationInterval = setInterval(() => {
-    if (animationIndex >= timestamps.length) {
+    if (animationIndex >= animationTimestamps.length) {
       stopAnimation();
       return;
     }
 
-    const timestamp = timestamps[animationIndex];
-    const point = groupedPoints[timestamp]?.[0];
+    const timestamp = animationTimestamps[animationIndex];
+    const point = animationGroupedPoints[timestamp]?.[0];
 
     if (!point) {
       animationIndex++;
@@ -860,15 +862,15 @@ function startAnimation(groupedPoints, timestamps) {
     const latLng = [point.location_lat, point.location_long];
     animationTrail.push(latLng);
 
-    // Draw trail
+    // ➤ Draw polyline trail
     if (animationPolyline) animationLayerGroup.removeLayer(animationPolyline);
     animationPolyline = L.polyline(animationTrail, {
       color: 'red',
-      weight: 2,
-      opacity: 0.6
+      weight: 4,
+      opacity: 0.8
     }).addTo(animationLayerGroup);
 
-    // Move or create animation marker
+    // ➤ Move or create the animated marker
     if (!animationMarker) {
       animationMarker = L.circleMarker(latLng, {
         radius: 8,
@@ -877,29 +879,86 @@ function startAnimation(groupedPoints, timestamps) {
         weight: 1,
         opacity: 1,
         fillOpacity: 0.9
-      }).addTo(animationLayerGroup);
+      }).bindPopup(`Time: ${formatTimestamp(point.timestamp)}`).addTo(animationLayerGroup);
     } else {
       animationMarker.setLatLng(latLng);
+      animationMarker.setPopupContent(`Time: ${formatTimestamp(point.timestamp)}`);
+    }
+
+    if (timeSlider) timeSlider.value = animationIndex;
+
+    // if (timeSliderLabel) {
+    //   const currentTimestamp = timestamp + '-01T00:00:00Z';
+    //   timeSliderLabel.textContent = formatTimestamp(currentTimestamp); // Use timestamp formatter
+    // }
+
+    if (timeSliderLabel) {
+      const currentTimestamp = timestamp + '-01T00:00:00Z';
+      timeSliderLabel.textContent = formatTimestamp(currentTimestamp);
+
+        // ➤ Update time overlay on the map
+        // const dateObj = new Date(currentTimestamp);
+        // const month = dateObj.toLocaleString('default', { month: 'short' });
+        // const year = dateObj.getFullYear();
+
+        // // if (timeDisplayControl && timeDisplayControl.getContainer()) {
+        // //   timeDisplayControl.getContainer().innerHTML = `${month} ${year}`;
+        // // }
+        // const timeDisplayElement = timeDisplayControl.getContainer();
+        // if (timeDisplayElement) {
+        //   const date = new Date(timestamp + '-01T00:00:00Z');  // Use your timestamp format
+        //   const monthYear = date.toLocaleString('default', { month: 'short', year: 'numeric' });
+        //   timeDisplayElement.innerHTML = monthYear;
+    
+      const timeDisplayElement = timeDisplayControl.getContainer();
+      if (timeDisplayElement) {
+        const date = new Date(currentTimestamp);
+        const monthYear = date.toLocaleString('default', { month: 'short', year: 'numeric' });
+        timeDisplayElement.innerHTML = monthYear;
+      }
     }
 
     animationIndex++;
   }, 400); // Adjust animation speed if needed
 }
 
-
-
 // Slider animation stop
 function stopAnimation() {
   clearInterval(animationInterval);
   animationInterval = null;
+  animationIndex = 0;
 
-  toggleGPSFilterLayer(true); // Show regular points again
+  // Restore the filtered GPS points if they were removed or hidden
+  toggleGPSFilterLayer(true);  // This should re-show the filter results
 
-  animationLayerGroup.clearLayers(); // Remove animation marker/trail
+  // ✅ Force refresh by dispatching 'change' on all checked filters
+  document.querySelectorAll('input[type="checkbox"]:checked').forEach(cb => {
+    cb.dispatchEvent(new Event('change'));
+  });
 
+  // Remove animation visuals
+  animationLayerGroup.clearLayers();
+
+  // Reset play/pause button (optional)
+  if (playPauseBtn) playPauseBtn.textContent = "▶️ Play";
+
+  // Reset time slider and label (optional)
+  // const timeSlider = document.getElementById("time-slider");
+  // const timeLabel = document.getElementById('time-label');
+  if (timeSlider) timeSlider.value = 0;
+  if (timeSliderLabel) timeSliderLabel.textContent = 'No time loaded';
+
+  if (timeDisplayControl && timeDisplayControl.getContainer()) {
+    timeDisplayControl.getContainer().innerHTML = '';
+  }
+  
+  // Restore legend
   const legend = document.getElementById("legend");
   if (legend) legend.style.display = "block";
+
+  map.removeControl(timeDisplayControl);
 }
+
 
 
 

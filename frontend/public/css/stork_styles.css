@@ -493,3 +493,12 @@ p.filterform-p {
   text-align: center !important;
 }
 
+/* Month and year slider counta on map */  
+/* .leaflet-bottom.leaflet-left .map-time-label {
+  left: 50% !important;
+  transform: translateX(-50%);
+  margin-left: 0 !important;
+  bottom: 20px !important;
+  position: absolute !important;
+  z-index: 1000;
+} */
