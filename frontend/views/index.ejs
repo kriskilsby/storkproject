@@ -55,21 +55,43 @@
         <h1 class="display-5 fw-bold">Stork Migration Interactive Visualisation</h1>
         <p class="lead">Run clustering on the Stork Migration database.</p>
       </section>
+
+      <section id="loading-section" class="container mt-4 mb-0">
+        <div class="row">
+          <div class="col-10 d-flex align-items-center">
+            <div id="loading-metadata" style="padding: 20px; background: #F9F9F9; border-radius: 8px; text-align: center;">
+              <div class="d-flex align-items-center gap-3">
+                <!-- <div class="spinner"></div> -->
+                <img src="/images/stork.png" alt="Loading..." id="stork-spinner" />
+                  <p class="fs-5 fw-bold text-dark mb-0">
+                    Checking the database for the available years and Stork individuals, please wait...
+                  </p> 
+                <!-- <p class="fs-5 fw-bold text-dark mb-0">
+                  <% [..."Checking the database for the available years and Stork individuals, please wait..."].forEach((char, i) => { %>
+                    <span class="wave-letter" style="animation-delay: <%= i * 0.05 %>s;"><%- char === " " ? "&nbsp;" : char %></span>
+                  <% }); %>
+                </p> -->
+              </div>   
+            </div> 
+          </div>
+        </div>
+      </section>
+      
    
       <!-- Clustering Form -->
       <section id="cluster-section" class="container my-4">
-        <div class="main-card card shadow-sm border-0 rounded">
+        <div class="main-card card shadow-sm border-0 rounded mt-1">
           <div class="card-body">
             <h3 class="card-title mb-4 mt-1">Select Your Parameters and Run Clustering</h3>
 
             <form id="clusteringForm" class="row g-3">
-              <label class="form-label-h"><h5>PostgreSQL Query Selection</h5></label>
+              <label class="form-label-h"><h5>Choose Years and Birds to Include in the Data Query</h5></label>
               <div class="row">
                 <div class="col-12">
-                  <p class="form-p">Select the year(s) and bird(s) from the dataset to include in the query.  
-                    You can select multiple entries or use the buttons to select or deselect all.  
-                    If no selection is made, all available years and birds will be included.  
-                    (Record counts for each option are shown in brackets.)
+                  <p class="form-p">Pick the year(s) and bird(s) you want to include in your search.  
+                    You can select multiple options or use the "Select All" and "Deselect All" buttons.  
+                    If you don't select anything, all years and birds will be used.  
+                    (The number of records for each choice is shown in brackets.)
                   </p>
                 </div>
               </div>
@@ -215,7 +237,16 @@
                   <label for="sample_rate" class="form-label">Sample Rate</label>
                   <input type="number" name="sample_rate" class="form-control" value="50" min="1">
                 </div>
+                <!-- <div class="col-md-2">
+                  <label for="sample_rate" class="form-label">Sample Rate</label>
+                  <select name="sample_rate" id="sample_rate" class="form-control" title="Sampling detail level">
+                    <option value="1">Low</option>
+                    <option value="2" selected>Medium</option>
+                    <option value="3">High</option>
+                  </select>
+                </div> -->
               </div> 
+
               <!-- </div> -->
 
               <div class="row mt-4">
@@ -318,7 +349,13 @@
                       You can narrow down the dataset by selecting specific years, birds, months, time slots, or a distance range.   
                     </p>
                   </div>
-                </div>              
+                </div> 
+                <div class="row mt-3" style="padding: 0;">
+                  <div class="col-4">
+                    <button type="button" class="btn btn-sm btn-danger" id="clearAllFilters">Clear All Filters</button>
+                  </div>
+                </div>
+
               <!-- Column: Year + Bird stacked vertically -->
               <div class="col-md-2 d-flex flex-column gap-4">
                 <!-- Year -->
@@ -400,11 +437,28 @@
                 <div id="map" style="min-height: 600px; padding-bottom: 0rem;"></div>
               </div>
             </div>
+
             <div id="time-animation-controls" class="my-3 d-flex align-items-center gap-3">
+              <label for="speedSelect">Speed:</label>
+              <select id="speedSelect">
+                <option value="fast">Fast</option>
+                <option value="medium" selected>Medium</option>
+                <option value="slow">Slow</option>
+              </select>
+
               <label for="time-slider">Time:</label>
               <input type="range" id="time-slider" min="0" max="0" step="1" value="0" style="flex-grow: 1;">
               <button id="playButton" class="btn btn-sm btn-outline-primary">▶️ Play</button>
+              <button id="pauseButton" disabled>Pause</button>
               <span id="time-label" class="ms-2 text-muted">No time loaded</span>
+            </div>
+            <div style="margin-bottom: 1em;">
+              <label>
+                <input type="radio" name="timeGrouping" value="monthly" checked> Monthly
+              </label>
+              <label style="margin-left: 1em;">
+                <input type="radio" name="timeGrouping" value="weekly"> Weekly
+              </label>
             </div>
 
           </div>

@@ -41,7 +41,10 @@ let animationTimestamps = null;
 let animationTrail = [];
 let animationPolyline = null;
 let playPauseBtn;
-
+let allSortedPoints = [];
+let animationPaused = false;
+let selectedCluster = null;
+// let markerLayer = L.layerGroup().addTo(map);
 
 
 
@@ -65,11 +68,6 @@ function initMap() {
   animationLayerGroup = L.layerGroup().addTo(map);
 
   
-
-  //   if (!timeDisplayControl) {
-  //   createTimeDisplayControl();  // Define once
-  //   timeDisplayControl.addTo(map);  // Add once
-  // }
 }
 
 // Adding an animated month and year visual to the map for the animated slider
@@ -88,13 +86,70 @@ timeDisplayControl.onAdd = function (map) {
   return div;
 };
 
-// timeDisplayControl.addTo(map);
-
-
 
 // Re-formats the timestamps to a date time string
+// function formatTimestamp(iso) {
+//   const date = new Date(iso);
+//   return date.toLocaleString('en-GB', {
+//     day: '2-digit',
+//     month: '2-digit',
+//     year: '2-digit',
+//     hour: '2-digit',
+//     minute: '2-digit'
+//   });
+// }
+
+// New to include weekly and monthly - Re-formats the timestamps to a date time string
+// function formatTimestamp(iso) {
+//   if (iso.includes('-W')) {
+//     // Weekly formatted string like '2024-W05'
+//     const [year, weekStr] = iso.split('-W');
+//     const week = parseInt(weekStr);
+//     const firstDay = new Date(Date.UTC(year, 0, 1 + (week - 1) * 7));
+//     return `Week ${week}, ${year} (${firstDay.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })})`;
+//   }
+
+//   const date = new Date(iso);
+//   return date.toLocaleString('en-GB', {
+//     day: '2-digit',
+//     month: '2-digit',
+//     year: '2-digit',
+//     hour: '2-digit',
+//     minute: '2-digit'
+//   });
+// }
+
+// New to include weekly and monthly
 function formatTimestamp(iso) {
+  if (typeof iso !== 'string') {
+    if (iso instanceof Date) {
+      return iso.toLocaleString('en-GB', {
+        day: '2-digit',
+        month: '2-digit',
+        year: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    }
+
+    console.warn("⚠️ formatTimestamp received non-string:", iso);
+    return 'Invalid timestamp';
+  }
+
+  // Handle ISO week keys like "2024-W05"
+  if (iso.includes('-W')) {
+    const [year, weekStr] = iso.split('-W');
+    const week = parseInt(weekStr);
+    if (isNaN(week)) return 'Invalid week';
+
+    const firstDay = new Date(Date.UTC(year, 0, 1 + (week - 1) * 7));
+    return `Week ${week}, ${year} (${firstDay.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })})`;
+  }
+
+  // Handle regular ISO string
   const date = new Date(iso);
+  if (isNaN(date)) return 'Invalid date';
+
   return date.toLocaleString('en-GB', {
     day: '2-digit',
     month: '2-digit',
@@ -104,59 +159,9 @@ function formatTimestamp(iso) {
   });
 }
 
-// Updates the map to show points
-// function updateMapForTimeIndex(groupedPoints, timestamps, index) {
-//   clusterLayerGroup.clearLayers();
-//   const points = groupedPoints[timestamps[index]] || [];
-
-//   points.forEach((point) => {
-//     const lat = point.location_lat;
-//     const lon = point.location_long;
-//     const cluster = point.cluster;
-
-//     const marker = L.circleMarker([lat, lon], {
-//       radius: 6,
-//       fillColor: getColorForCluster(cluster),
-//       color: '#333',
-//       weight: 1,
-//       opacity: 1,
-//       fillOpacity: 0.8
-//     }).bindPopup(() => {
-//       const heading = Math.round(point.calculated_heading);
-//       const distance = point.distance?.toFixed(1);
-//       const compass = point.compass_direction || 'N/A';
-//       const timestamp = point.timestamp ? formatTimestamp(point.timestamp) : 'N/A';
-
-//       return `
-//         <div>
-//           <strong>Cluster:</strong> ${cluster}<br/>
-//           <strong>Bird ID:</strong> ${point.individual_local_identifier}<br/>
-//           <strong>Heading:</strong> ${heading}° (${compass})<br/>
-//           <strong>Distance:</strong> ${distance} m<br/>
-//           <strong>Time:</strong> ${timestamp}
-//         </div>
-//       `;
-//     });
-
-//     // ✅ UPDATE SLIDER UI
-//     if (timeSlider) {
-//       timeSlider.value = index;
-//     }
-
-//     if (timeSliderLabel) {
-//       timeSliderLabel.textContent = `Time: ${formatTimestamp(timestamps[index])}`;
-//     }
-//   }
-
-//     clusterLayerGroup.addLayer(marker);
-//   });
-
-//   if (timeSliderLabel) {
-//     timeSliderLabel.textContent = `Time: ${formatTimestamp(timestamps[index])}`;
-//   }
-// }
 
 
+// Time details on the map for slider
 function updateMapForTimeIndex(groupedPoints, timestamps, index) {
   clusterLayerGroup.clearLayers();
   const points = groupedPoints[timestamps[index]] || [];
@@ -201,7 +206,8 @@ function updateMapForTimeIndex(groupedPoints, timestamps, index) {
   if (timeSliderLabel) {
     timeSliderLabel.textContent = `Time: ${formatTimestamp(timestamps[index])}`;
   }
-} // ← this was missing
+}
+
 
 //Populates the bird and year drop-downs based on the data set
 function populateDropdowns(points) {
@@ -224,6 +230,7 @@ function populateDropdowns(points) {
   yearSelect.value = currentYear;
 }
 
+// Update the filtered dropdowns to show only those that are available
 function updateFilteredDropdowns() {
   const selectedYears = getSelectedValues("year-select-clustering");
   const selectedBirds = getSelectedValues("bird-select-clustering");
@@ -274,7 +281,7 @@ function updateFilteredDropdowns() {
 
 
 
-// Update to use populateMultiSelectWithCounts function
+// Years list - Update to use populateMultiSelectWithCounts function
 function renderYearOptions(yearList) {
   const yearCounts = {};
   yearList.forEach(year => {
@@ -285,7 +292,7 @@ function renderYearOptions(yearList) {
   populateMultiSelectWithCounts("year-select-clustering", yearList, yearCounts);
 }
 
-// Update to use populateMultiSelectWithCounts function
+// Bird list - Update to use populateMultiSelectWithCounts function
 function renderBirdOptions(birdList) {
   const birdCounts = {};
   birdList.forEach(bird => {
@@ -296,12 +303,13 @@ function renderBirdOptions(birdList) {
   populateMultiSelectWithCounts("bird-select-clustering", birdList, birdCounts);
 }
 
-
+// KK check
 function getSelectedValues(selectId) {
   const select = document.getElementById(selectId);
   return Array.from(select.selectedOptions).map(opt => opt.value);
 }
 
+// Fetch the available year and birds dropdown options
 async function fetchAndPopulateDropdowns() {
   try {
     const response = await fetch('/api/metadata');
@@ -336,6 +344,7 @@ function animateCountUp(element, targetNumber, duration = 1000) {
   update();
 }
 
+// Update the slider animation and time markers
 function updateAnimationMarker(index) {
   if (!Array.isArray(sortedTimePoints) || sortedTimePoints.length === 0) return;
 
@@ -376,30 +385,7 @@ function downsamplePoints(points, step = 100) {
   return sampledPoints;
 }
 
-// function getMonthlyAveragedPoints(points) {
-//   const grouped = {};
-
-//   points.forEach(p => {
-//     const date = new Date(p.timestamp);
-//     const monthKey = `${date.getUTCFullYear()}-${date.getUTCMonth() + 1}`;
-
-//     if (!grouped[monthKey]) {
-//       grouped[monthKey] = { latSum: 0, lngSum: 0, count: 0, timestamp: p.timestamp };
-//     }
-
-//     grouped[monthKey].latSum += p.location_lat;
-//     grouped[monthKey].lngSum += p.location_long;
-//     grouped[monthKey].count++;
-//   });
-
-//   return Object.entries(grouped).map(([month, data]) => ({
-//     location_lat: data.latSum / data.count,
-//     location_long: data.lngSum / data.count,
-//     timestamp: data.timestamp
-//   })).sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
-// }
-
-
+// Get monthly average GPS point data for the time slider
 function getMonthlyAveragedPoints(allPoints) {
   // Group points by "YYYY-MM" string
   const grouped = {};
@@ -455,6 +441,67 @@ function getMonthlyAveragedPoints(allPoints) {
   };
 }
 
+// Alternative: Get weekly average GPS point data for the time slider
+function getWeeklyAveragedPoints(allPoints) {
+  const grouped = {};
+
+  allPoints.forEach(point => {
+    const date = new Date(point.timestamp);
+    if (isNaN(date)) return;
+
+    // Calculate ISO week number
+    const tempDate = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+    const dayNum = tempDate.getUTCDay() || 7;
+    tempDate.setUTCDate(tempDate.getUTCDate() + 4 - dayNum);
+    const yearStart = new Date(Date.UTC(tempDate.getUTCFullYear(), 0, 1));
+    const weekNo = Math.ceil((((tempDate - yearStart) / 86400000) + 1) / 7);
+
+    const weekKey = `${tempDate.getUTCFullYear()}-W${String(weekNo).padStart(2, '0')}`;
+
+    if (!grouped[weekKey]) {
+      grouped[weekKey] = [];
+    }
+    grouped[weekKey].push(point);
+  });
+
+  const averagedPoints = {};
+
+  for (const weekKey in grouped) {
+    const points = grouped[weekKey];
+    if (points.length === 0) continue;
+
+    let sumLat = 0;
+    let sumLon = 0;
+    points.forEach(p => {
+      sumLat += p.location_lat;
+      sumLon += p.location_long;
+    });
+
+    const avgLat = sumLat / points.length;
+    const avgLon = sumLon / points.length;
+
+     // Derive a real ISO date for the start of the week
+    const [year, weekStr] = weekKey.split('-W');
+    const week = parseInt(weekStr);
+    const firstDayOfWeek = new Date(Date.UTC(year, 0, 1 + (week - 1) * 7));
+
+    averagedPoints[weekKey] = [{
+      ...points[0],
+      location_lat: avgLat,
+      location_long: avgLon,
+      // timestamp: weekKey // We'll format this in the label
+      timestamp: firstDayOfWeek.toISOString()
+    }];
+  }
+
+  const timestamps = Object.keys(averagedPoints).sort();
+
+  return {
+    groupedPoints: averagedPoints,
+    timestamps
+  };
+}
+
 
 
 
@@ -463,6 +510,12 @@ function renderClustersOnMap(data) {
   clusterLayerGroup.clearLayers();
   const legendContainer = document.getElementById("legend");
   legendContainer.innerHTML = ""; // Clear old legend entries
+
+  // Clear previous selection highlight
+  document.querySelectorAll(".legend-item").forEach(item => {
+    item.classList.remove("selected-cluster");
+  });
+
   const uniqueClusters = new Set();
 
   timeSlider = document.getElementById('time-slider');
@@ -470,7 +523,6 @@ function renderClustersOnMap(data) {
   playPauseBtn = document.getElementById('playButton');
 
   if (!data || !data.all_points || data.all_points.length === 0) {
-
     alert('No preview data returned');
     return;
   }
@@ -481,10 +533,8 @@ function renderClustersOnMap(data) {
     animationInterval = null;
     if (playPauseBtn) playPauseBtn.textContent = '▶️ Play';
   }
-  animationLayerGroup.clearLayers();
 
-  // Group by timestamp
-  // const groupedPoints = {};
+  animationLayerGroup.clearLayers();
   allPoints = data.all_points;
 
   const selectedMonths = getSelectedCheckboxValues("month"); // from checkboxes
@@ -493,9 +543,9 @@ function renderClustersOnMap(data) {
   const filteredPoints = allPoints.filter(p => {
     const date = new Date(p.timestamp);
     const year = date.getFullYear().toString();
-    const month = date.getUTCMonth() + 1; // JS months: 0–11
-    const hour = date.getUTCHours();
-    // const timeslot = Math.floor(hour / 3); // 3-hour buckets: 0–7
+    const month = date.getUTCMonth() + 1;
+    // const hour = date.getUTCHours();
+    const hour = date.getHours();
 
     // Map hour to one of the custom time slots
     let timeslot = null;
@@ -521,32 +571,32 @@ function renderClustersOnMap(data) {
     const slotMatch = selectedSlots.length === 0 || selectedSlots.includes(timeslot);
     const distance = p.distance ?? 0;
     const distanceMatch = distance >= distanceMin && distance <= distanceMax;
+    const clusterMatch = selectedCluster === null || p.cluster === selectedCluster; // Added for filter cluster legend
 
-    return birdMatch && yearMatch && monthMatch && slotMatch && distanceMatch;
+    // return birdMatch && yearMatch && monthMatch && slotMatch && distanceMatch;
+    return birdMatch && yearMatch && monthMatch && slotMatch && distanceMatch && clusterMatch;
+
   });
 
-  // sortedTimePoints = [...filteredPoints].sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
-  const allSortedPoints = [...filteredPoints].sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+  allSortedPoints = [...filteredPoints].sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
   const downsampleStep = 100;  // You can change this to 50, 200, etc.
-  // sortedTimePoints = downsamplePoints(allSortedPoints, downsampleStep);
-  // sortedTimePoints = getMonthlyAveragedPoints(allSortedPoints);
   
-  const result = getMonthlyAveragedPoints(allSortedPoints);
+  // Monthly or weekly slider toggle
+  const timeGrouping = document.querySelector('input[name="timeGrouping"]:checked')?.value || 'monthly';
+  // Whether to use weekly or monthly average points for the slider animation
+  let result;
+  if (timeGrouping === 'weekly') {
+    result = getWeeklyAveragedPoints(allSortedPoints);
+  } else {
+    result = getMonthlyAveragedPoints(allSortedPoints);
+  }
+
   animationGroupedPoints = result.groupedPoints;
   animationTimestamps = result.timestamps;
 
   console.log("DEBUG → groupedPoints:", animationGroupedPoints);
   console.log("DEBUG → timestamps:", animationTimestamps);
 
-
-
-  // if (timeSlider && allPoints.length) {
-  //   timeSlider.max = allPoints.length - 1;
-  //   timeSlider.value = 0;
-  //   timeSliderLabel.textContent = formatTimestamp(allPoints[0].timestamp);
-  // }
-
-  // KK CHECK
   if (timeSlider && sortedTimePoints.length) {
     timeSlider.max = sortedTimePoints.length - 1;
     timeSlider.value = 0;
@@ -563,8 +613,6 @@ function renderClustersOnMap(data) {
   // Populate dropdowns
   populateDropdowns(allPoints);
   
-   // Animate the points over time with a slider
-  // Only animate if a single bird is selected
   const isSingleBird = currentBird !== "all";
 
  
@@ -573,14 +621,14 @@ function renderClustersOnMap(data) {
     document.getElementById('time-animation-controls').style.display = 'flex';
 
     // ✅ Step 2: Generate animation points — one per month
-    const result = getMonthlyAveragedPoints(allSortedPoints);
-    animationGroupedPoints = result.groupedPoints;
-    animationTimestamps = result.timestamps;
+    // const result = getMonthlyAveragedPoints(allSortedPoints);
+    // animationGroupedPoints = result.groupedPoints;
+    // animationTimestamps = result.timestamps;
 
     console.log("📅 Monthly Averaged Points Result:", result);  // ← Debug output
 
-    animationGroupedPoints = result.groupedPoints;
-    animationTimestamps = result.timestamps;
+    // animationGroupedPoints = result.groupedPoints;
+    // animationTimestamps = result.timestamps;
 
 
     // ✅ Guard against bad data
@@ -624,7 +672,6 @@ function renderClustersOnMap(data) {
   }
 
 
-
   // Rebuild groupedPoints with filtered data
   const groupedPoints = {};
   filteredPoints.forEach(point => {
@@ -637,12 +684,10 @@ function renderClustersOnMap(data) {
   
   // Count cluster sizes
   const clusterCounts = {};
-  // data.all_points.forEach(p => {
-  //   clusterCounts[p.cluster] = (clusterCounts[p.cluster] || 0) + 1;
-  // });
+  
   filteredPoints.forEach(p => {
   clusterCounts[p.cluster] = (clusterCounts[p.cluster] || 0) + 1;
-});
+  });
 
   // Sort clusters by size, descending
   const sortedClusters = Object.entries(clusterCounts)
@@ -656,14 +701,44 @@ function renderClustersOnMap(data) {
     const count = clusterCounts[clusterId];
 
     const item = document.createElement("div");
+
+    // item.innerHTML = `
+    //   <div class="color-box" style="background:${color}"></div>
+    //   Cluster ${clusterId} <span style="color: #666;">(0 pts)</span>
+    // `;
+    // legendContainer.appendChild(item);
+
+    // NEW CODE START
+    item.classList.add("legend-item");
+    item.style.cursor = "pointer";
     item.innerHTML = `
-      <div class="color-box" style="background:${color}"></div>
-      Cluster ${clusterId} <span style="color: #666;">(0 pts)</span>
+      <div class="color-box" style="background:${color}; display: inline-block; width: 16px; height: 16px; margin-right: 8px;"></div>
+      <span class="legend-label">Cluster ${clusterId}</span> 
+      <span class="legend-count" style="color: #666;"></span>
     `;
+
+    // Highlight if this cluster is selected
+    if (selectedCluster === clusterId) {
+      item.classList.add("selected-cluster");
+    }
+
     legendContainer.appendChild(item);
 
+    // Add click event to legend entry
+    item.addEventListener("click", () => {
+      // Toggle cluster selection
+      if (selectedCluster === clusterId) {
+        selectedCluster = null; // Unselect if already selected
+      } else {
+        selectedCluster = clusterId;
+      }
+      // Re-render map with selected cluster filter
+      renderClustersOnMap({ all_points: allPoints });
+    });
+    // NEW CODE END
+
     // Animate count up on the span element
-    animateCountUp(item.querySelector("span"), count, 1500);
+    animateCountUp(item.querySelector(".legend-count"), count, 1500);
   });
 
 
@@ -678,45 +753,79 @@ function renderClustersOnMap(data) {
   }
 
   if (allPoints.length > 0) {
-  const bounds = L.latLngBounds(filteredPoints.map(p => [p.location_lat, p.location_long]));
-  map.fitBounds(bounds);
+    const bounds = L.latLngBounds(filteredPoints.map(p => [p.location_lat, p.location_long]));
+    map.fitBounds(bounds);
   }
 
 
-// Show all points without filtering by time
-Object.values(groupedPoints).flat().forEach((point) => {
-  const lat = point.location_lat;
-  const lon = point.location_long;
-  const cluster = point.cluster;
+  // Show all points without filtering by time
+  Object.values(groupedPoints).flat().forEach((point) => {
+    const lat = point.location_lat;
+    const lon = point.location_long;
+    const cluster = point.cluster;
 
-  const marker = L.circleMarker([lat, lon], {
-    radius: 6,
-    fillColor: getColorForCluster(cluster),
-    color: '#333',
-    weight: 1,
-    opacity: 1,
-    fillOpacity: 0.8
-  }).bindPopup(() => {
-    const heading = Math.round(point.calculated_heading);
-    const distance = point.distance?.toFixed(1);
-    const compass = point.compass_direction || 'N/A';
-    const timestamp = point.timestamp ? formatTimestamp(point.timestamp) : 'N/A';
+    const marker = L.circleMarker([lat, lon], {
+      radius: 6,
+      fillColor: getColorForCluster(cluster),
+      color: '#333',
+      weight: 1,
+      opacity: 1,
+      fillOpacity: 0.8
+    }).bindPopup(() => {
+      const heading = Math.round(point.calculated_heading);
+      const distance = point.distance?.toFixed(1);
+      const compass = point.compass_direction || 'N/A';
+      const timestamp = point.timestamp ? formatTimestamp(point.timestamp) : 'N/A';
 
-    return `
-      <div>
-        <strong>Cluster:</strong> ${cluster}<br/>
-        <strong>Bird ID:</strong> ${point.individual_local_identifier}<br/>
-        <strong>Heading:</strong> ${heading}° (${compass})<br/>
-        <strong>Distance:</strong> ${distance} m<br/>
-        <strong>Time:</strong> ${timestamp}<br/>
-        <strong>Latitude:</strong> ${lat}<br/>
-        <strong>Longitude:</strong> ${lon}
-      </div>
-    `;
+      // return `
+      //   <div>
+      //     <strong>Cluster:</strong> ${cluster}<br/>
+      //     <strong>Bird ID:</strong> ${point.individual_local_identifier}<br/>
+      //     <strong>Heading:</strong> ${heading}° (${compass})<br/>
+      //     <strong>Distance:</strong> ${distance} m<br/>
+      //     <strong>Time:</strong> ${timestamp}<br/>
+      //     <strong>Latitude:</strong> ${lat}<br/>
+      //     <strong>Longitude:</strong> ${lon}
+      //   </div>
+      // `;
+
+
+      // return `
+      //   <div>
+      //     <strong>Cluster:</strong> ${cluster}<br/>
+      //     <strong>Bird ID:</strong> ${point.individual_local_identifier}<br/>
+      //     <strong>Heading:</strong> ${heading}° (${compass})<br/>
+      //     <strong>Distance:</strong> ${distance} m<br/>
+      //     <strong>Time:</strong> ${timestamp}<br/>
+      //     <strong>Latitude:</strong> ${lat}<br/>
+      //     <strong>Longitude:</strong> ${lon}<br/>
+      //     <div style="margin-top: 6px;">
+      //       <a href="https://www.google.com/maps?q=${lat},${lon}" target="_blank" style="margin-right: 8px;">🌍 Google Maps</a>
+      //       <a href="https://www.openstreetmap.org/?mlat=${lat}&mlon=${lon}#map=16/${lat}/${lon}" target="_blank">🗺️ OpenStreetMap</a>
+      //     </div>
+      //   </div>
+      // `;
+
+      return `
+        <div>
+          <strong>Cluster:</strong> ${cluster}<br/>
+          <strong>Bird ID:</strong> ${point.individual_local_identifier}<br/>
+          <strong>Heading:</strong> ${heading}° (${compass})<br/>
+          <strong>Distance:</strong> ${distance} m<br/>
+          <strong>Time:</strong> ${timestamp}<br/>
+          <strong>Latitude:</strong> ${lat}<br/>
+          <strong>Longitude:</strong> ${lon}<br/>
+          <div style="margin-top: 6px;">
+            <a href="https://www.google.com/maps?q=${lat},${lon}" target="_blank" style="margin-right: 8px;">🌍 Google Maps</a>
+          </div>
+        </div>
+      `;
+
+
+    });
+
+    clusterLayerGroup.addLayer(marker);
   });
-
-  clusterLayerGroup.addLayer(marker);
-});
 
 }
 
@@ -744,6 +853,7 @@ function selectAll(id) {
   $(`#${id}`).trigger('change'); // <- Trigger UI update
 }
 
+// Deselect all years and birds in the clustering form
 function deselectAll(id) {
   const select = document.getElementById(id);
   for (let opt of select.options) opt.selected = false;
@@ -784,7 +894,7 @@ function populateMultiSelectWithCounts(id, values, countMap) {
   $(`#${id}`).trigger('change.select2');
 }
 
-
+// Fiter the years by bird
 function filterYearsByBirds(birds) {
   if (birds.length === 0) {
     renderYearOptions(Object.keys(metadata.years));
@@ -811,13 +921,49 @@ function toggleGPSFilterLayer(show) {
 
 
 // Slider animation start
-function startAnimation() {
+function startAnimation(timeGrouping = 'monthly') {
+
+  // Dynamically select based on current radio button
+  const result = timeGrouping === 'weekly'
+    ? getWeeklyAveragedPoints(allSortedPoints)
+    : getMonthlyAveragedPoints(allSortedPoints);
+
+  animationGroupedPoints = result.groupedPoints;
+  // animationTimestamps = result.sortedTimestamps;
+  animationTimestamps = result.timestamps;
+  console.log("Animation Data Returned:", result);
+
   if (!animationGroupedPoints || !Array.isArray(animationTimestamps) || animationTimestamps.length === 0) {
     console.warn("Invalid animation data.");
     return;
   }
 
+  // ✅ Choose animation speed
+  // const intervalMs = timeGrouping === 'weekly' ? 400 : 800;
+  // ✅ Read selected speed option
+  const speedInput = document.getElementById("speedSelect");
+  const selectedSpeed = speedInput?.value || "medium";
+
+  // ✅ Mode-specific interval mapping
+  const speedMap = {
+    weekly: {
+      fast: 200,
+      medium: 400,
+      slow: 600
+    },
+    monthly: {
+      fast: 400,
+      medium: 600,
+      slow: 800
+    }
+  };
+
+  const intervalMs = speedMap[timeGrouping]?.[selectedSpeed] || 600;
+
   toggleGPSFilterLayer(false); // Hide regular points
+
+  // Enable the pause button when animation starts
+  document.getElementById("pauseButton").disabled = false;
 
   animationIndex = 0;
   animationTrail = [];
@@ -833,19 +979,22 @@ function startAnimation() {
     animationLayerGroup.removeLayer(animationMarker);
     animationMarker = null;
   }
-  
-  const legend = document.getElementById("legend");
-  if (legend) legend.style.display = "none";
 
+  // Update slider range
   if (timeSlider) {
     timeSlider.min = 0;
     timeSlider.max = animationTimestamps.length - 1;
     timeSlider.value = 0; // Reset to start
   }
+  
+  const legend = document.getElementById("legend");
+  if (legend) legend.style.display = "none";
 
   timeDisplayControl.addTo(map);
 
   animationInterval = setInterval(() => {
+     if (animationPaused) return;
+
     if (animationIndex >= animationTimestamps.length) {
       stopAnimation();
       return;
@@ -870,7 +1019,7 @@ function startAnimation() {
       opacity: 0.8
     }).addTo(animationLayerGroup);
 
-    // ➤ Move or create the animated marker
+    // Move or create the animated marker
     if (!animationMarker) {
       animationMarker = L.circleMarker(latLng, {
         radius: 8,
@@ -886,41 +1035,24 @@ function startAnimation() {
     }
 
     if (timeSlider) timeSlider.value = animationIndex;
-
-    // if (timeSliderLabel) {
-    //   const currentTimestamp = timestamp + '-01T00:00:00Z';
-    //   timeSliderLabel.textContent = formatTimestamp(currentTimestamp); // Use timestamp formatter
-    // }
-
-    if (timeSliderLabel) {
-      const currentTimestamp = timestamp + '-01T00:00:00Z';
-      timeSliderLabel.textContent = formatTimestamp(currentTimestamp);
-
-        // ➤ Update time overlay on the map
-        // const dateObj = new Date(currentTimestamp);
-        // const month = dateObj.toLocaleString('default', { month: 'short' });
-        // const year = dateObj.getFullYear();
-
-        // // if (timeDisplayControl && timeDisplayControl.getContainer()) {
-        // //   timeDisplayControl.getContainer().innerHTML = `${month} ${year}`;
-        // // }
-        // const timeDisplayElement = timeDisplayControl.getContainer();
-        // if (timeDisplayElement) {
-        //   const date = new Date(timestamp + '-01T00:00:00Z');  // Use your timestamp format
-        //   const monthYear = date.toLocaleString('default', { month: 'short', year: 'numeric' });
-        //   timeDisplayElement.innerHTML = monthYear;
     
+    if (timeSliderLabel) {
+      const ts = new Date(point.timestamp);
+      timeSliderLabel.textContent = formatTimestamp(ts);
+
       const timeDisplayElement = timeDisplayControl.getContainer();
       if (timeDisplayElement) {
-        const date = new Date(currentTimestamp);
-        const monthYear = date.toLocaleString('default', { month: 'short', year: 'numeric' });
-        timeDisplayElement.innerHTML = monthYear;
+        // Different format for weekly vs monthly
+        timeDisplayElement.innerHTML =
+          timeGrouping === 'weekly'
+            ? `Week of ${ts.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}`
+            : ts.toLocaleDateString('en-GB', { month: 'short', year: 'numeric' });
       }
     }
-
     animationIndex++;
-  }, 400); // Adjust animation speed if needed
+  }, intervalMs);
 }
+
 
 // Slider animation stop
 function stopAnimation() {
@@ -931,7 +1063,7 @@ function stopAnimation() {
   // Restore the filtered GPS points if they were removed or hidden
   toggleGPSFilterLayer(true);  // This should re-show the filter results
 
-  // ✅ Force refresh by dispatching 'change' on all checked filters
+  // Force refresh by dispatching 'change' on all checked filters
   document.querySelectorAll('input[type="checkbox"]:checked').forEach(cb => {
     cb.dispatchEvent(new Event('change'));
   });
@@ -941,6 +1073,10 @@ function stopAnimation() {
 
   // Reset play/pause button (optional)
   if (playPauseBtn) playPauseBtn.textContent = "▶️ Play";
+
+  document.getElementById("pauseButton").disabled = true;
+  document.getElementById("pauseButton").textContent = "Pause";
+  animationPaused = false;
 
   // Reset time slider and label (optional)
   // const timeSlider = document.getElementById("time-slider");
@@ -974,6 +1110,58 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   // Wait until dropdowns are populated
   await fetchAndPopulateDropdowns();
+
+  // Hide the loading section once metadata is fetched and dropdowns populated
+  // document.getElementById('loading-section').style.display = 'none';
+
+  // const loadingSection = document.getElementById('loading-section');
+
+  // ### Animated loading text ###
+  // const textElem = document.querySelector('#loading-metadata p');
+  // const rawText = textElem.textContent;
+  // const text = rawText.replace(/\s+/g, ' ').trim(); // collapse whitespace
+  // const text = textElem.textContent;
+
+  // console.log("Animating text:", text);
+  // console.log("Text length:", text.length);
+
+  // textElem.textContent = ''; // clear existing text
+
+  // // Wrap each letter in a span with a class and a delay style for wave effect
+  // for (let i = 0; i < text.length; i++) {
+  //   const span = document.createElement('span');
+  //   span.textContent = text[i];
+  //   span.style.animationDelay = `${(text.length - i - 1) * 0.1}s`; // right to left
+  //   span.classList.add('wave-letter');
+  //   textElem.appendChild(span);
+  // }
+
+
+
+
+  // Total delay = max animation delay + duration (e.g., 0.1s * text.length + 1s)
+  // const totalAnimTime = text.length * 100 + 1000; // ms
+
+  const loadingSection = document.getElementById('loading-section');
+
+  // Add fade-out class
+  loadingSection.classList.add('fade-out');
+
+  // // After transition finishes, set display to none
+  setTimeout(() => {
+    loadingSection.style.display = 'none';
+  }, 1000); // Match the transition duration (0.5s = 500ms)
+
+  // setTimeout(() => {
+  //   loadingSection.classList.add('fade-out');
+
+  //   setTimeout(() => {
+  //     loadingSection.style.display = 'none';
+  //   }, 1000); // Match fade-out CSS transition
+  // }, totalAnimTime);
+
+  
+
 
    // Initialise Select2 on the clustering dropdowns
   $('#year-select-clustering').select2({
@@ -1045,7 +1233,6 @@ document.addEventListener("DOMContentLoaded", async () => {
       toggleAll(type, check);
     });
   });
-
 
 
   // ✅ Distance filter listener
@@ -1199,16 +1386,32 @@ document.addEventListener("DOMContentLoaded", async () => {
         "decimal_places", "interval_minutes", "sample_rate",
         "use_distance", "use_heading", "use_year", "use_month", "use_scaling",
         "use_timestamp", "use_interval_mins", "auto_silhouette", "max_cluster_size", 
-        "leaf_size_dbscan", "leaf_size_hdbscan" 
+        "leaf_size_dbscan", "leaf_size_hdbscan", "timeGrouping", "use_coordinates", "animationSpeed"  
       ];
 
+      // fieldsToPersist.forEach((key) => {
+      //   const input = document.querySelector(`[name="${key}"]`);
+      //   if (input) {
+      //     const value = input.type === "checkbox" ? input.checked : input.value; 
+      //     localStorage.setItem(`clustering_${key}`, value);
+      //   }
+      // });
+
       fieldsToPersist.forEach((key) => {
-        const input = document.querySelector(`[name="${key}"]`);
+        let input = document.querySelector(`[name="${key}"]`);
+
+        // Special case for radio button groups (like timeGrouping)
+        if (input?.type === "radio") {
+          input = document.querySelector(`input[name="${key}"]:checked`);
+        }
+
         if (input) {
-          const value = input.type === "checkbox" ? input.checked : input.value; 
+          const value = input.type === "checkbox" ? input.checked : input.value;
           localStorage.setItem(`clustering_${key}`, value);
         }
       });
+
+
 
     } catch (err) {
       console.error("Clustering error:", err);
@@ -1229,16 +1432,47 @@ document.addEventListener("DOMContentLoaded", async () => {
     "decimal_places", "interval_minutes", "sample_rate",
     "use_distance", "use_heading", "use_year", "use_month", "use_scaling",
     "use_timestamp", "use_interval_mins", "auto_silhouette", "max_cluster_size", 
-    "leaf_size_dbscan", "leaf_size_hdbscan" 
+    "leaf_size_dbscan", "leaf_size_hdbscan", "timeGrouping", "use_coordinates", "animationSpeed"
   ];
 
-  persistFields.forEach((key) => {
-    const input = document.querySelector(`[name="${key}"]`);
-    const saved = localStorage.getItem(`clustering_${key}`);
-    if (!input || saved === null) return;
+  // persistFields.forEach((key) => {
+  //   const input = document.querySelector(`[name="${key}"]`);
+  //   const saved = localStorage.getItem(`clustering_${key}`);
+  //   if (!input || saved === null) return;
 
-    if (input.type === "checkbox") input.checked = saved === "true";
-    else input.value = saved;
+  //   if (input.type === "checkbox") input.checked = saved === "true";
+  //   else input.value = saved;
+
+  //   if (key === "method") {
+  //     document.querySelectorAll(".method-params").forEach(el => el.classList.add("d-none"));
+  //     const visible = document.getElementById(`${saved}-params`);
+  //     if (visible) visible.classList.remove("d-none");
+  //   }
+  // });
+
+  persistFields.forEach((key) => {
+    // Load saved value
+    const saved = localStorage.getItem(`clustering_${key}`);
+    if (saved === null) return;
+
+    const input = document.querySelector(`[name="${key}"]`);
+
+    // ✅ Special case for radio buttons
+    const radios = document.querySelectorAll(`input[type="radio"][name="${key}"]`);
+    if (radios.length > 0) {
+      radios.forEach(radio => {
+        radio.checked = radio.value === saved;
+      });
+      return; // skip rest of loop
+    }
+
+    if (!input) return;
+
+    if (input.type === "checkbox") {
+      input.checked = saved === "true";
+    } else {
+      input.value = saved;
+    }
 
     if (key === "method") {
       document.querySelectorAll(".method-params").forEach(el => el.classList.add("d-none"));
@@ -1247,18 +1481,94 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   });
 
+
   timeSlider.addEventListener('input', (e) => {
     if (animationInterval) stopAnimation();
     updateAnimationMarker(parseInt(e.target.value, 10));
   });
 
 
+  // document.getElementById("playButton").addEventListener("click", () => {
+  //   if (animationInterval) {
+  //     stopAnimation();
+  //   } else {
+  //     startAnimation(animationGroupedPoints, animationTimestamps);
+  //   }
+  // });
+
   document.getElementById("playButton").addEventListener("click", () => {
+    const selectedGrouping = document.querySelector('input[name="timeGrouping"]:checked')?.value || "monthly";
+
     if (animationInterval) {
       stopAnimation();
     } else {
-      startAnimation(animationGroupedPoints, animationTimestamps);
+      startAnimation(selectedGrouping);
     }
   });
+
+  // Slider Pause button
+  document.getElementById("pauseButton").addEventListener("click", () => {
+    animationPaused = !animationPaused;
+
+    const pauseBtn = document.getElementById("pauseButton");
+    pauseBtn.textContent = animationPaused ? "Resume" : "Pause";
+  });
+   // Slider - change beteen monthly and weekly
+  document.querySelectorAll('input[name="timeGrouping"]').forEach(rb => {
+    rb.addEventListener('change', () => {
+      const selected = document.querySelector('input[name="timeGrouping"]:checked')?.value;
+      localStorage.setItem("clustering_timeGrouping", selected);
+    });
+  });
+   // Slider speed selection
+  document.getElementById("speedSelect").addEventListener("change", (e) => {
+    localStorage.setItem("clustering_animationSpeed", e.target.value);
+  });
+
+  // Clear All Filters Button in Filter section
+  document.getElementById("clearAllFilters").addEventListener("click", () => {
+    // Reset Year & Bird dropdowns to "all"
+    const yearSelect = document.getElementById("year-select");
+    const birdSelect = document.getElementById("bird-select");
+
+    yearSelect.value = "all";
+    birdSelect.value = "all";
+
+    // Dispatch change events to trigger existing listeners
+    yearSelect.dispatchEvent(new Event("change"));
+    birdSelect.dispatchEvent(new Event("change"));
+
+    // Uncheck all Month checkboxes
+    document.querySelectorAll('input[name="month"]').forEach(cb => {
+      cb.checked = false;
+      cb.dispatchEvent(new Event("change")); // if needed to trigger updates
+    });
+
+    // Uncheck all Hour checkboxes
+    document.querySelectorAll('input[name="hour"]').forEach(cb => {
+      cb.checked = false;
+      cb.dispatchEvent(new Event("change")); // if needed
+    });
+
+    // Clear Distance inputs
+    document.getElementById("distanceMin").value = "";
+    document.getElementById("distanceMax").value = "";
+
+    // If you have a distance filtering function that must run:
+    renderClustersOnMap({ all_points: allPoints });
+
+    // Reset time slider UI (optional, depending on your app behavior)
+    const timeSlider = document.getElementById("time-slider");
+    const timeLabel = document.getElementById("time-label");
+    if (timeSlider && timeLabel) {
+      timeSlider.value = 0;
+      timeLabel.innerText = "No time loaded";
+    }
+
+    // Reset time grouping radio buttons to 'monthly' (if needed)
+    const monthlyRadio = document.querySelector('input[name="timeGrouping"][value="monthly"]');
+    if (monthlyRadio) monthlyRadio.checked = true;
+  });
+
 
 });
