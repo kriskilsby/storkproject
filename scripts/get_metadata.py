@@ -13,23 +13,6 @@ import database
 dotenv_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'backend', '.env'))
 load_dotenv(dotenv_path)
 
-# def get_metadata():
-#     conn, cur = database.get_db_connection()
-#     try:
-#         cur.execute("SELECT DISTINCT individual_local_identifier FROM migration_data.stork_data ORDER BY individual_local_identifier")
-#         birds = [row[0] for row in cur.fetchall()]
-
-#         cur.execute("SELECT DISTINCT EXTRACT(YEAR FROM timestamp)::int AS year FROM migration_data.stork_data ORDER BY year")
-#         years = [int(row[0]) for row in cur.fetchall()]
-
-#         print(json.dumps({ "birds": birds, "years": years }))  # output as JSON
-#     except Exception as e:
-#         print(json.dumps({ "error": str(e) }), file=sys.stderr)
-#         sys.exit(1)
-#     finally:
-#         cur.close()
-#         conn.close()
-
 def get_metadata():
     conn, cur = database.get_db_connection()
     try:

@@ -7,9 +7,9 @@
 
 # start_project.ps1
 
-# Step 1: Activate the Python virtual environment
+# 1: Activate the Python virtual environment
 & .\venv\Scripts\Activate.ps1
 
-# Step 2: Start the frontend dev server
+# 2: Start the frontend dev server
 cd frontend
 npm run dev
