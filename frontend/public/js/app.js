@@ -800,8 +800,8 @@ function renderClustersOnMap(data) {
       //     <strong>Latitude:</strong> ${lat}<br/>
       //     <strong>Longitude:</strong> ${lon}<br/>
       //     <div style="margin-top: 6px;">
-      //       <a href="https://www.google.com/maps?q=${lat},${lon}" target="_blank" style="margin-right: 8px;">🌍 Google Maps</a>
-      //       <a href="https://www.openstreetmap.org/?mlat=${lat}&mlon=${lon}#map=16/${lat}/${lon}" target="_blank">🗺️ OpenStreetMap</a>
+            // <a href="https://www.google.com/maps?q=${lat},${lon}" target="_blank" style="margin-right: 8px;">🌍 Google Maps</a>
+            // <a href="https://www.openstreetmap.org/?mlat=${lat}&mlon=${lon}#map=16/${lat}/${lon}" target="_blank">🗺️ OpenStreetMap</a>
       //     </div>
       //   </div>
       // `;
@@ -1104,6 +1104,7 @@ function stopAnimation() {
 // ################# ONLY ADD WHAT NEEDS TO GO INTO DOM BELOW #################
 // Initialises the app when the DOM is fully loaded
 document.addEventListener("DOMContentLoaded", async () => {
+  window.scrollTo(0, 0);
   console.log("startAnimation type inside DOMContentLoaded:", typeof startAnimation);
   // Initialise the map
   initMap();
@@ -1150,7 +1151,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   // // After transition finishes, set display to none
   setTimeout(() => {
     loadingSection.style.display = 'none';
-  }, 1000); // Match the transition duration (0.5s = 500ms)
+  }, 1500); // Match fade-out CSS transition (0.5s = 500ms)
 
   // setTimeout(() => {
   //   loadingSection.classList.add('fade-out');
@@ -1481,6 +1482,12 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   });
 
+  const savedSpeed = localStorage.getItem("clustering_animationSpeed");
+  if (savedSpeed) {
+    const speedSelect = document.getElementById("speedSelect");
+    if (speedSelect) speedSelect.value = savedSpeed;
+  }
+
 
   timeSlider.addEventListener('input', (e) => {
     if (animationInterval) stopAnimation();
@@ -1570,5 +1577,41 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (monthlyRadio) monthlyRadio.checked = true;
   });
 
+  
+  
+  // Temporarily disable tooltips to prevent flicker
+  document.querySelectorAll('.deferred-tooltip').forEach(el => {
+    const tooltipInstance = bootstrap.Tooltip.getInstance(el);
+    if (tooltipInstance) {
+      tooltipInstance.disable();
+    }
+  });
+
+  // Transfer data-title-html -> title
+  document.querySelectorAll('.deferred-tooltip').forEach(el => {
+    const htmlTitle = el.getAttribute('data-title-html');
+    if (htmlTitle) {
+      el.setAttribute('title', htmlTitle);
+    }
+  });
+
+  // Initialise all tooltips
+  const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+  tooltipTriggerList.forEach(function (tooltipTriggerEl) {
+    new bootstrap.Tooltip(tooltipTriggerEl);
+  });
+
+  // Reveal all label text hidden initially
+document.querySelectorAll('.method-label-text').forEach(el => {
+  el.style.visibility = 'visible';
+});
+
+  // Re-enable tooltips when ready
+  document.querySelectorAll('.deferred-tooltip').forEach(el => {
+    const tooltipInstance = bootstrap.Tooltip.getInstance(el);
+    if (tooltipInstance) {
+      tooltipInstance.enable();
+    }
+  });
 
 });

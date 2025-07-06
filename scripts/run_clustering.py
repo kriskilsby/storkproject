@@ -60,6 +60,55 @@ def fetch_data(query):
         conn.close()
 
 # New helper function to return the total numbers for debug checks
+# def fetch_counts(interval_minutes, sample_rate):
+#     time_bucket = f"""
+#         date_trunc('hour', timestamp) +
+#         INTERVAL '1 minute' * (FLOOR(EXTRACT(MINUTE FROM timestamp) / {interval_minutes}) * {interval_minutes})
+#     """ if interval_minutes > 0 else "timestamp"
+
+#     count_query = f"""
+#     WITH 
+#     filtered_base AS (
+#         SELECT *
+#         FROM migration_data.stork_data
+#         WHERE sql_distance IS NOT NULL AND sql_heading IS NOT NULL
+#     ),
+#     deduped AS (
+#         SELECT *,
+#             {time_bucket} AS rounded_timestamp,
+#             ROW_NUMBER() OVER (
+#                 PARTITION BY individual_local_identifier, {time_bucket}
+#                 ORDER BY timestamp
+#             ) AS rn
+#         FROM filtered_base
+#     ),
+#     filtered_deduped AS (
+#         SELECT *
+#         FROM deduped
+#         WHERE rn = 1
+#     ),
+#     sampled AS (
+#         SELECT *
+#         FROM filtered_deduped
+#         WHERE MOD(record_id, {sample_rate}) = 0
+#     )
+#     SELECT 
+#         (SELECT COUNT(*) FROM migration_data.stork_data) AS total_raw_count,
+#         (SELECT COUNT(*) FROM filtered_base) AS count_after_filtering,
+#         (SELECT COUNT(*) FROM filtered_deduped) AS count_after_deduplication,
+#         (SELECT COUNT(*) FROM sampled) AS count_after_sampling;
+#     """
+
+#     counts_df = fetch_data(count_query)
+#     if not counts_df.empty:
+#         counts = counts_df.iloc[0].to_dict()
+#         print("[DEBUG] Count summary from SQL:", file=sys.stderr)
+#         for k, v in counts.items():
+#             print(f"  {k}: {v}", file=sys.stderr)
+#     else:
+#         print("[DEBUG] Failed to fetch count summary", file=sys.stderr)
+
+    
 def fetch_counts(interval_minutes, sample_rate):
     time_bucket = f"""
         date_trunc('hour', timestamp) +
@@ -105,22 +154,145 @@ def fetch_counts(interval_minutes, sample_rate):
         print("[DEBUG] Count summary from SQL:", file=sys.stderr)
         for k, v in counts.items():
             print(f"  {k}: {v}", file=sys.stderr)
+        return counts
     else:
         print("[DEBUG] Failed to fetch count summary", file=sys.stderr)
+        return None
+
+##################### KK ORIGINAL CODE BELOW ########################################
+# # Function to run all the core clustering logic
+# def run_clustering(method='kmeans', params={}):
+    
+#     # Extracts parameters with defaults
+#     decimal_places = int(params.get('decimal_places', 3))
+#     interval_minutes = int(params.get('interval_minutes', 15))
+#     sample_rate = int(params.get('sample_rate', 20))
+
+#     # Set interval_minutes between 1 and 60
+#     interval_minutes = max(0, min(interval_minutes, 60))  
+
+#        # Set Boolean flags to use additional features
+#     def str_to_bool(val):
+#         return str(val).lower() == 'true'
+
+#     use_distance = str_to_bool(params.get('use_distance', False))
+#     use_heading = str_to_bool(params.get('use_heading', False))
+#     use_year = str_to_bool(params.get('use_year', False))
+#     use_month = str_to_bool(params.get('use_month', False))
+#     use_scaling = str_to_bool(params.get('use_scaling', False))
+#     use_coordinates = str_to_bool(params.get('use_coordinates', True))
+#     use_interval_mins = str_to_bool(params.get('use_interval_mins', True))
 
 
-# Function to run all the core clustering logic
+#     ############## TERMINAL DEBUG PRINTS ####################
+#     # Debug output to show parameters chosen
+#     print("[INFO] Parameters used for clustering:", file=sys.stderr)
+#     print(f"  method: {method}", file=sys.stderr)
+#     print(f"  decimal_places: {decimal_places}", file=sys.stderr)
+#     print(f"  interval_minutes: {interval_minutes}", file=sys.stderr)
+#     print(f"  sample_rate: {sample_rate}", file=sys.stderr)
+#     print(f"  use_scaling: {use_scaling}", file=sys.stderr)
+#     print("[INFO] Data collection setup:", file=sys.stderr)
+#     print(f"  use_coordinates: {use_coordinates}", file=sys.stderr)
+#     print(f"  use_interval_mins: {use_interval_mins}", file=sys.stderr)
+#     print(f"  use_distance: {use_distance}", file=sys.stderr)
+#     print(f"  use_heading: {use_heading}", file=sys.stderr)
+#     print(f"  use_year: {use_year}", file=sys.stderr)
+#     print(f"  use_month: {use_month}", file=sys.stderr)
+
+#     ############## FRONTEND INFO LOGS ####################
+#     log("Parameters used for clustering:")
+#     log(f"    method: {method}")
+#     log(f"    decimal_places: {decimal_places}")
+#     log(f"    interval_minutes: {interval_minutes}")
+#     log(f"    sample_rate: {sample_rate}")
+#     log(f"    use_scaling: {use_scaling}")
+#     log(f"\nFeatures used in clustering:")
+#     log(f"    use_coordinates: {use_coordinates}")
+#     log(f"    use_interval_mins: {use_interval_mins}")
+#     log(f"    use_distance: {use_distance}")
+#     log(f"    use_heading: {use_heading}")
+#     log(f"    use_year: {use_year}")
+#     log(f"    use_month: {use_month}")
+      
+#     if interval_minutes > 0:
+#         time_bucket = f"""
+#         date_trunc('hour', timestamp) +
+#         INTERVAL '1 minute' * (FLOOR(EXTRACT(MINUTE FROM timestamp) / {interval_minutes}) * {interval_minutes})
+#         """
+#     else:
+#         time_bucket = "timestamp"
+
+#         # KK new added - Build WHERE clause
+#     filter_clauses = ["sql_distance IS NOT NULL", "sql_heading IS NOT NULL"]
+#     if selected_years:
+#         year_str = ', '.join(str(y) for y in selected_years)
+#         filter_clauses.append(f"EXTRACT(YEAR FROM timestamp) IN ({year_str})")
+#     if selected_birds:
+#         bird_str = ', '.join(f"'{b}'" for b in selected_birds)
+#         filter_clauses.append(f"individual_local_identifier IN ({bird_str})")
+
+#     where_clause = " AND ".join(filter_clauses)
+
+#     sql_query = f"""
+#     WITH
+#     filtered_base AS (
+#     SELECT * FROM migration_data.stork_data
+#     WHERE {where_clause}
+#     ),
+#     deduped AS (
+#     SELECT *,
+#         {time_bucket} AS rounded_timestamp,
+#         ROW_NUMBER() OVER (
+#         PARTITION BY individual_local_identifier, {time_bucket}, location_lat, location_long  
+#         ORDER BY timestamp
+#         ) AS rn
+#     FROM filtered_base
+#     ),
+#     filtered_deduped AS (
+#     SELECT * FROM deduped WHERE rn = 1
+#     ),
+#     sampled AS (
+#     SELECT * FROM filtered_deduped WHERE MOD(record_id, {sample_rate}) = 0
+#     ),
+#     counts AS (
+#     SELECT
+#         (SELECT COUNT(*) FROM migration_data.stork_data) AS total_raw_count,
+#         (SELECT COUNT(*) FROM filtered_base) AS count_after_filtering,
+#         (SELECT COUNT(*) FROM filtered_deduped) AS count_after_deduplication,
+#         (SELECT COUNT(*) FROM sampled) AS count_after_sampling
+#     )
+#     SELECT
+#         s.individual_local_identifier,
+#         s.location_lat,
+#         s.location_long,
+#         s.sql_heading AS calculated_heading,
+#         s.sql_distance AS distance,
+#         s.compass_direction,
+#         s.rounded_timestamp AS timestamp,
+#         c.total_raw_count,
+#         c.count_after_filtering,
+#         c.count_after_deduplication,
+#         c.count_after_sampling
+#     FROM sampled s
+#     CROSS JOIN counts c;
+#     """
+
+#     data = fetch_data(sql_query)
+    ##################### KK ORIGINAL CODE ABOVE ########################################
+
+    ############# KK NEW CODE ADDED BELOW #############################################
 def run_clustering(method='kmeans', params={}):
     
-    # Extracts parameters with defaults
+    # Extract parameters with defaults
     decimal_places = int(params.get('decimal_places', 3))
     interval_minutes = int(params.get('interval_minutes', 15))
-    sample_rate = int(params.get('sample_rate', 20))
+    sample_rate_setting = int(params.get('sample_rate', 2))  # 1 = Low, 2 = Medium, 3 = High
 
-    # Set interval_minutes between 1 and 60
-    interval_minutes = max(0, min(interval_minutes, 60))  
+    # Cap interval_minutes between 0–60
+    interval_minutes = max(0, min(interval_minutes, 60))
 
-       # Set Boolean flags to use additional features
+    # Convert booleans from string
     def str_to_bool(val):
         return str(val).lower() == 'true'
 
@@ -132,38 +304,18 @@ def run_clustering(method='kmeans', params={}):
     use_coordinates = str_to_bool(params.get('use_coordinates', True))
     use_interval_mins = str_to_bool(params.get('use_interval_mins', True))
 
+    selected_years = params.get('selected_years', [])
+    selected_birds = params.get('selected_birds', [])
 
-    ############## TERMINAL DEBUG PRINTS ####################
-    # Debug output to show parameters chosen
-    print("[INFO] Parameters used for clustering:", file=sys.stderr)
-    print(f"  method: {method}", file=sys.stderr)
-    print(f"  decimal_places: {decimal_places}", file=sys.stderr)
-    print(f"  interval_minutes: {interval_minutes}", file=sys.stderr)
-    print(f"  sample_rate: {sample_rate}", file=sys.stderr)
-    print(f"  use_scaling: {use_scaling}", file=sys.stderr)
-    print("[INFO] Data collection setup:", file=sys.stderr)
-    print(f"  use_coordinates: {use_coordinates}", file=sys.stderr)
-    print(f"  use_interval_mins: {use_interval_mins}", file=sys.stderr)
-    print(f"  use_distance: {use_distance}", file=sys.stderr)
-    print(f"  use_heading: {use_heading}", file=sys.stderr)
-    print(f"  use_year: {use_year}", file=sys.stderr)
-    print(f"  use_month: {use_month}", file=sys.stderr)
+    # ---- Map setting to max sample count ----
+    max_samples_map = {
+        1: 15000,  # Low
+        2: 30000,  # Medium
+        3: 45000   # High
+    }
+    max_samples = max_samples_map.get(sample_rate_setting, 30000)
 
-    ############## FRONTEND INFO LOGS ####################
-    log("Parameters used for clustering:")
-    log(f"    method: {method}")
-    log(f"    decimal_places: {decimal_places}")
-    log(f"    interval_minutes: {interval_minutes}")
-    log(f"    sample_rate: {sample_rate}")
-    log(f"    use_scaling: {use_scaling}")
-    log(f"\nFeatures used in clustering:")
-    log(f"    use_coordinates: {use_coordinates}")
-    log(f"    use_interval_mins: {use_interval_mins}")
-    log(f"    use_distance: {use_distance}")
-    log(f"    use_heading: {use_heading}")
-    log(f"    use_year: {use_year}")
-    log(f"    use_month: {use_month}")
-      
+    # ---- Build SQL filters ----
     if interval_minutes > 0:
         time_bucket = f"""
         date_trunc('hour', timestamp) +
@@ -172,7 +324,6 @@ def run_clustering(method='kmeans', params={}):
     else:
         time_bucket = "timestamp"
 
-        # KK new added - Build WHERE clause
     filter_clauses = ["sql_distance IS NOT NULL", "sql_heading IS NOT NULL"]
     if selected_years:
         year_str = ', '.join(str(y) for y in selected_years)
@@ -183,33 +334,68 @@ def run_clustering(method='kmeans', params={}):
 
     where_clause = " AND ".join(filter_clauses)
 
+    # ---- First, fetch total count AFTER filtering/deduplication ----
+    count_query = f"""
+    WITH
+    filtered_base AS (
+        SELECT * FROM migration_data.stork_data
+        WHERE {where_clause}
+    ),
+    deduped AS (
+        SELECT *,
+            {time_bucket} AS rounded_timestamp,
+            ROW_NUMBER() OVER (
+                PARTITION BY individual_local_identifier, {time_bucket}, location_lat, location_long  
+                ORDER BY timestamp
+            ) AS rn
+        FROM filtered_base
+    ),
+    filtered_deduped AS (
+        SELECT * FROM deduped WHERE rn = 1
+    )
+    SELECT COUNT(*) AS total_records FROM filtered_deduped;
+    """
+    count_df = fetch_data(count_query)
+    total_records = count_df.iloc[0]['total_records'] if not count_df.empty else 0
+
+    # ---- Determine actual sample rate ----
+    if total_records > max_samples:
+        sample_rate = max(1, total_records // max_samples)
+    else:
+        sample_rate = 1
+
+    print(f"[INFO] Sample rate setting: {sample_rate_setting} → Max {max_samples} samples", file=sys.stderr)
+    print(f"[INFO] Records after filter/dedupe: {total_records}", file=sys.stderr)
+    print(f"[INFO] Calculated MOD divisor sample_rate: {sample_rate}", file=sys.stderr)
+
+    # ---- Final clustering query ----
     sql_query = f"""
     WITH
     filtered_base AS (
-    SELECT * FROM migration_data.stork_data
-    WHERE {where_clause}
+        SELECT * FROM migration_data.stork_data
+        WHERE {where_clause}
     ),
     deduped AS (
-    SELECT *,
-        {time_bucket} AS rounded_timestamp,
-        ROW_NUMBER() OVER (
-        PARTITION BY individual_local_identifier, {time_bucket}, location_lat, location_long  
-        ORDER BY timestamp
-        ) AS rn
-    FROM filtered_base
+        SELECT *,
+            {time_bucket} AS rounded_timestamp,
+            ROW_NUMBER() OVER (
+                PARTITION BY individual_local_identifier, {time_bucket}, location_lat, location_long  
+                ORDER BY timestamp
+            ) AS rn
+        FROM filtered_base
     ),
     filtered_deduped AS (
-    SELECT * FROM deduped WHERE rn = 1
+        SELECT * FROM deduped WHERE rn = 1
     ),
     sampled AS (
-    SELECT * FROM filtered_deduped WHERE MOD(record_id, {sample_rate}) = 0
+        SELECT * FROM filtered_deduped WHERE MOD(record_id, {sample_rate}) = 0
     ),
     counts AS (
-    SELECT
-        (SELECT COUNT(*) FROM migration_data.stork_data) AS total_raw_count,
-        (SELECT COUNT(*) FROM filtered_base) AS count_after_filtering,
-        (SELECT COUNT(*) FROM filtered_deduped) AS count_after_deduplication,
-        (SELECT COUNT(*) FROM sampled) AS count_after_sampling
+        SELECT
+            (SELECT COUNT(*) FROM migration_data.stork_data) AS total_raw_count,
+            (SELECT COUNT(*) FROM filtered_base) AS count_after_filtering,
+            (SELECT COUNT(*) FROM filtered_deduped) AS count_after_deduplication,
+            (SELECT COUNT(*) FROM sampled) AS count_after_sampling
     )
     SELECT
         s.individual_local_identifier,
@@ -227,7 +413,25 @@ def run_clustering(method='kmeans', params={}):
     CROSS JOIN counts c;
     """
 
+    # ---- Fetch final data ----
     data = fetch_data(sql_query)
+
+    # ---- Logging ----
+    log("Parameters used for clustering:")
+    log(f"    method: {method}")
+    log(f"    decimal_places: {decimal_places}")
+    log(f"    interval_minutes: {interval_minutes}")
+    log(f"    sample_rate_setting [{sample_rate_setting}] and sample_rate: {sample_rate}")
+    log(f"    use_scaling: {use_scaling}")
+    log("\nFeatures used in clustering:")
+    log(f"    use_coordinates: {use_coordinates}")
+    log(f"    use_interval_mins: {use_interval_mins}")
+    log(f"    use_distance: {use_distance}")
+    log(f"    use_heading: {use_heading}")
+    log(f"    use_year: {use_year}")
+    log(f"    use_month: {use_month}")
+    ############# KK NEW CODE ADDED ABOVE #############################################
+
     # print(f"[DEBUG] Fetched {len(data)} rows from SQL", file=sys.stderr)
 
     if data.empty:
