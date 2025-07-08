@@ -56,12 +56,12 @@
           <h1 class="display-5 fw-bold">Stork Migration Interactive Visualisation</h1>
           <p class="lead">Run clustering on the Stork Migration database.</p>
         </div>
-         <img src="/images/stork.png" alt="Stork Icon"
+         <img src="/images/stork2.webp" alt="Stork Icon"
          style="
            position: absolute;
-           bottom: -2rem;
-           right: -2rem;
-           max-height: 7rem;
+           bottom: -4rem;
+           right: -3rem;
+           max-height: 10rem;
            pointer-events: none;
            z-index: 999;
          ">
@@ -94,13 +94,19 @@
       <section id="cluster-section" class="container my-4">
         <div class="main-card card shadow-sm border-0 rounded mt-1">
           <div class="card-body">
-            <h3 class="card-title mb-4 mt-1">Select Your Parameters and Run Clustering</h3>
+            <label for="cluster-card-title" class="form-label fw-bold deferred-tooltip"
+              data-bs-toggle="tooltip" data-bs-placement="top" data-bs-html="true"
+              data-title-html="&lt;strong&gt;Clustering&lt;/strong&gt; is an essential data science technique, used
+                to simplify large datasets into meaningful groups, by revealing hidden patterns and linking similar
+                data together to form larger related groups.">
+              <h3 class="card-title mb-4 mt-1">Select Your Parameters and Run Clustering</h3>
+            </label>
 
             <form id="clusteringForm" class="row g-3">
               <!-- <h5 class="form-top-h5">Choose Years and Birds to Include in the Data Query</h5> -->
 
               <label for="Years and Birds" class="form-label fw-bold deferred-tooltip"
-                data-bs-toggle="tooltip" data-bs-placement="top" data-bs-html="true"
+                data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-html="true"
                 data-title-html="When the page first opens, it checks the database for all available 
                   &lt;strong&gt;years&lt;/strong&gt; and &lt;strong&gt;Stork individuals&lt;/strong&gt;. 
                   When you click 'Run Clustering', it uses only the ones you've selected. 
@@ -509,38 +515,6 @@
 
             <!-- Filter Form -->
             <form id="mapFiltersForm" class="row g-3">
-                <!-- <div class="row" style="padding: 0;">
-                  <div class="col-12">
-                    <p class="filterform-p">Filter the GPS points using any combination of the methods below. 
-                      You can narrow down the dataset by selecting specific years, birds, months, time slots, or a distance range.   
-                    </p>
-                  </div>
-                </div>  -->
-
-                <!-- KK CHECKING BELOW  -->
-                <!-- <div class="row mt-3" style="padding: 0;">
-                  <div id="clear-button-div" class="col-4">
-
-                    <label for="clear-filters" class="form-label fw-bold deferred-tooltip"
-                      data-bs-toggle="tooltip" data-bs-placement="top" data-bs-html="true"
-                      data-title-html="Click to reset and remove all currently applied filters.">  
-                      <button type="button" class="btn-sm btn-custom-warning method-label-text" 
-                      id="clearAllFilters">Clear All Filters</button>
-                    </label>
-                     <button type="button" class="btn-sm btn-custom-warning" id="clearAllFilters">
-                      Clear All Filters
-                    </button> -->
-                  <!-- </div> -->
-                   
-
-                  <!-- <div class="col-8">
-                    <p class="filterform-p">Filter the GPS points using any combination of the methods below. 
-                      You can narrow down the dataset by selecting specific years, birds, months, time slots, or a distance range.   
-                    </p>
-                  </div>
-
-                </div> -->
-                <!-- KK CHECKING ABOVE  -->
 
 
                 <div class="row mt-3 align-items-center">
@@ -682,7 +656,7 @@
               <div id="time-animation-controls" class="my-3 d-flex align-items-center gap-3 flex-wrap" style="margin-top: 0rem;">
 
                 <label for="speedSelect" class="form-label fw-bold deferred-tooltip"
-                  data-bs-toggle="tooltip" data-bs-placement="top" data-bs-html="true"
+                  data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-html="true"
                   data-title-html="Choose the animation speed for the migration playback.">
                   <span class="form-h5 method-label-text">Speed:</span>
                 </label> 
@@ -694,7 +668,7 @@
                 </select>
 
                 <label for="playButton" class="form-label fw-bold deferred-tooltip"
-                  data-bs-toggle="tooltip" data-bs-placement="top" data-bs-html="true"
+                  data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-html="true"
                   data-title-html="Start the migration animation playback.">
                   <button id="playButton" class="btn btn-sm btn-outline-light fw-semibold method-label-text">▶️ Play</button>
                 </label> 
@@ -702,7 +676,7 @@
                 <!-- <button id="playButton" class="btn btn-sm btn-outline-light fw-semibold">▶️ Play</button> -->
 
                 <label for="pauseButton" class="form-label fw-bold deferred-tooltip"
-                  data-bs-toggle="tooltip" data-bs-placement="top" data-bs-html="true"
+                  data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-html="true"
                   data-title-html="Pause the migration animation playback.">
                   <button id="pauseButton" class="btn btn-sm btn-secondary fw-semibold method-label-text" disabled>⏸️ Pause</button>
                 </label> 
@@ -711,7 +685,7 @@
 
                 <div class="form-check slider-detail">
                   <label for="monthlyRadio" class="form-label fw-bold deferred-tooltip"
-                    data-bs-toggle="tooltip" data-bs-placement="top" data-bs-html="true"
+                    data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-html="true"
                     data-title-html="Groups GPS data by month for the time animation. Uses monthly averages to conserve memory, but with reduced accuracy.">
                     <span class="method-label-text">Monthly</span>
                   </label>
@@ -720,7 +694,7 @@
                 </div>
                 <div class="form-check slider-detail">
                   <label for="weeklyRadio" class="form-label fw-bold deferred-tooltip"
-                    data-bs-toggle="tooltip" data-bs-placement="top" data-bs-html="true"
+                    data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-html="true"
                     data-title-html="Groups GPS data by week for the time animation. Uses weekly averages for greater accuracy, but is more memory-intensive.">
                     <span class="method-label-text">Weekly</span>
                   </label>
@@ -729,7 +703,7 @@
                 </div class="slider-detail">
 
                   <label for="time-slider" class="form-label fw-bold deferred-tooltip"
-                    data-bs-toggle="tooltip" data-bs-placement="top" data-bs-html="true"
+                    data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-html="true"
                     data-title-html="Use the slider to move through the time range of the dataset.">
                     <span class="method-label-text">Time:</span>
                   </label>
@@ -764,7 +738,7 @@
 
                 <div class="col-7">
                   <p class="form-p">
-                    Observe an individual Storks direction of travel and mingration over time, using the selections and buttons above.
+                    Observe an individual Storks direction of travel and migration over time, using the selections and buttons above.
                   </p>
                   <!-- Hide as this is not needed currently - but leave in case its required later -->
                   <span id="time-label" class="ms-2 text-light fw-semibold" style="display: none;">No time loaded</span>

@@ -797,3 +797,14 @@ p.filterform-p {
   position: absolute !important;
   z-index: 1000;
 } */
+
+/* Time slider colour per year */
+#time-slider::-webkit-slider-runnable-track {
+  height: 6px;
+  border-radius: 4px;
+}
+#time-slider::-moz-range-track {
+  height: 6px;
+  border-radius: 4px;
+}
+
