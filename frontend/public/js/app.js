@@ -46,7 +46,18 @@ let animationPaused = false;
 let selectedCluster = null;
 // let markerLayer = L.layerGroup().addTo(map);
 
-
+// Global colour map for year-based visuals
+const yearColorMap = {
+    2016: '#e6194b',  // Red
+    2017: '#3cb44b',  // Green
+    2018: '#ffe119',  // Yellow
+    2019: '#0082c8',  // Blue
+    2020: '#f58231',  // Orange
+    2021: '#911eb4',  // Purple
+    2022: '#46f0f0',  // Cyan
+    2023: '#f032e6',  // Magenta
+    2024: '#fabebe'   // Pink
+  };
 
 
 // Returns the selected checkbox values
@@ -85,6 +96,103 @@ timeDisplayControl.onAdd = function (map) {
   div.innerHTML = 'Month Year';
   return div;
 };
+
+// Helper function for slider colour per year - parses 'YYYY-Www' into a Date object
+function parseISOWeek(isoWeekStr) {
+  const [yearStr, weekStr] = isoWeekStr.split('-W');
+  const year = parseInt(yearStr, 10);
+  const week = parseInt(weekStr, 10);
+
+  // Start from Jan 4 (guaranteed to be in the first week)
+  const jan4 = new Date(Date.UTC(year, 0, 4));
+  const jan4Day = jan4.getUTCDay() || 7; // ISO: 1 = Monday ... 7 = Sunday
+
+  // Calculate the start of the first ISO week
+  const weekStart = new Date(jan4);
+  weekStart.setUTCDate(jan4.getUTCDate() - jan4Day + 1 + (week - 1) * 7);
+  return weekStart;
+}
+
+
+// Add colour years to the time slider to show time better
+// function updateSliderYearColors(timestamps, sliderElement) {
+//   if (!sliderElement || !Array.isArray(timestamps)) return;
+
+//   const total = timestamps.length;
+//   let gradientParts = [];
+//   let lastYear = null;
+//   let lastIndex = 0;
+
+//   timestamps.forEach((ts, i) => {
+//     const year = new Date(ts).getFullYear();
+//     if (year !== lastYear) {
+//       if (lastYear !== null) {
+//         const percent = (i / total) * 100;
+//         gradientParts.push(`${yearColorMap[lastYear] || '#ccc'} ${(lastIndex / total) * 100}% ${percent}%`);
+//       }
+//       lastYear = year;
+//       lastIndex = i;
+//     }
+//   });
+
+//   if (lastYear) {
+//     gradientParts.push(`${yearColorMap[lastYear] || '#ccc'} ${(lastIndex / total) * 100}% 100%`);
+//   }
+
+//   const gradient = `linear-gradient(to right, ${gradientParts.join(', ')})`;
+//   sliderElement.style.background = gradient;
+// }
+
+function updateSliderYearColors(timestamps, sliderElement) {
+  if (!sliderElement || !Array.isArray(timestamps)) return;
+
+  const total = timestamps.length;
+  const yearSegments = [];
+
+   // Use custom parser function if needed
+  const getYear = (ts) => {
+    return ts.includes('-W') ? parseISOWeek(ts).getUTCFullYear() : new Date(ts).getFullYear();
+  };
+
+  // Group consecutive timestamps by year
+  // let currentYear = new Date(timestamps[0]).getFullYear();
+  let currentYear = getYear(timestamps[0]);
+  let startIdx = 0;
+
+  console.log("Timestamps passed to updateSliderYearColors:", timestamps);
+
+  for (let i = 1; i < total; i++) {
+    // const tsYear = new Date(timestamps[i]).getFullYear();
+    const tsYear = getYear(timestamps[i]); // KK change this check
+    if (tsYear !== currentYear) {
+      const startPercent = (startIdx / total) * 100;
+      const endPercent = (i / total) * 100;
+      const color = yearColorMap[currentYear] || '#ccc';
+
+      console.log(`📅 Year segment: ${currentYear}, color: ${color}, range: ${startPercent.toFixed(2)}% - ${endPercent.toFixed(2)}%`);
+
+      yearSegments.push(`${color} ${startPercent.toFixed(2)}% ${endPercent.toFixed(2)}%`);
+      currentYear = tsYear;
+      startIdx = i;
+    }
+  }
+
+  // Add last segment
+  const finalColor = yearColorMap[currentYear] || '#ccc';
+  const finalStartPercent = (startIdx / total) * 100;
+
+  console.log(`📅 Final year segment: ${currentYear}, color: ${finalColor}, range: ${finalStartPercent.toFixed(2)}% - 100%`);
+
+  yearSegments.push(`${finalColor} ${(startIdx / total) * 100}% 100%`);
+
+  // Apply to slider
+  // sliderElement.style.background = `linear-gradient(to right, ${yearSegments.join(', ')})`;
+  const gradient = `linear-gradient(to right, ${yearSegments.join(', ')})`;
+
+  console.log("🎨 Final gradient string applied to slider:", gradient);
+
+  sliderElement.style.background = gradient
+}
 
 
 // Re-formats the timestamps to a date time string
@@ -590,9 +698,11 @@ function renderClustersOnMap(data) {
   } else {
     result = getMonthlyAveragedPoints(allSortedPoints);
   }
-
+  
   animationGroupedPoints = result.groupedPoints;
   animationTimestamps = result.timestamps;
+
+  updateSliderYearColors(animationTimestamps, timeSlider);
 
   console.log("DEBUG → groupedPoints:", animationGroupedPoints);
   console.log("DEBUG → timestamps:", animationTimestamps);
@@ -794,6 +904,7 @@ function renderClustersOnMap(data) {
       //   <div>
       //     <strong>Cluster:</strong> ${cluster}<br/>
       //     <strong>Bird ID:</strong> ${point.individual_local_identifier}<br/>
+      
       //     <strong>Heading:</strong> ${heading}° (${compass})<br/>
       //     <strong>Distance:</strong> ${distance} m<br/>
       //     <strong>Time:</strong> ${timestamp}<br/>
@@ -820,9 +931,32 @@ function renderClustersOnMap(data) {
           </div>
         </div>
       `;
-
-
     });
+
+    //   return `
+    //     <div>
+    //       <strong>Cluster:</strong> ${cluster}<br/>
+    //       <strong>Bird ID:</strong> ${point.individual_local_identifier}<br/>
+    //       <strong>Heading:</strong> ${heading}° (${compass})<br/>
+    //       <strong>Distance:</strong> ${distance} m<br/>
+    //       <strong>Time:</strong> ${timestamp}<br/>
+    //       <strong>Latitude:</strong> ${lat}<br/>
+    //       <strong>Longitude:</strong> ${lon}<br/>
+    //       <div class="map-links-placeholder" style="margin-top: 6px;"></div>
+    //     </div>
+    //   `;
+    // })
+
+    // // Defer link creation but bind `lat/lon` into the closure correctly
+    // marker.on('popupopen', ((lat, lon) => (e) => {
+    //   const container = e.popup.getElement()?.querySelector('.map-links-placeholder');
+    //   if (container && container.childElementCount === 0) {
+    //     container.innerHTML = `
+    //       <a href="https://www.google.com/maps?q=${lat},${lon}" target="_blank" style="margin-right: 8px;">🌍 Google Maps</a>
+    //       <a href="https://www.openstreetmap.org/?mlat=${lat}&mlon=${lon}#map=16/${lat}/${lon}" target="_blank">🗺️ OpenStreetMap</a>
+    //     `;
+    //   }
+    // })(lat, lon));
 
     clusterLayerGroup.addLayer(marker);
   });
@@ -920,6 +1054,7 @@ function toggleGPSFilterLayer(show) {
 }
 
 
+
 // Slider animation start
 function startAnimation(timeGrouping = 'monthly') {
 
@@ -985,7 +1120,17 @@ function startAnimation(timeGrouping = 'monthly') {
     timeSlider.min = 0;
     timeSlider.max = animationTimestamps.length - 1;
     timeSlider.value = 0; // Reset to start
+    updateSliderYearColors(animationTimestamps, timeSlider); // KK added for the colour per year for time slider 
   }
+
+  // KK ADD NEW CHECKING 
+  if (timeSliderLabel && animationTimestamps.length > 0) {
+    const firstPoint = animationGroupedPoints[animationTimestamps[0]]?.[0];
+    if (firstPoint) {
+      timeSliderLabel.textContent = formatTimestamp(firstPoint.timestamp);
+    }
+  }
+
   
   const legend = document.getElementById("legend");
   if (legend) legend.style.display = "none";
@@ -1012,12 +1157,44 @@ function startAnimation(timeGrouping = 'monthly') {
     animationTrail.push(latLng);
 
     // ➤ Draw polyline trail
-    if (animationPolyline) animationLayerGroup.removeLayer(animationPolyline);
-    animationPolyline = L.polyline(animationTrail, {
-      color: 'red',
-      weight: 4,
-      opacity: 0.8
-    }).addTo(animationLayerGroup);
+    // if (animationPolyline) animationLayerGroup.removeLayer(animationPolyline);
+    // animationPolyline = L.polyline(animationTrail, {
+    //   color: 'red',
+    //   weight: 4,
+    //   opacity: 0.8
+    // }).addTo(animationLayerGroup);
+
+    // ##### KK new code below for colours on polylines per year ########
+    // Clear existing polylines
+    animationLayerGroup.eachLayer(layer => {
+      if (layer instanceof L.Polyline) animationLayerGroup.removeLayer(layer);
+    });
+
+    // Group trail points by year
+    const trailByYear = {};
+
+    animationTrail.forEach((latLng, idx) => {
+      const point = animationGroupedPoints[animationTimestamps[idx]]?.[0];
+      if (!point) return;
+
+      const year = new Date(point.timestamp).getFullYear();
+      if (!trailByYear[year]) trailByYear[year] = [];
+      trailByYear[year].push(latLng);
+    });
+
+    // Add one polyline per year
+    Object.entries(trailByYear).forEach(([year, latLngs]) => {
+      const color = yearColorMap[year] || '#999';
+      const polyline = L.polyline(latLngs, {
+        color,
+        weight: 4,
+        opacity: 0.8
+      });
+      polyline.addTo(animationLayerGroup);
+    });
+
+
+     // ##### KK new code above for colours on polylines per year ########
 
     // Move or create the animated marker
     if (!animationMarker) {
@@ -1112,37 +1289,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   // Wait until dropdowns are populated
   await fetchAndPopulateDropdowns();
 
-  // Hide the loading section once metadata is fetched and dropdowns populated
-  // document.getElementById('loading-section').style.display = 'none';
-
-  // const loadingSection = document.getElementById('loading-section');
-
-  // ### Animated loading text ###
-  // const textElem = document.querySelector('#loading-metadata p');
-  // const rawText = textElem.textContent;
-  // const text = rawText.replace(/\s+/g, ' ').trim(); // collapse whitespace
-  // const text = textElem.textContent;
-
-  // console.log("Animating text:", text);
-  // console.log("Text length:", text.length);
-
-  // textElem.textContent = ''; // clear existing text
-
-  // // Wrap each letter in a span with a class and a delay style for wave effect
-  // for (let i = 0; i < text.length; i++) {
-  //   const span = document.createElement('span');
-  //   span.textContent = text[i];
-  //   span.style.animationDelay = `${(text.length - i - 1) * 0.1}s`; // right to left
-  //   span.classList.add('wave-letter');
-  //   textElem.appendChild(span);
-  // }
-
-
-
-
-  // Total delay = max animation delay + duration (e.g., 0.1s * text.length + 1s)
-  // const totalAnimTime = text.length * 100 + 1000; // ms
-
   const loadingSection = document.getElementById('loading-section');
 
   // Add fade-out class
@@ -1153,18 +1299,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     loadingSection.style.display = 'none';
   }, 1500); // Match fade-out CSS transition (0.5s = 500ms)
 
-  // setTimeout(() => {
-  //   loadingSection.classList.add('fade-out');
-
-  //   setTimeout(() => {
-  //     loadingSection.style.display = 'none';
-  //   }, 1000); // Match fade-out CSS transition
-  // }, totalAnimTime);
-
-  
-
-
-   // Initialise Select2 on the clustering dropdowns
+    // Initialise Select2 on the clustering dropdowns
   $('#year-select-clustering').select2({
     placeholder: "Select year(s)",
     width: '100%'
@@ -1224,7 +1359,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     updateAnimationMarker(index);
   });
 
-
   // Attach listeners after DOM loads
   // Event listener for toggle buttons
   document.querySelectorAll('button[data-toggle-type]').forEach(button => {
@@ -1235,12 +1369,10 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
   });
 
-
   // ✅ Distance filter listener
   document.getElementById("applyDistanceFilter").addEventListener("click", () => {
     renderClustersOnMap({ all_points: allPoints });
   });
-
   
   // Event listener for form submission - form submission handler
   form.addEventListener("submit", async (e) => {
@@ -1358,6 +1490,9 @@ document.addEventListener("DOMContentLoaded", async () => {
       sortedTimePoints = (data?.all_points || []).slice().sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
 
 
+
+
+
       // Render received data 
       renderClustersOnMap(data);
 
@@ -1390,14 +1525,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         "leaf_size_dbscan", "leaf_size_hdbscan", "timeGrouping", "use_coordinates", "animationSpeed"  
       ];
 
-      // fieldsToPersist.forEach((key) => {
-      //   const input = document.querySelector(`[name="${key}"]`);
-      //   if (input) {
-      //     const value = input.type === "checkbox" ? input.checked : input.value; 
-      //     localStorage.setItem(`clustering_${key}`, value);
-      //   }
-      // });
-
+    
       fieldsToPersist.forEach((key) => {
         let input = document.querySelector(`[name="${key}"]`);
 
@@ -1411,8 +1539,6 @@ document.addEventListener("DOMContentLoaded", async () => {
           localStorage.setItem(`clustering_${key}`, value);
         }
       });
-
-
 
     } catch (err) {
       console.error("Clustering error:", err);
@@ -1435,21 +1561,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     "use_timestamp", "use_interval_mins", "auto_silhouette", "max_cluster_size", 
     "leaf_size_dbscan", "leaf_size_hdbscan", "timeGrouping", "use_coordinates", "animationSpeed"
   ];
-
-  // persistFields.forEach((key) => {
-  //   const input = document.querySelector(`[name="${key}"]`);
-  //   const saved = localStorage.getItem(`clustering_${key}`);
-  //   if (!input || saved === null) return;
-
-  //   if (input.type === "checkbox") input.checked = saved === "true";
-  //   else input.value = saved;
-
-  //   if (key === "method") {
-  //     document.querySelectorAll(".method-params").forEach(el => el.classList.add("d-none"));
-  //     const visible = document.getElementById(`${saved}-params`);
-  //     if (visible) visible.classList.remove("d-none");
-  //   }
-  // });
 
   persistFields.forEach((key) => {
     // Load saved value
@@ -1488,20 +1599,106 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (speedSelect) speedSelect.value = savedSpeed;
   }
 
+  // timeSlider.addEventListener('input', (e) => {
+  //   if (animationInterval) stopAnimation();
+  //   updateAnimationMarker(parseInt(e.target.value, 10));
+  // });
 
+  // ######## KK New  to check - Updated slider input logic ################################
   timeSlider.addEventListener('input', (e) => {
-    if (animationInterval) stopAnimation();
-    updateAnimationMarker(parseInt(e.target.value, 10));
+  const newIndex = parseInt(e.target.value, 10);
+  animationPaused = true;
+
+  // Update pause button to reflect that animation is now paused
+  const pauseBtn = document.getElementById("pauseButton");
+  if (pauseBtn) pauseBtn.textContent = "Resume";
+
+   // Update play button to "Stop"
+  const playPauseBtn = document.getElementById("playButton");
+  if (playPauseBtn) playPauseBtn.textContent = "⏹️ Stop";
+
+  animationIndex = newIndex;
+
+  const timestamp = animationTimestamps[newIndex];
+  const point = animationGroupedPoints[timestamp]?.[0];
+
+  if (!point) return;
+
+  const latlng = [point.location_lat, point.location_long];
+
+  // Update the trail
+  animationTrail = animationTimestamps
+    .slice(0, newIndex + 1)
+    .map(ts => {
+      const p = animationGroupedPoints[ts]?.[0];
+      return p ? [p.location_lat, p.location_long] : null;
+    })
+    .filter(Boolean);
+
+  // Redraw trail line
+  // if (animationPolyline) animationLayerGroup.removeLayer(animationPolyline);
+
+  // animationPolyline = L.polyline(animationTrail, {
+  //   color: 'red',
+  //   weight: 4,
+  //   opacity: 0.8
+  // }).addTo(animationLayerGroup);
+
+  // KK NEW CODE BELOW FOR COLOUR SLIDER PER YEAR CHECK ##########################
+  // Clear existing polylines
+  animationLayerGroup.eachLayer(layer => {
+    if (layer instanceof L.Polyline) animationLayerGroup.removeLayer(layer);
   });
 
+  // Group trail points by year
+  const trailByYear = {};
 
-  // document.getElementById("playButton").addEventListener("click", () => {
-  //   if (animationInterval) {
-  //     stopAnimation();
-  //   } else {
-  //     startAnimation(animationGroupedPoints, animationTimestamps);
-  //   }
-  // });
+  animationTrail.forEach((latLng, idx) => {
+    const point = animationGroupedPoints[animationTimestamps[idx]]?.[0];
+    if (!point) return;
+
+    const year = new Date(point.timestamp).getFullYear();
+    if (!trailByYear[year]) trailByYear[year] = [];
+    trailByYear[year].push(latLng);
+  });
+
+  // Add one polyline per year
+  Object.entries(trailByYear).forEach(([year, latLngs]) => {
+    const color = yearColorMap[year] || '#999';
+    const polyline = L.polyline(latLngs, {
+      color,
+      weight: 4,
+      opacity: 0.8
+    });
+    polyline.addTo(animationLayerGroup);
+  });
+  // KK NEW CODE ABOVE FOR COLOUR SLIDER PER YEAR CHECK ##########################
+
+  // Update or create marker
+  if (!animationMarker) {
+    animationMarker = L.circleMarker(latlng, {
+      radius: 8,
+      fillColor: 'red',
+      color: 'black',
+      weight: 1,
+      opacity: 1,
+      fillOpacity: 0.9
+    }).addTo(animationLayerGroup);
+  } else {
+    animationMarker.setLatLng(latlng);
+  }
+
+  // Update label
+  if (timeSliderLabel) {
+    const ts = new Date(point.timestamp);
+    timeSliderLabel.textContent = formatTimestamp(ts);
+  }
+
+  animationMarker.bindPopup(`Time: ${formatTimestamp(point.timestamp)}`);
+  map.panTo(latlng);
+});
+
+// ####### KK TO CHECK NEW CODE DETAIL ABOVE ######################################
 
   document.getElementById("playButton").addEventListener("click", () => {
     const selectedGrouping = document.querySelector('input[name="timeGrouping"]:checked')?.value || "monthly";
@@ -1534,6 +1731,10 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   // Clear All Filters Button in Filter section
   document.getElementById("clearAllFilters").addEventListener("click", () => {
+    // ✅ Reset global state first
+    currentBird = "all";
+    currentYear = "all";
+    
     // Reset Year & Bird dropdowns to "all"
     const yearSelect = document.getElementById("year-select");
     const birdSelect = document.getElementById("bird-select");
@@ -1577,8 +1778,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (monthlyRadio) monthlyRadio.checked = true;
   });
 
-  
-  
   // Temporarily disable tooltips to prevent flicker
   document.querySelectorAll('.deferred-tooltip').forEach(el => {
     const tooltipInstance = bootstrap.Tooltip.getInstance(el);
