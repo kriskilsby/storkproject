@@ -1053,10 +1053,51 @@ function toggleGPSFilterLayer(show) {
   }
 }
 
+// For the colour year legend
+function showYearLegend(timestamps) {
+  const yearLegend = document.getElementById("year-legend");
+  yearLegend.innerHTML = ""; // Clear any previous content
+
+  if (!Array.isArray(timestamps) || timestamps.length === 0) {
+    console.warn("⚠️ No timestamps provided for year legend.");
+    return;
+  }
+
+  const getYear = (ts) => {
+    return ts.includes('-W') ? parseISOWeek(ts).getUTCFullYear() : new Date(ts).getFullYear();
+  };
+
+  const uniqueYears = [...new Set(timestamps.map(getYear))].sort();
+
+  uniqueYears.forEach(year => {
+    const color = yearColorMap[year] || '#ccc';
+
+    const item = document.createElement("div");
+    item.className = "legend-item";
+
+    const colorBox = document.createElement("div");
+    colorBox.className = "color-box";
+    colorBox.style.backgroundColor = color;
+
+    const label = document.createElement("span");
+    label.textContent = year;
+
+    item.appendChild(colorBox);
+    item.appendChild(label);
+
+    yearLegend.appendChild(item);
+  });
+}
+
 
 
 // Slider animation start
 function startAnimation(timeGrouping = 'monthly') {
+
+  if (animationInterval) {
+    clearInterval(animationInterval);
+    animationInterval = null;
+  }
 
   // Dynamically select based on current radio button
   const result = timeGrouping === 'weekly'
@@ -1067,6 +1108,12 @@ function startAnimation(timeGrouping = 'monthly') {
   // animationTimestamps = result.sortedTimestamps;
   animationTimestamps = result.timestamps;
   console.log("Animation Data Returned:", result);
+
+  // Show year legend, hide cluster legend
+  document.getElementById("cluster-legend-container").style.display = "none";
+  document.getElementById("year-legend-container").style.display = "block";
+  showYearLegend(animationTimestamps);
+
 
   if (!animationGroupedPoints || !Array.isArray(animationTimestamps) || animationTimestamps.length === 0) {
     console.warn("Invalid animation data.");
@@ -1139,6 +1186,7 @@ function startAnimation(timeGrouping = 'monthly') {
 
   animationInterval = setInterval(() => {
      if (animationPaused) return;
+     console.log("Animation tick:", animationIndex);
 
     if (animationIndex >= animationTimestamps.length) {
       stopAnimation();
@@ -1156,15 +1204,7 @@ function startAnimation(timeGrouping = 'monthly') {
     const latLng = [point.location_lat, point.location_long];
     animationTrail.push(latLng);
 
-    // ➤ Draw polyline trail
-    // if (animationPolyline) animationLayerGroup.removeLayer(animationPolyline);
-    // animationPolyline = L.polyline(animationTrail, {
-    //   color: 'red',
-    //   weight: 4,
-    //   opacity: 0.8
-    // }).addTo(animationLayerGroup);
-
-    // ##### KK new code below for colours on polylines per year ########
+    // ##### new code below for colours on polylines per year ########
     // Clear existing polylines
     animationLayerGroup.eachLayer(layer => {
       if (layer instanceof L.Polyline) animationLayerGroup.removeLayer(layer);
@@ -1192,9 +1232,6 @@ function startAnimation(timeGrouping = 'monthly') {
       });
       polyline.addTo(animationLayerGroup);
     });
-
-
-     // ##### KK new code above for colours on polylines per year ########
 
     // Move or create the animated marker
     if (!animationMarker) {
@@ -1230,7 +1267,6 @@ function startAnimation(timeGrouping = 'monthly') {
   }, intervalMs);
 }
 
-
 // Slider animation stop
 function stopAnimation() {
   clearInterval(animationInterval);
@@ -1255,9 +1291,6 @@ function stopAnimation() {
   document.getElementById("pauseButton").textContent = "Pause";
   animationPaused = false;
 
-  // Reset time slider and label (optional)
-  // const timeSlider = document.getElementById("time-slider");
-  // const timeLabel = document.getElementById('time-label');
   if (timeSlider) timeSlider.value = 0;
   if (timeSliderLabel) timeSliderLabel.textContent = 'No time loaded';
 
@@ -1269,6 +1302,10 @@ function stopAnimation() {
   const legend = document.getElementById("legend");
   if (legend) legend.style.display = "block";
 
+  // Restore legend containers
+  document.getElementById("year-legend-container").style.display = "none";
+  document.getElementById("cluster-legend-container").style.display = "block";
+
   map.removeControl(timeDisplayControl);
 }
 
@@ -1277,27 +1314,43 @@ function stopAnimation() {
 
 
 
+// ################ ALWAYS KEEP THIS JUST ABOVE DOM SECTION TO STOP BROWSER SCROLL HISTORY #################
+if ('scrollRestoration' in history) {
+  history.scrollRestoration = 'manual';
+}
 
 // ################# ONLY ADD WHAT NEEDS TO GO INTO DOM BELOW #################
 // Initialises the app when the DOM is fully loaded
 document.addEventListener("DOMContentLoaded", async () => {
-  window.scrollTo(0, 0);
+  window.scrollTo(0, 0); //scroll to the top immediately
   console.log("startAnimation type inside DOMContentLoaded:", typeof startAnimation);
+
   // Initialise the map
   initMap();
 
-  // Wait until dropdowns are populated
+  // Wait until dropdowns are populated (after SQL query)
   await fetchAndPopulateDropdowns();
 
-  const loadingSection = document.getElementById('loading-section');
+  // Give the browser a moment to render the scroll and loading section
+  
+    const loadingSection = document.getElementById('loading-section');
+    // Start fade-out
+    loadingSection.classList.add('fade-out');
 
-  // Add fade-out class
-  loadingSection.classList.add('fade-out');
+    // Hide after fade-out transition
+    loadingSection.addEventListener('transitionend', () => {
+      loadingSection.style.display = 'none';
+    });
+
+  // setTimeout(() => {
+  // }, 100); // Small delay to ensure scroll + layout apply before fading out
+
+
 
   // // After transition finishes, set display to none
-  setTimeout(() => {
-    loadingSection.style.display = 'none';
-  }, 1500); // Match fade-out CSS transition (0.5s = 500ms)
+  // setTimeout(() => {
+  //   loadingSection.style.display = 'none';
+  // }, 1500); // Match fade-out CSS transition (0.5s = 500ms)
 
     // Initialise Select2 on the clustering dropdowns
   $('#year-select-clustering').select2({
@@ -1369,7 +1422,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
   });
 
-  // ✅ Distance filter listener
+  // Distance filter listener
   document.getElementById("applyDistanceFilter").addEventListener("click", () => {
     renderClustersOnMap({ all_points: allPoints });
   });
@@ -1489,10 +1542,6 @@ document.addEventListener("DOMContentLoaded", async () => {
 
       sortedTimePoints = (data?.all_points || []).slice().sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
 
-
-
-
-
       // Render received data 
       renderClustersOnMap(data);
 
@@ -1525,7 +1574,6 @@ document.addEventListener("DOMContentLoaded", async () => {
         "leaf_size_dbscan", "leaf_size_hdbscan", "timeGrouping", "use_coordinates", "animationSpeed"  
       ];
 
-    
       fieldsToPersist.forEach((key) => {
         let input = document.querySelector(`[name="${key}"]`);
 
@@ -1569,7 +1617,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     const input = document.querySelector(`[name="${key}"]`);
 
-    // ✅ Special case for radio buttons
+    // special case for radio buttons
     const radios = document.querySelectorAll(`input[type="radio"][name="${key}"]`);
     if (radios.length > 0) {
       radios.forEach(radio => {
@@ -1599,12 +1647,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (speedSelect) speedSelect.value = savedSpeed;
   }
 
-  // timeSlider.addEventListener('input', (e) => {
-  //   if (animationInterval) stopAnimation();
-  //   updateAnimationMarker(parseInt(e.target.value, 10));
-  // });
-
-  // ######## KK New  to check - Updated slider input logic ################################
+  // ######## Updated slider input logic ################################
   timeSlider.addEventListener('input', (e) => {
   const newIndex = parseInt(e.target.value, 10);
   animationPaused = true;
@@ -1635,16 +1678,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     })
     .filter(Boolean);
 
-  // Redraw trail line
-  // if (animationPolyline) animationLayerGroup.removeLayer(animationPolyline);
-
-  // animationPolyline = L.polyline(animationTrail, {
-  //   color: 'red',
-  //   weight: 4,
-  //   opacity: 0.8
-  // }).addTo(animationLayerGroup);
-
-  // KK NEW CODE BELOW FOR COLOUR SLIDER PER YEAR CHECK ##########################
   // Clear existing polylines
   animationLayerGroup.eachLayer(layer => {
     if (layer instanceof L.Polyline) animationLayerGroup.removeLayer(layer);
@@ -1672,8 +1705,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
     polyline.addTo(animationLayerGroup);
   });
-  // KK NEW CODE ABOVE FOR COLOUR SLIDER PER YEAR CHECK ##########################
-
+  
   // Update or create marker
   if (!animationMarker) {
     animationMarker = L.circleMarker(latlng, {
@@ -1697,8 +1729,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   animationMarker.bindPopup(`Time: ${formatTimestamp(point.timestamp)}`);
   map.panTo(latlng);
 });
-
-// ####### KK TO CHECK NEW CODE DETAIL ABOVE ######################################
 
   document.getElementById("playButton").addEventListener("click", () => {
     const selectedGrouping = document.querySelector('input[name="timeGrouping"]:checked')?.value || "monthly";
