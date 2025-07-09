@@ -321,15 +321,7 @@ div.main-card {
   box-shadow: 0 4px 8px rgba(0,0,0,0.05);
 }
 
-.legend-item.selected-cluster {
-  background-color: #A1D6BF !important;
-  border-left: 4px solid #333;
-  padding-left: 4px;
-}
 
-.legend-item:hover {
-  background-color: #c8e8d5;
-}
 
 
 /* Doesn't currently exist in index.ejs  */
@@ -514,13 +506,24 @@ select {
   align-items: center;
 } */
 
+
+.legend-item.selected-cluster {
+  background-color: #A1D6BF !important;
+  border-left: 4px solid #333;
+  padding-left: 4px;
+}
+
+.legend-item:hover {
+  background-color: #c8e8d5;
+}
+
 .legend {
   background-color: #A1D6BF;
   padding: 10px;
   /* min-height: 500px; */
 }
 
-#legend {
+#legend, #year-legend {
   width: 200px;
   margin-right: 10px;
   padding: 10px;
@@ -537,7 +540,7 @@ select {
 }
 
 
-#legend div {
+#legend div, .legend-item {
   display: flex;
   align-items: center;
   gap: 6px;
