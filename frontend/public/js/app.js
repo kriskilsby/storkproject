@@ -44,6 +44,8 @@ let playPauseBtn;
 let allSortedPoints = [];
 let animationPaused = false;
 let selectedCluster = null;
+let isAnimating = false;
+
 // let markerLayer = L.layerGroup().addTo(map);
 
 // Global colour map for year-based visuals
@@ -271,6 +273,9 @@ function formatTimestamp(iso) {
 
 // Time details on the map for slider
 function updateMapForTimeIndex(groupedPoints, timestamps, index) {
+  console.log("updateMapForTimeIndex called. Index:", index);
+  console.log("Timestamp:", timestamps[index]);
+  console.log("Number of points:", (groupedPoints[timestamps[index]] || []).length);
   clusterLayerGroup.clearLayers();
   const points = groupedPoints[timestamps[index]] || [];
 
@@ -615,6 +620,10 @@ function getWeeklyAveragedPoints(allPoints) {
 
 // Main function responsible for rendering filtered points
 function renderClustersOnMap(data) {
+  if (isAnimating) {
+    console.log("🚫 renderClustersOnMap skipped — isAnimating = true");
+    return;
+  }
   clusterLayerGroup.clearLayers();
   const legendContainer = document.getElementById("legend");
   legendContainer.innerHTML = ""; // Clear old legend entries
@@ -644,6 +653,26 @@ function renderClustersOnMap(data) {
 
   animationLayerGroup.clearLayers();
   allPoints = data.all_points;
+
+  // ############## KK ADDED SECTION BELOW #####################
+  const birdSelect = document.getElementById("bird-select");
+  const playBtn = document.getElementById("playButton");
+
+  console.log("Rendering clusters on map. currentBird:", currentBird);
+  const uniqueBirds = new Set(allPoints.map(p => p.individual_local_identifier));
+  console.log("Unique birds in current dataset:", [...uniqueBirds]);
+  const selectedBird = birdSelect?.value;
+
+  // If only one bird is in dataset, enable the play button
+  if (uniqueBirds.size === 1 || (selectedBird && selectedBird !== "all")) {
+    playBtn.disabled = false;
+  } else {
+    playBtn.disabled = true;
+  }
+  console.log("Play button enabled:", !playBtn.disabled);
+  console.log("uniqueBirds.size:", uniqueBirds.size, "selectedBird:", selectedBird);
+
+  // ############## KK ADDED SECTION ABOVE #####################
 
   const selectedMonths = getSelectedCheckboxValues("month"); // from checkboxes
   const selectedSlots = getSelectedCheckboxValues("hour");   // from checkboxes
@@ -764,15 +793,16 @@ function renderClustersOnMap(data) {
     };
 
     // ✅ Step 4: Hook up play/pause button
-    playPauseBtn.onclick = () => {
-      if (animationInterval) {
-        stopAnimation();
-        playPauseBtn.textContent = '▶️ Play';
-      } else {
-        playPauseBtn.textContent = '⏸️ Pause';
-        startAnimation(animationGroupedPoints, animationTimestamps);
-      }
-    };
+    // playPauseBtn.onclick = () => {
+    //   if (animationInterval) {
+    //     stopAnimation();
+    //     playPauseBtn.textContent = '▶️ Play';
+    //   } else {
+    //     playPauseBtn.textContent = '⏸️ Pause';
+    //     console.log("⏯️ Starting animation now...");
+    //     startAnimation(animationGroupedPoints, animationTimestamps);
+    //   }
+    // };
 
     // Show first frame
     updateMapForTimeIndex(animationGroupedPoints, animationTimestamps, 0);
@@ -961,6 +991,8 @@ function renderClustersOnMap(data) {
     clusterLayerGroup.addLayer(marker);
   });
 
+  // Update Play Button once after all data is handled
+  updatePlayButtonState();
 }
 
 // Returns a color for a given cluster ID using a D3 palette
@@ -1089,10 +1121,45 @@ function showYearLegend(timestamps) {
   });
 }
 
+// Disable the slider play button when there is multiple birds and no filter
+function updatePlayButtonState() {
+  const playBtn = document.getElementById("playButton");
+
+  const uniqueBirds = new Set(allSortedPoints.map(p => p.individual_local_identifier));
+  const multipleBirds = uniqueBirds.size > 1;
+  const allBirdsSelected = !currentBird || currentBird === "all";
+
+  if (multipleBirds && allBirdsSelected) {
+    playBtn.disabled = true;
+    playBtn.title = "Select a specific bird to enable animation.";
+  } else {
+    playBtn.disabled = false;
+    playBtn.title = "";
+  }
+}
+
+
 
 
 // Slider animation start
 function startAnimation(timeGrouping = 'monthly') {
+  isAnimating = true;
+  animationPaused = false;
+  
+  // ############## KK ADDED SECTION BELOW #####################
+  // const birdSelect = document.getElementById("bird-select");
+  // const selectedBird = birdSelect?.value;
+
+  // If multiple birds exist, but 'All Birds' is selected, block animation
+  console.log("Animation started. currentBird:", currentBird);
+  const uniqueBirds = new Set(allSortedPoints.map(p => p.individual_local_identifier));
+  console.log("Unique birds in allSortedPoints for animation:", [...uniqueBirds]);
+
+  if (uniqueBirds.size > 1 && (!currentBird || currentBird === "all")) {
+    alert("Please select a specific bird from the dropdown to use the animation.");
+    return;
+  }
+  // ############## KK ADDED SECTION ABOVE #####################
 
   if (animationInterval) {
     clearInterval(animationInterval);
@@ -1114,7 +1181,7 @@ function startAnimation(timeGrouping = 'monthly') {
   document.getElementById("year-legend-container").style.display = "block";
   showYearLegend(animationTimestamps);
 
-
+ 
   if (!animationGroupedPoints || !Array.isArray(animationTimestamps) || animationTimestamps.length === 0) {
     console.warn("Invalid animation data.");
     return;
@@ -1185,6 +1252,8 @@ function startAnimation(timeGrouping = 'monthly') {
   timeDisplayControl.addTo(map);
 
   animationInterval = setInterval(() => {
+    console.log("Checking animationPaused:", animationPaused);
+    console.log("⏳ setInterval assigned. ID:", animationInterval);
      if (animationPaused) return;
      console.log("Animation tick:", animationIndex);
 
@@ -1194,6 +1263,10 @@ function startAnimation(timeGrouping = 'monthly') {
     }
 
     const timestamp = animationTimestamps[animationIndex];
+    console.log(`Animation frame ${animationIndex + 1} / ${animationTimestamps.length}`);
+    console.log("Timestamp:", timestamp);
+    const points = animationGroupedPoints[timestamp] || [];
+    console.log("Points for this timestamp:", points);
     const point = animationGroupedPoints[timestamp]?.[0];
 
     if (!point) {
@@ -1269,6 +1342,19 @@ function startAnimation(timeGrouping = 'monthly') {
 
 // Slider animation stop
 function stopAnimation() {
+  console.log("🛑 START OF stopAnimation() function CALLED");
+  console.trace("🧭 Trace stopAnimation call");
+  // KK NEW CODE BELOW ###################
+  if (!animationInterval) {
+    console.log("🟡 stopAnimation() skipped — no animation running");
+    return;
+  }
+
+  console.log("🛑 stopAnimation() CALLED");
+  clearInterval(animationInterval);
+  animationInterval = null;
+  // KK NEW CODE ABOVE ###################
+  isAnimating = false;
   clearInterval(animationInterval);
   animationInterval = null;
   animationIndex = 0;
@@ -1398,9 +1484,43 @@ document.addEventListener("DOMContentLoaded", async () => {
   });
   // Event listener for Bird drop-downs
   document.getElementById("bird-select").addEventListener("change", (e) => {
-    currentBird = e.target.value;
+    // currentBird = e.target.value;
+    // console.log("Bird dropdown changed. Selected bird:", currentBird);
+    // renderClustersOnMap({ all_points: allPoints });
+    // updatePlayButtonState(); // KK ADDED CODE CHECK for time slider button
+
+    const selected = e.target.value;
+
+    if (selected === currentBird) {
+      console.log("⚠️ Bird selection hasn't changed. Skipping re-render.");
+      return;
+    }
+
+    // if (animationInterval) {
+    //   console.log("⏳ Animation in progress. Ignoring dropdown change.");
+    //   return;
+    // }
+    // KK NEW CODE
+    if (animationInterval && !animationPaused) {
+      console.log("⏳ Animation in progress. Ignoring dropdown change.");
+      return;
+    }
+    // KK NEW CODE
+     // Clear any leftover animation interval (e.g., paused or stale)
+    if (animationInterval) {
+      clearInterval(animationInterval);
+      animationInterval = null;
+    }
+
+    console.log("✅ Bird dropdown changed. New selection:", selected);
+    currentBird = selected;
+
     renderClustersOnMap({ all_points: allPoints });
+    updatePlayButtonState();
   });
+
+
+
   // Event listener for year drop-downs
   document.getElementById("year-select").addEventListener("change", (e) => {
     currentYear = e.target.value;
@@ -1740,6 +1860,15 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   });
 
+//   document.getElementById("playButton").addEventListener("click", () => {
+//   const selectedGrouping = document.querySelector('input[name="timeGrouping"]:checked')?.value || "monthly";
+
+//   stopAnimation(); // Always stop any running animation
+
+//   // Always start fresh
+//   startAnimation(selectedGrouping);
+// });
+
   // Slider Pause button
   document.getElementById("pauseButton").addEventListener("click", () => {
     animationPaused = !animationPaused;
@@ -1806,6 +1935,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     // Reset time grouping radio buttons to 'monthly' (if needed)
     const monthlyRadio = document.querySelector('input[name="timeGrouping"][value="monthly"]');
     if (monthlyRadio) monthlyRadio.checked = true;
+
+    updatePlayButtonState(); // KK ADD CODE CHECK FOR SLIDER BUTTON
   });
 
   // Temporarily disable tooltips to prevent flicker
