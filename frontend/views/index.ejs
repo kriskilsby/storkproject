@@ -6,8 +6,8 @@
     <title>Stork Migration Data Visualisation</title>
 
     <!-- CSS -->
-    <link rel="stylesheet" href="/css/stork_styles.css" />
     <link rel="stylesheet" href="/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="/css/stork_styles.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@docsearch/css@3" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
@@ -51,34 +51,25 @@
 
     <!-- Main Content -->
     <main>
-      <section id="hero-top" class="text-center py-5 position-relative" style="text-align: left;">
-        <div>
-          <h1 class="display-5 fw-bold">Stork Migration Interactive Visualisation</h1>
-          <p class="lead">Run clustering on the Stork Migration database.</p>
-        
-        <!-- </div>
-         <img src="/images/stork3.png" alt="Stork Icon1"
-         style="
-           position: absolute;
-           bottom: -1.5rem;
-           left: -3rem;
-           max-height: 11rem;
-           pointer-events: none;
-           z-index: 999;
-         "> -->
 
-        </div>
-         <img src="/images/stork2.webp" alt="Stork Icon"
-         style="
-           position: absolute;
-           bottom: -4rem;
-           right: -3rem;
-           max-height: 10rem;
-           pointer-events: none;
-           z-index: 999;
-         ">
-              
-      </section>
+      <div class="container">
+        <section id="hero-top" class="text-center py-5 position-relative">
+          
+            <h1 class="display-2 fw-bold">Stork Interactive Visualisation</h1>
+            <h1 class="display-6">Run clustering on the Stork Migration database.</h1>
+          
+          <img src="/images/stork2.webp" alt="Stork Icon"
+          class="hero-stork-img"
+          style="
+            position: absolute;
+            bottom: -4rem;
+            right: -3rem;
+            /* max-height: 10rem; */
+            pointer-events: none;
+            z-index: 999;
+          ">
+        </section>
+      </div>
 
       <section id="loading-section" class="container mt-4 mb-0">
         <div class="row">
@@ -171,138 +162,152 @@
               <!-- Method -->
               <div class="row mt-3">
                 <!-- <h5 class="form-h5">Clustering Setup</h5> -->
-
-                <label for="Clustering Setup" class="form-label fw-bold deferred-tooltip"
-                  data-bs-toggle="tooltip" data-bs-placement="top" data-bs-html="true"
-                  data-title-html="These settings let you choose how the system groups the data. 
-                    Each method offers different options to fine-tune how clusters are found.">
-                  <h5 class="form-h5 method-label-text">Clustering Setup</h5>
-                </label>  
-
-                <div class="row">
-                  <div class="col-12">
+                <div class="col-12">
+                  <div class="row">
+                    <label for="Clustering Setup" class="form-label fw-bold deferred-tooltip"
+                      data-bs-toggle="tooltip" data-bs-placement="top" data-bs-html="true"
+                      data-title-html="These settings let you choose how the system groups the data. 
+                        Each method offers different options to fine-tune how clusters are found.">
+                      <h5 class="form-h5 method-label-text">Clustering Setup</h5>
+                    </label>  
+                  </div>  
+                </div>
+                <!-- <div class="row"> -->
+                <div class="col-12">
+                  <div class="row">
                     <p class="form-p">Choose a clustering method and adjust its settings as needed.  
                       Each method has its own parameters, which can affect how clusters are identified in the data. 
                       When you click run clustering it will cluster based on your chosen settings, using the data selected by your query. 
                     </p>
                   </div>
                 </div>
-                <div class="col-md-2">
-                  <label for="method" class="form-label fw-bold deferred-tooltip"
-                    data-bs-toggle="tooltip" data-bs-placement="top" data-bs-html="true"
-                    data-title-html="Choose how you want the data to be grouped:
-                      &lt;br&gt;&lt;strong&gt;KMeans&lt;/strong&gt; is fast and simple but you must say how many groups you want.
-                      &lt;br&gt;&lt;strong&gt;DBSCAN&lt;/strong&gt; can find oddly shaped groups and ignores noisy points.
-                      &lt;br&gt;&lt;strong&gt;HDBSCAN&lt;/strong&gt; is similar to DBSCAN but more advanced and flexible.">
-                    <span class="method-label-text">Clustering Method</span>
-                  </label>
-                  <select id="method" name="method" class="form-select">
-                    <option value="kmeans">KMeans</option>
-                    <option value="dbscan">DBSCAN</option>
-                    <option value="hdbscan">HDBSCAN</option>
-                  </select>
-                </div>
+                <!-- </div> -->
 
-                <!-- KMeans Params -->
-                <div id="kmeans-params" class="method-params d-none col-md-10">
-                  <div class="row">
-                    <div class="col-md-2">
-                      <label for="n_clusters" class="form-label fw-bold deferred-tooltip"
-                        data-bs-toggle="tooltip" data-bs-placement="top" data-bs-html="true"
-                        data-title-html="This sets how many groups (clusters) you want the system to make. 
-                          For example, enter '3' to split the data into 3 groups.">
-                        <span class="method-label-text"># Clusters</span>
-                      </label>
-                      <input type="number" name="n_clusters" class="form-control" value="3" min="1">
-                    </div>
-                    <div class="col-md-5">
-                      <input class="form-check-input" type="checkbox" name="auto_silhouette" id="auto_silhouette">
-                      <label for="auto_silhouette" class="form-check-label  fw-bold deferred-tooltip" 
-                        data-bs-toggle="tooltip" data-bs-placement="top" data-bs-html="true"
-                        data-title-html="If checked, the system will test between 2 to 20 clusters and 
-                          pick the best one automatically based on how well the groups separate.">
-                        <span class="method-label-text"> Auto Silhouette</span>
-                      </label>
-                      <p>Use Silhouette Analysis to find the best number of clusters</p>
-                    </div>
-                  </div>
-                </div>
+                <div class="col-12">
+                  <div class="row g-3">
 
-                <!-- DBSCAN Params -->
-                <div id="dbscan-params" class="method-params d-none col-md-10">
-                  <div class="row">
-                    <div class="col-md-2">
-                      <label for="eps" class="form-label fw-bold deferred-tooltip"
+                    <!-- Clustering Method -->
+                    <div class="col-12 col-sm-6 col-md-6 col-lg-3">
+                      <label for="method" class="form-label fw-bold deferred-tooltip"
                         data-bs-toggle="tooltip" data-bs-placement="top" data-bs-html="true"
-                        data-title-html="This controls how close points must be to be in the same group. 
-                          Smaller values find tighter groups; larger ones find looser groups.">
-                        <span class="method-label-text">EPS</span>
+                        data-title-html="Choose how you want the data to be grouped:
+                          &lt;br&gt;&lt;strong&gt;KMeans&lt;/strong&gt; is fast and simple but you must say how many groups you want.
+                          &lt;br&gt;&lt;strong&gt;DBSCAN&lt;/strong&gt; can find oddly shaped groups and ignores noisy points.
+                          &lt;br&gt;&lt;strong&gt;HDBSCAN&lt;/strong&gt; is similar to DBSCAN but more advanced and flexible.">
+                        <span class="method-label-text">Clustering Method</span>
                       </label>
-                      <input type="number" name="eps" step="0.01" min="0" max="10" class="form-control" value="0.5">
+                      <select id="method" name="method" class="form-select">
+                        <option value="kmeans">KMeans</option>
+                        <option value="dbscan">DBSCAN</option>
+                        <option value="hdbscan">HDBSCAN</option>
+                      </select>
                     </div>
-                    <div class="col-md-2">
-                      <label for="min_samples" class="form-label fw-bold deferred-tooltip"
-                        data-bs-toggle="tooltip" data-bs-placement="top" data-bs-html="true"
-                        data-title-html="This sets how many nearby points are needed to form a group. 
-                          Higher values mean stronger evidence is needed to make a cluster.">
-                        <span class="method-label-text">Min Samples</span>
-                      </label>
-                      <input type="number" name="min_samples" class="form-control" value="5">
+                  
+                    <!-- KMeans Params -->
+                    <div id="kmeans-params" class="method-params mt-3 d-none col-12">
+                      <div class="row">
+                        <div class="col-12 col-sm-6 col-md-6 col-lg-3">
+                          <label for="n_clusters" class="form-label fw-bold deferred-tooltip"
+                            data-bs-toggle="tooltip" data-bs-placement="top" data-bs-html="true"
+                            data-title-html="This sets how many groups (clusters) you want the system to make. 
+                              For example, enter '3' to split the data into 3 groups.">
+                            <span class="method-label-text"># Clusters</span>
+                          </label>
+                          <input type="number" name="n_clusters" class="form-control" value="3" min="1">
+                        </div>
+                        <div class="mt-3 col-12 col-sm-7 col-md-6 col-lg-5">
+                          <input class="form-check-input" type="checkbox" name="auto_silhouette" id="auto_silhouette">
+                          <label for="auto_silhouette" class="form-check-label  fw-bold deferred-tooltip" 
+                            data-bs-toggle="tooltip" data-bs-placement="top" data-bs-html="true"
+                            data-title-html="If checked, the system will test between 2 to 20 clusters and 
+                              pick the best one automatically based on how well the groups separate.">
+                            <span class="method-label-text"> Auto Silhouette</span>
+                          </label>
+                          <p>Use Silhouette Analysis to find the best number of clusters</p>
+                        </div>
+                      </div>
                     </div>
-                    <div class="col-md-2">
-                      <label for="leaf_size_dbscan" class="form-label fw-bold deferred-tooltip"
-                        data-bs-toggle="tooltip" data-bs-placement="top" data-bs-html="true"
-                        data-title-html="This affects how fast the algorithm runs. You usually don’t need to change this.">
-                        <span class="method-label-text">Leaf Size</span>
-                      </label>
-                      <input type="number" name="leaf_size_dbscan" class="form-control" value="40">
+
+                    <!-- DBSCAN Params -->
+                    <div id="dbscan-params" class="method-params mt-3 d-none col-12">
+                      <div class="row">
+                        <div class="col-12 col-sm-6 col-md-6 col-lg-3">
+                          <label for="eps" class="form-label fw-bold deferred-tooltip"
+                            data-bs-toggle="tooltip" data-bs-placement="top" data-bs-html="true"
+                            data-title-html="This controls how close points must be to be in the same group. 
+                              Smaller values find tighter groups; larger ones find looser groups.">
+                            <span class="method-label-text">EPS</span>
+                          </label>
+                          <input type="number" name="eps" step="0.01" min="0" max="10" class="form-control" value="0.5">
+                        </div>
+                        <div class="col-12 col-sm-6 col-md-6 col-lg-3">
+                          <label for="min_samples" class="form-label fw-bold deferred-tooltip"
+                            data-bs-toggle="tooltip" data-bs-placement="top" data-bs-html="true"
+                            data-title-html="This sets how many nearby points are needed to form a group. 
+                              Higher values mean stronger evidence is needed to make a cluster.">
+                            <span class="method-label-text">Min Samples</span>
+                          </label>
+                          <input type="number" name="min_samples" class="form-control" value="5">
+                        </div>
+                        <div class="col-12 col-sm-6 col-md-6 col-lg-3">
+                          <label for="leaf_size_dbscan" class="form-label fw-bold deferred-tooltip"
+                            data-bs-toggle="tooltip" data-bs-placement="top" data-bs-html="true"
+                            data-title-html="This affects how fast the algorithm runs. You usually don’t need to change this.">
+                            <span class="method-label-text">Leaf Size</span>
+                          </label>
+                          <input type="number" name="leaf_size_dbscan" class="form-control" value="40">
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                </div>
-                
-                <!-- HDBSCAN Params -->
-                <div id="hdbscan-params" class="method-params d-none col-md-10">
-                  <div class="row">
-                    <div class="col-md-2">
-                      <label for="min_cluster_size" class="form-label fw-bold deferred-tooltip"
-                        data-bs-toggle="tooltip" data-bs-placement="top" data-bs-html="true"
-                        data-title-html="The smallest number of points allowed in a group. 
-                          Setting this higher avoids tiny clusters.">
-                        <span class="method-label-text">Min Cluster Size</span>
-                      </label>
-                      <input type="number" name="min_cluster_size" class="form-control" value="5">
-                    </div>
-                    <div class="col-md-2">
-                      <label for="max_cluster_size" class="form-label fw-bold deferred-tooltip"
-                        data-bs-toggle="tooltip" data-bs-placement="top" data-bs-html="true"
-                        data-title-html="The largest number of points allowed in a group. 
-                          Leave it blank if you don’t want a limit.">
-                        <span class="method-label-text">Max Cluster Size</span>
-                      </label>
-                      <input type="number" name="max_cluster_size" class="form-control" placeholder="None">
-                    </div>
-                    <div class="col-md-2">
-                      <label for="leaf_size_hdbscan" class="form-label fw-bold deferred-tooltip"
-                        data-bs-toggle="tooltip" data-bs-placement="top" data-bs-html="true"
-                        data-title-html="Like in DBSCAN, this adjusts speed. You normally don’t need to change it.">
-                        <span class="method-label-text">Leaf Size</span>
-                      </label>
-                      <input type="number" name="leaf_size_hdbscan" class="form-control" value="40">
+                    
+                    <!-- HDBSCAN Params -->
+                    <div id="hdbscan-params" class="method-params mt-3 d-none col-12">
+                      <div class="row">
+                        <div class="col-12 col-sm-6 col-lg-3">
+                          <label for="min_cluster_size" class="form-label fw-bold deferred-tooltip"
+                            data-bs-toggle="tooltip" data-bs-placement="top" data-bs-html="true"
+                            data-title-html="The smallest number of points allowed in a group. 
+                              Setting this higher avoids tiny clusters.">
+                            <span class="method-label-text">Min Cluster Size</span>
+                          </label>
+                          <input type="number" name="min_cluster_size" class="form-control" value="5">
+                        </div>
+                        <div class="col-12 col-sm-6 col-lg-3">
+                          <label for="max_cluster_size" class="form-label fw-bold deferred-tooltip"
+                            data-bs-toggle="tooltip" data-bs-placement="top" data-bs-html="true"
+                            data-title-html="The largest number of points allowed in a group. 
+                              Leave it blank if you don’t want a limit.">
+                            <span class="method-label-text">Max Cluster Size</span>
+                          </label>
+                          <input type="number" name="max_cluster_size" class="form-control" placeholder="None">
+                        </div>
+                        <div class="col-12 col-sm-6 col-lg-3">
+                          <label for="leaf_size_hdbscan" class="form-label fw-bold deferred-tooltip"
+                            data-bs-toggle="tooltip" data-bs-placement="top" data-bs-html="true"
+                            data-title-html="Like in DBSCAN, this adjusts speed. You normally don’t need to change it.">
+                            <span class="method-label-text">Leaf Size</span>
+                          </label>
+                          <input type="number" name="leaf_size_hdbscan" class="form-control" value="40">
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
 
               <!-- Data Collection setup details -->
-              <div class="row mt-4">
-                <!-- <h5 class="form-h5">Data Collection Setup</h5> -->
-
-                <label for="Data Collection Setup" class="form-label fw-bold deferred-tooltip"
-                  data-bs-toggle="tooltip" data-bs-placement="top" data-bs-html="true"
-                  data-title-html="These settings let you control how the data is prepared before clustering. 
-                    They help balance between accuracy and performance.">
-                  <h5 class="form-h5 method-label-text">Data Collection Setup</h5>
-                </label>  
+              <div class="row mt-3">
+                <!-- Section heading and label -->
+                <div class="row">
+                  <div class="col-12">
+                    <label for="Data Collection Setup" class="form-label fw-bold deferred-tooltip"
+                      data-bs-toggle="tooltip" data-bs-placement="top" data-bs-html="true"
+                      data-title-html="These settings let you control how the data is prepared before clustering. 
+                        They help balance between accuracy and performance.">
+                      <h5 class="form-h5 method-label-text">Data Collection Setup</h5>
+                    </label>
+                  </div>
+                </div>
 
                 <div class="row">
                   <div class="col-12">
@@ -318,62 +323,67 @@
                   </div>
                 </div>    
                 
-                <!-- Decimal Places selection -->
-                <div class="col-md-2">
-                  <label for="decimal_places" class="form-label fw-bold deferred-tooltip"
-                    data-bs-toggle="tooltip" data-bs-placement="top" data-bs-html="true"
-                    data-title-html="Controls how accurate the GPS locations are. 
-                      More decimal places give more detail but take longer to process.">
-                    <span class="method-label-text">Decimal Precision</span>
-                  </label>
-                  <select id="decimal_places" name="decimal_places" class="form-select">
-                    <option value="-1">Standard (full)</option>
-                    <option value="3" selected>3 (≈111m)</option>
-                    <option value="4">4 (≈11m)</option>
-                    <option value="5">5 (≈1.1m)</option>
-                  </select>
-                </div>
+                <!-- Collection Methods -->
+                <div class="col-12">
+                  <div class="row g-3">
+                    <!-- Decimal Places selection -->
+                    <div class="col-12 col-sm-6 col-lg-3">
+                      <label for="decimal_places" class="form-label fw-bold deferred-tooltip"
+                        data-bs-toggle="tooltip" data-bs-placement="top" data-bs-html="true"
+                        data-title-html="Controls how accurate the GPS locations are. 
+                          More decimal places give more detail but take longer to process.">
+                        <span class="method-label-text">Decimal Precision</span>
+                      </label>
+                      <select id="decimal_places" name="decimal_places" class="form-select">
+                        <option value="-1">Standard (full)</option>
+                        <option value="3" selected>3 (≈111m)</option>
+                        <option value="4">4 (≈11m)</option>
+                        <option value="5">5 (≈1.1m)</option>
+                      </select>
+                    </div>
 
-                <!-- Interval minutes selection -->
-                <div class="col-md-2">
-                  <label for="interval_minutes" class="form-label fw-bold deferred-tooltip"
-                    data-bs-toggle="tooltip" data-bs-placement="top" data-bs-html="true"
-                    data-title-html="Only keeps data at fixed time steps. 
-                      For example, 15 minutes means it uses one point every 15 minutes. 
-                      Higher intervals make clustering faster but less detailed.">
-                    <span class="method-label-text">Time Interval</span>
-                  </label>
-                  <select id="interval_minutes" name="interval_minutes" class="form-select">
-                    <option value="0">0 min</option>
-                    <option value="1">1 min</option>
-                    <option value="5">5 min</option>
-                    <option value="10">10 min</option>
-                    <option value="15" selected>15 min</option>
-                    <option value="20">20 min</option>
-                    <option value="30">30 min</option>
-                  </select>
-                </div>
-               
-                <!-- Sample Rate selection -->
-                <div class="col-md-2">
-                  <label for="sample_rate" class="form-label fw-bold deferred-tooltip"
-                    data-bs-toggle="tooltip" data-bs-placement="top" data-bs-html="true"
-                    data-title-html="Limits how many GPS points are used to draw the map.
-                      <strong>High</strong>: Up to 45,000 points (more detail, slower),
-                      <strong>Medium</strong>: Up to 30,000 points (balanced),
-                      <strong>Low</strong>: Up to 15,000 points (faster, less detail).">
-                    <span class="method-label-text">GPS Point Limit</span>
-                  </label>
-                  <select id="sample_rate" name="sample_rate" class="form-select">
-                    <option value="1">Low</option>
-                    <option value="2" selected>Medium</option>
-                    <option value="3">High</option>
-                  </select>
+                    <!-- Interval minutes selection -->
+                    <div class="col-12 col-sm-6 col-lg-3">
+                      <label for="interval_minutes" class="form-label fw-bold deferred-tooltip"
+                        data-bs-toggle="tooltip" data-bs-placement="top" data-bs-html="true"
+                        data-title-html="Only keeps data at fixed time steps. 
+                          For example, 15 minutes means it uses one point every 15 minutes. 
+                          Higher intervals make clustering faster but less detailed.">
+                        <span class="method-label-text">Time Interval</span>
+                      </label>
+                      <select id="interval_minutes" name="interval_minutes" class="form-select">
+                        <option value="0">0 min</option>
+                        <option value="1">1 min</option>
+                        <option value="5">5 min</option>
+                        <option value="10">10 min</option>
+                        <option value="15" selected>15 min</option>
+                        <option value="20">20 min</option>
+                        <option value="30">30 min</option>
+                      </select>
+                    </div>
+                  
+                    <!-- Sample Rate selection -->
+                    <div class="col-12 col-sm-6 col-lg-3">
+                      <label for="sample_rate" class="form-label fw-bold deferred-tooltip"
+                        data-bs-toggle="tooltip" data-bs-placement="top" data-bs-html="true"
+                        data-title-html="Limits how many GPS points are used to draw the map.
+                          <strong>High</strong>: Up to 45,000 points (more detail, slower),
+                          <strong>Medium</strong>: Up to 30,000 points (balanced),
+                          <strong>Low</strong>: Up to 15,000 points (faster, less detail).">
+                        <span class="method-label-text">GPS Point Limit</span>
+                      </label>
+                      <select id="sample_rate" name="sample_rate" class="form-select">
+                        <option value="1">Low</option>
+                        <option value="2" selected>Medium</option>
+                        <option value="3">High</option>
+                      </select>
+                    </div>
+                  </div>  
                 </div>
               </div> 
 
               <!-- Feature Selection area -->
-              <div class="row mt-4">
+              <div class="row mt-3">
                 <div class="col-md-12">
               
                   <label for="Feature Selections" class="form-label fw-bold deferred-tooltip"
@@ -391,136 +401,116 @@
                       </p>
                     </div>
                   </div>                  
-                  <div style="display: flex; flex-wrap: wrap; gap: 0rem; margin-top: 0.5rem;">
-                    
-                    <input class="form-check-input me-1" type="checkbox" name="use_coordinates" id="use_coordinates" checked>
-                    <label class="form-label fw-bold deferred-tooltip" style="margin-left: 0.3rem; margin-right: 2.0rem;"
-                      data-bs-toggle="tooltip" data-bs-placement="top" data-bs-html="true"
-                      data-title-html="Use geographic coordinates (latitude and longitude) as clustering features.
-                        Useful for detecting location-based patterns.">
-                      <span class="form-h5 method-label-text">Use Coordinates</span>
-                    </label>
+                  <!-- <div style="display: flex; flex-wrap: wrap; gap: 0rem; margin-top: 0.5rem;"> -->
+                  <div class="d-flex flex-wrap gap-3 mt-3">
+                    <!-- Use Coordinates -->
+                    <div class="d-flex flex-sm-row flex-column align-items-start">
+                      <input class="form-check-input me-1" type="checkbox" name="use_coordinates" id="use_coordinates" checked>
+                      <!-- <label class="form-label fw-bold deferred-tooltip" style="margin-left: 0.3rem; margin-right: 2.0rem;" -->
+                      <label class="form-label fw-bold deferred-tooltip ms-sm-2"
+                        data-bs-toggle="tooltip" data-bs-placement="top" data-bs-html="true"
+                        data-title-html="Use geographic coordinates (latitude and longitude) as clustering features.
+                          Useful for detecting location-based patterns.">
+                        <span class="form-h5 method-label-text">Use Coordinates</span>
+                      </label>
+                    </div>
 
-                    <input class="form-check-input me-1" type="checkbox" name="use_interval_mins" id="use_interval_mins" checked>
-                    <label class="form-label fw-bold deferred-tooltip" style="margin-left: 0.3rem; margin-right: 2.0rem;"
-                      data-bs-toggle="tooltip" data-bs-placement="top" data-bs-html="true"
-                      data-title-html="Include the time interval (in minutes) between points as a feature.
-                        Can help detect movement or time-based behaviours.">
-                      <span class="form-h5 method-label-text">Use Interval Minutes</span>
-                    </label>                    
+                    <!-- Use Interval Minutes -->
+                    <div class="d-flex flex-sm-row flex-column align-items-start">
+                      <input class="form-check-input me-1" type="checkbox" name="use_interval_mins" id="use_interval_mins" checked>
+                      <!-- <label class="form-label fw-bold deferred-tooltip" style="margin-left: 0.3rem; margin-right: 2.0rem;" -->
+                      <label class="form-label fw-bold deferred-tooltip ms-sm-2"
+                        data-bs-toggle="tooltip" data-bs-placement="top" data-bs-html="true"
+                        data-title-html="Include the time interval (in minutes) between points as a feature.
+                          Can help detect movement or time-based behaviours.">
+                        <span class="form-h5 method-label-text">Use Interval Minutes</span>
+                      </label>                    
+                    </div>
 
-                    <input class="form-check-input me-1" type="checkbox" name="use_distance" id="use_distance">
-                    <label class="form-label fw-bold deferred-tooltip" style="margin-left: 0.3rem; margin-right: 2.0rem;"
-                      data-bs-toggle="tooltip" data-bs-placement="top" data-bs-html="true"
-                      data-title-html="Use the calculated distance between consecutive points.
-                        Helps highlight activity intensity or spatial changes.">
-                      <span class="form-h5 method-label-text">Distance</span> 
-                    </label>
+                    <!-- Use Distance -->
+                    <div class="d-flex flex-sm-row flex-column align-items-start">                   
+                      <input class="form-check-input me-1" type="checkbox" name="use_distance" id="use_distance">
+                      <!-- <label class="form-label fw-bold deferred-tooltip" style="margin-left: 0.3rem; margin-right: 2.0rem;" -->
+                      <label class="form-label fw-bold deferred-tooltip ms-sm-2"
+                        data-bs-toggle="tooltip" data-bs-placement="top" data-bs-html="true"
+                        data-title-html="Use the calculated distance between consecutive points.
+                          Helps highlight activity intensity or spatial changes.">
+                        <span class="form-h5 method-label-text">Distance</span> 
+                      </label>
+                    </div>
 
-                    <input class="form-check-input me-1" type="checkbox" name="use_heading" id="use_heading">
-                    <label class="form-label fw-bold deferred-tooltip" style="margin-left: 0.3rem; margin-right: 2.0rem;"
-                      data-bs-toggle="tooltip" data-bs-placement="top" data-bs-html="true"
-                      data-title-html="Include the direction of movement (in degrees) as a feature.
-                        Useful for tracking consistent movement patterns or directionality.">
-                      <span class="form-h5 method-label-text">Heading</span> 
-                    </label>
+                    <!-- Use Heading -->
+                    <div class="d-flex flex-sm-row flex-column align-items-start">                      
+                      <input class="form-check-input me-1" type="checkbox" name="use_heading" id="use_heading">
+                      <!-- <label class="form-label fw-bold deferred-tooltip" style="margin-left: 0.3rem; margin-right: 2.0rem;" -->
+                      <label class="form-label fw-bold deferred-tooltip ms-sm-2"
+                        data-bs-toggle="tooltip" data-bs-placement="top" data-bs-html="true"
+                        data-title-html="Include the direction of movement (in degrees) as a feature.
+                          Useful for tracking consistent movement patterns or directionality.">
+                        <span class="form-h5 method-label-text">Heading</span> 
+                      </label>
+                    </div>
 
-                    <input class="form-check-input me-1" type="checkbox" name="use_year" id="use_year" checked>
-                    <label class="form-label fw-bold deferred-tooltip" style="margin-left: 0.3rem; margin-right: 2.0rem;"
-                      data-bs-toggle="tooltip" data-bs-placement="top" data-bs-html="true"
-                      data-title-html="Use the year each data point was collected.
-                        Can help identify long-term trends or seasonal behaviours.">
-                      <span class="form-h5 method-label-text">Year</span>  
-                    </label>
+                    <!-- Use Year -->
+                    <div class="d-flex flex-sm-row flex-column align-items-start">
+                      <input class="form-check-input me-1" type="checkbox" name="use_year" id="use_year" checked>
+                      <!-- <label class="form-label fw-bold deferred-tooltip" style="margin-left: 0.3rem; margin-right: 2.0rem;" -->
+                      <label class="form-label fw-bold deferred-tooltip ms-sm-2"
+                        data-bs-toggle="tooltip" data-bs-placement="top" data-bs-html="true"
+                        data-title-html="Use the year each data point was collected.
+                          Can help identify long-term trends or seasonal behaviours.">
+                        <span class="form-h5 method-label-text">Year</span>  
+                      </label>
+                    </div>
 
-                    <input class="form-check-input me-1" type="checkbox" name="use_month" id="use_month" checked>
-                    <label class="form-label fw-bold deferred-tooltip" style="margin-left: 0.3rem; margin-right: 2.0rem;"
-                      data-bs-toggle="tooltip" data-bs-placement="top" data-bs-html="true"
-                      data-title-html="Use the month of each data point to detect seasonal patterns.
-                        Particularly helpful in time-sensitive clustering.">
-                      <span class="form-h5 method-label-text">Month</span>  
-                    </label>
+                    <!-- Use Month -->
+                    <div class="d-flex flex-sm-row flex-column align-items-start">                      
+                      <input class="form-check-input me-1" type="checkbox" name="use_month" id="use_month" checked>
+                      <!-- <label class="form-label fw-bold deferred-tooltip" style="margin-left: 0.3rem; margin-right: 2.0rem;" -->
+                      <label class="form-label fw-bold deferred-tooltip ms-sm-2"
+                        data-bs-toggle="tooltip" data-bs-placement="top" data-bs-html="true"
+                        data-title-html="Use the month of each data point to detect seasonal patterns.
+                          Particularly helpful in time-sensitive clustering.">
+                        <span class="form-h5 method-label-text">Month</span>  
+                      </label>
+                    </div>
 
-                    <input class="form-check-input me-1" type="checkbox" name="use_scaling" id="use_scaling">
-                    <label class="form-label fw-bold deferred-tooltip" style="margin-left: 0.3rem; margin-right: 2.0rem;"
-                      data-bs-toggle="tooltip" data-bs-placement="top" data-bs-html="true"
-                      data-title-html="Apply standard scaling to all features (zero mean, unit variance).
-                        Essential for distance-based algorithms like KMeans to treat all features equally.">
-                      <span class="form-h5 method-label-text">Use Feature Scaling (StandardScaler)</span> 
-                    </label>
-
+                    <!-- Use Scaling -->
+                    <div class="d-flex flex-sm-row flex-column align-items-start">                      
+                      <input class="form-check-input me-1" type="checkbox" name="use_scaling" id="use_scaling">
+                      <!-- <label class="form-label fw-bold deferred-tooltip" style="margin-left: 0.3rem; margin-right: 2.0rem;" -->
+                      <label class="form-label fw-bold deferred-tooltip ms-sm-2"
+                        data-bs-toggle="tooltip" data-bs-placement="top" data-bs-html="true"
+                        data-title-html="Apply standard scaling to all features (zero mean, unit variance).
+                          Essential for distance-based algorithms like KMeans to treat all features equally.">
+                        <span class="form-h5 method-label-text">Use Feature Scaling (StandardScaler)</span> 
+                      </label>
+                    </div>
                   </div>
                 </div> 
               </div>
 
               <!-- Submit Button -->
               <div class="row mt-3 align-items-center">
-                <!-- <div id="run-button-div" class="col-3 col-sm-4 col-md-2 mb-2">
-                  <label for="run-clustering" class="form-label fw-bold deferred-tooltip"
-                    data-bs-toggle="tooltip" data-bs-placement="top" data-bs-html="true"
-                    data-title-html="Start the clustering process using the selected algorithm and features.
-                      Processing time depends on data size and selected parameters.">  
-                    <button type="submit" id="runClusteringBtn" class="btn btn-sm btn-success btn-clustering-style"
-                    >Run Clustering</button>
-                  </label>
-                </div> -->
-
-                <div id="run-button-div" class="col-3 col-sm-4 col-md-2 mb-2">
-                  <label for="run-clustering"
-                        class="form-label fw-bold deferred-tooltip d-block"
-                        data-bs-toggle="tooltip"
-                        data-bs-placement="top"
-                        data-bs-html="true"
-                        data-title-html="Start the clustering process using the selected algorithm and features.">
-                    <button type="submit"
-                            id="runClusteringBtn"
-                            class="btn btn-sm btn-success btn-clustering-style w-100">
-                      Run Clustering
-                    </button>
-                  </label>
-                </div>
-                
-                <!-- <div id="run-button-div" class="col-3 col-sm-4 col-md-2 mb-2">
+                <!-- <div id="run-button-div" class="col-3 col-sm-4 col-md-2 mb-2"> -->
+                <div id="run-button-div" class="col-12 col-lg-2 mb-2">  
                   <button type="submit"
                           id="runClusteringBtn"
-                          class="btn btn-sm btn-success btn-clustering-style"
+                          class="btn btn-sm btn-success btn-clustering-style w-100 deferred-tooltip"
                           data-bs-toggle="tooltip"
                           data-bs-placement="top"
                           data-bs-html="true"
-                          title="Start the clustering process using the selected algorithm and features.
-                                Processing time depends on data size and selected parameters.">
+                          data-title-html="Start the clustering process using the selected algorithm and features.">
                     Run Clustering
                   </button>
-                </div> -->
+                </div>
 
-
-                <div class="col-9">
-                  <!-- <button type="submit" class="btn btn-success btn_lg me-3">Run Clustering</button> -->
-                  <span id="clustering-timer" class="text-muted fw-bold"></span>
-                </div> 
+                <!-- <div class="col-9" style="min-height: 1px;"> -->
+                <div class="col-12 col-lg-10" style="min-height: 1px;">
+                  <!-- <span id="clustering-timer" class="text-muted fw-bold">&nbsp;</span> -->
+                  <span id="clustering-timer" class="text-muted fw-bold d-block w-100 text-center text-sm-start">&nbsp;</span>
+                </div>
               </div>
-
-                <!-- <div class="row mt-3 align-items-center">
-                  <div id="clear-button-div" class="col-3 col-sm-4 col-md-2 mb-2">
-                    <button type="button"
-                            class="btn btn-sm btn-custom-warning fw-bold deferred-tooltip method-label-text"
-                            id="clearAllFilters"
-                            data-bs-toggle="tooltip"
-                            data-bs-placement="top"
-                            data-bs-html="true"
-                            title="Click to <strong>reset</strong> and remove all currently applied filters.">
-                      Clear All Filters
-                    </button>
-                  </div>
-
-                  <div class="col-9">
-                    <p class="mb-0">
-                      Filter the GPS points using any combination of the methods below. You can narrow down the dataset by selecting specific years, birds, months, time slots, or a distance range.
-                    </p>
-                  </div>
-                </div> -->
-
-       
 
               <!-- Clustering Logs (Frontend Logs) -->
               <div id="clusteringLogs" style="margin-top: 1rem; font-size: 0.95rem;">
@@ -581,10 +571,11 @@
             <!-- Filter Form -->
             <form id="mapFiltersForm" class="row g-3">
 
-
-                <div class="row mt-3 align-items-center">
+              <div class="col-12"> 
+                <div class="row mt-1 align-items-center">
                   <!-- <div id="clear-button-div" class="col-2"> -->
-                  <div id="clear-button-div" class="col-3 col-sm-4 col-md-2 mb-2">
+                  <div id="clear-button-div" class="mb-2 col-12 col-md-12 col-lg-2">
+                    <!-- class="btn btn-sm btn-custom-warning fw-bold deferred-tooltip method-label-text" -->
                     <button type="button"
                             class="btn btn-sm btn-custom-warning fw-bold deferred-tooltip method-label-text"
                             id="clearAllFilters"
@@ -596,16 +587,16 @@
                     </button>
                   </div>
 
-                  <div class="col-9">
+                  <div class="col-12 col-md-12 col-lg-9">
                     <p class="mb-0">
                       Filter the GPS points using any combination of the methods below. You can narrow down the dataset by selecting specific years, birds, months, time slots, or a distance range.
                     </p>
                   </div>
                 </div>
-
+              </div>
 
               <!-- Column: Year + Bird stacked vertically -->
-              <div class="col-md-2 d-flex flex-column gap-4">
+              <div class="col-md-12 col-lg-2 d-flex flex-column gap-4">
                 <!-- Year -->
                  
                 <div>
@@ -636,7 +627,7 @@
 
               <!-- Column 3: Months Filter -->
               <div class="col-md-4">
-                <label for="months-select" class="form-label fw-bold deferred-tooltip"
+                <label for="month-select" class="form-label fw-bold deferred-tooltip"
                   data-bs-toggle="tooltip" data-bs-placement="top" data-bs-html="true"
                   data-title-html="Select one or more months to filter GPS points by month.
                     Use the buttons to select all, and deselect all month filters">
@@ -657,12 +648,12 @@
               </div>
 
               <!-- Column 4: Time Slots -->
-              <div class="col-md-4">
+              <div class="col-md-5 col-lg-4">
                 <label for="timeSlots-select" class="form-label fw-bold deferred-tooltip"
                   data-bs-toggle="tooltip" data-bs-placement="top" data-bs-html="true"
                   data-title-html="Filter GPS points based on specific time intervals during the day.
                     Use the buttons to select all, and deselect all time-based filters">
-                  <span class="form-h5 method-label-text">Time Slots:</span>
+                  <span class="form-h5 mathod-label-text">Time Slots:</span>
                 </label>                 
                 <!-- <label class="form-label">Time Slots:</label> -->
                 <div class="mb-2">
@@ -685,7 +676,7 @@
                 </div>
               </div>
 
-              <div class="col-md-2 d-flex flex-column gap-1">
+              <div class="col-md-3 col-lg-2 d-flex flex-column gap-1">
                 <label for="distance-select" class="form-label fw-bold deferred-tooltip"
                   data-bs-toggle="tooltip" data-bs-placement="top" data-bs-html="true"
                   data-title-html="Set minimum and maximum distance (in meters) to filter points within that range.">
@@ -702,30 +693,37 @@
 
             </form>
 
-            <div class="row mt-2 ms-0 me-0">
-              <div class="legend col-md-2 rounded" style="min-height: 600px;">
-                <!-- Cluster Legend (default) -->
-                <div id="cluster-legend-container">
-                  <label for="cluster-legend" class="form-label fw-bold deferred-tooltip"
-                    data-bs-toggle="tooltip" data-bs-placement="top" data-bs-html="true"
-                    data-title-html="Shows up to 20 clusters of GPS points, sorted with the largest cluster at the top.">
-                    <h6 class="method-label-text">Cluster Legend</h6>
-                  </label>
-                  <div id="legend" class="legend"></div>
-                </div>
+            <!-- <div class="row g-3 mt-0"> -->
+            <!-- <div class="row mt-0 g-3">
+              <div class="legend-container col-12 col-lg-3" style="min-height: 600px;"> -->
+                <!-- <div class="legend rounded" style="min-height: 600px;"> -->
 
-                <!-- Year Legend (during animation) -->
-                <div id="year-legend-container" style="display: none;">
-                  <label class="form-label fw-bold">
-                    <h6 class="method-label-text">Year Legend</h6>
-                  </label>
-                  <div id="year-legend" class="legend"></div>
-                </div>
-              </div>
+            <div class="container"> 
+              <div class="row mt-0 g-3"> 
+                <div class="legend-container mt-2 col-12 col-lg-3" style="min-height: 600px;">
 
-              <div id="map-div" class="col-md-10 me-0">
-                <div id="map" style="min-height: 600px; padding-bottom: 0rem;"></div>
-              </div>
+                  <div id="cluster-legend-container">
+                    <label for="cluster-legend" class="form-label fw-bold deferred-tooltip"
+                      data-bs-toggle="tooltip" data-bs-placement="top" data-bs-html="true"
+                      data-title-html="Shows up to 20 clusters of GPS points, sorted with the largest cluster at the top.">
+                      <h6 class="legend-label-text">Cluster Legend</h6>
+                    </label>
+                    <div id="legend" class="legend"></div>
+                  </div>
+
+                  <!-- Year Legend (during animation) -->
+                  <div id="year-legend-container" style="display: none;">
+                    <label class="form-label fw-bold">
+                      <h6 class="method-label-text">Year Legend</h6>
+                    </label>
+                    <div id="year-legend" class="legend"></div>
+                  </div>
+                </div>
+              
+                <div id="map-div" class="mt-2 col-12 col-lg-9">
+                  <div id="map" style="min-height: 600px; padding-bottom: 0rem;"></div>
+                </div>  
+              </div>  
             </div>
 
 
@@ -790,28 +788,22 @@
               </div>
 
               <div class="row align-items-center">
-                <div class="col-4">
-                  <!-- <div class="mb-2 d-flex gap-4"> -->
+                <!-- <div class="col-12"> -->
+                <div class="col-10 col-md-3 col-lg-4">
                   <h5 class="form-h5 mb-0 mt-0">Play the Migration Animation</h5>
                 </div>
-                <div class="col-2 col-sm-1 position-relative">
-                  <img src="/images/stork.png" alt="Stork" class="img-fluid" 
-                        style="
-                        position: absolute;
-                        bottom: -3.0rem;
-                        right: 0.5rem;
-                        max-height: 5.5rem;
-                        pointer-events: none;
-                        ">
+                <div class="play-img col-2 col-md-2 col-lg-1 position-relative">
+                  <img src="/images/stork.png" alt="Stork" class="img-fluid play-stork-img">      
                 </div>
 
-                <div class="col-7">
+                <div class="col-12 col-md-7 col-lg-7">
                   <p class="form-p mb-0">
                     Observe an individual Storks direction of travel and migration over time, using the selections and buttons above.
                   </p>
                   <!-- Hide as this is not needed currently - but leave in case its required later -->
                   <span id="time-label" class="ms-2 text-light fw-semibold" style="display: none;">No time loaded</span>
                 </div>
+                <!-- </div>   -->
               </div>  
             </div>
           </div>
