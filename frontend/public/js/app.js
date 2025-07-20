@@ -1352,7 +1352,9 @@ function startAnimation(timeGrouping = 'monthly') {
   }
 
   const legend = document.getElementById("legend");
-  if (legend) legend.style.display = "none";
+  // if (legend) legend.style.display = "none";
+  if (legend) legend.classList.add("hide");
+
 
   timeDisplayControl.addTo(map);
 
@@ -1504,7 +1506,9 @@ function stopAnimation() {
   
   // Restore legend
   const legend = document.getElementById("legend");
-  if (legend) legend.style.display = "block";
+  // if (legend) legend.style.display = "block";
+  if (legend) legend.classList.remove("hide");
+  window.dispatchEvent(new Event('resize')); // Optional but helps refresh layout
 
   // Restore legend containers
   document.getElementById("year-legend-container").style.display = "none";

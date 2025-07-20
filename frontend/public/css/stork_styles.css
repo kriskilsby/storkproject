@@ -5,61 +5,117 @@
 
     ====================================== */
 
-@media (max-width: 576px) {
-  #legend, #year-legend {
-    font-size: 12px;
-    padding: 5px;
+/* For screen sizes under 1200px */
+@media (max-width: 1200px) {
+  .hero-stork-img {
+    max-height: 8rem;
+    right: -2rem;
+    bottom: -3rem;
   }
+}
+
+/* For screen sizes under 992px */
+@media (max-width: 992px) {
+.legend-container {
+    min-height: auto !important;
+    /* padding: 0.5rem; */
+  }
+
+#map-div {
+  padding-right: 0 !important;
+  padding-left: 0 !important;
+}
+  #legend, #year-legend {
+    flex-direction: row !important; /* Change to row direction for multi-column layout */
+    flex-wrap: wrap; /* Allow items to wrap to the next line */
+    justify-content: flex-start; /* Align items to the start of the row */
+    gap: 8px; /* Increase gap slightly for better spacing in multi-column */
+    padding: 10px; /* Keep consistent padding, or adjust for smaller screens */
+  }
+
+  
+  /* Style the individual legend items to take roughly half the width */
+  #legend > div, /* Target all direct div children (includes the "more clusters" item) */
+  #year-legend > div {
+    flex: 1 1 calc(50% - 4px) !important; /* FORCED to grow, not shrink, base width 50% minus half the gap */
+    max-width: calc(50% - 4px) !important; /* FORCED max width to ensure two items per row */
+    word-break: break-all; /* More aggressive word-breaking for narrower columns */
+  }
+
+/* .legend-item class specific rules, if any other than what's covered by #legend > div */
+  /* This rule is largely redundant if #legend > div is used, but doesn't hurt */
+  .legend-item {
+    flex-wrap: wrap; /* Ensures content within the item wraps */
+  }
+
  .color-box {
     width: 0.75rem;
     height: 0.75rem;
   }
-  #hero-top img {
-    max-height: 6rem;
-    right: 0;
-    bottom: -2rem;
-  }
-  #play-animation-section img {
-    max-height: 3rem;
-    bottom: -1rem;
-  }
 }
 
-/* @media (max-width: 576px) {
-  #hero-top img {
-    max-height: 6rem;
-    right: 0;
-    bottom: -2rem;
-  }
-}
-
-@media (max-width: 576px) {
-  #play-animation-section img {
-    max-height: 3rem;
-    bottom: -1rem;
-  }
-} */
-
+/* For screen sizes under 768px */
 @media (max-width: 768px) {
-  .legend {
-    min-height: auto;
-    padding: 0.5rem;
-  }
   #main-container {
     flex-direction: column;
     height: 70vh;
     margin: 1rem;
   }
+  .hero-stork-img {
+    max-height: 6rem;
+    right: -1rem;
+    bottom: -2rem;
+  }
+  #hero-top {
+    max-width: 90% !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+  }
+  .legend-container { /* If you need this specific override here, keep it */
+     min-height: auto !important;
+  }
 }
 
-/* Tweak margins on smaller screens */
-/* @media (max-width: 768px) {
-    #main-container {
-    flex-direction: column;
-    height: 70vh;
-    margin: 1rem;
+/* For screen sizes under 576px */
+@media (max-width: 576px) {
+  #legend, #year-legend {
+    font-size: 12px;
+    padding: 5px;
+    gap: 6px; /* Slightly smaller gap when in a single column again */
+    flex-direction: column !important; /* Revert to single column */
+    flex-wrap: nowrap !important; /* Prevent wrapping if it becomes a single column */  
   }
-}  */
+
+  /* Ensure items take full width to stack properly */
+  #legend > div,
+  #year-legend > div {
+    flex: 1 1 100% !important; /* FORCED to take full width */
+    max-width: 100% !important; /* Ensures they don't overflow */
+  }
+
+  .legend-item {
+    flex: 1 1 100%; /* Make items take full width to stack */
+    max-width: 100%; /* Ensure they don't overflow */
+  }
+
+ .color-box {
+    width: 0.75rem;
+    height: 0.75rem;
+  }
+  
+  #play-animation-section img {
+    max-height: 3rem;
+    bottom: -1rem;
+  }
+  .hero-stork-img {
+    max-height: 4rem;
+    right: 0;
+    bottom: -1rem;
+  }
+}
+
+
+
 
 
     /* ======================================
@@ -74,15 +130,24 @@
   max-width: 100%;
 }
 
+h6.legend-label-text {
+  margin-left: 1rem;
+}
+
 /* .row {
   margin-left: 0;
   margin-right: 0;
   overflow-x: hidden;
+  overflow: hidden !important;
 } */
 
 
+
+
+
 body {
-    font-family: 'Inter', sans-serif;
+    /* font-family: 'Inter', sans-serif; */
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif
     background-color: #F9F9F9 !important;
   }
 
@@ -92,6 +157,10 @@ body {
 
   .card-body {
     background-color: #F9F9F9 !important;
+  }
+
+  .card-title {
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif !important;
   }
 
   /* Setup for any div. with the main-card class */
@@ -150,6 +219,9 @@ p.filterform-p {
   padding-right: 0rem;
 }
 
+.filter-label-text {
+  font-size: 1.2rem;
+}
 
     /* ======================================
 
@@ -161,25 +233,38 @@ p.filterform-p {
   background-color:#C66489;
   color: #F9F9F9;
   padding-top: 2rem !important;
-  padding-bottom: 2rem !important;
+  padding-bottom: 4rem !important;
+  /* padding-left: 1rem;
+  padding-right: 1rem; */
   border-radius: 1rem;
   margin: 1rem auto;
-  max-width: 1100px;
+  /* margin: 1rem 1rem; */
+  max-width: 85%;
   box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+  /* overflow: hidden; */
+  padding-left: 1rem;
+  padding-right: 1rem;
 }
 
-#hero-top img {
+/* #hero-top img {
   max-width: 100%;
   height: auto;
-}
+  display: block;
+  margin: 0 auto;
+} */
 
-  #hero-top h1 {
-    font-size: 1.5rem;
+  /* #hero-top h1 {
+    font-size: 3rem;
   }
 
   #hero-top p {
-    font-size: 1rem;
-  }
+    font-size: 2.3rem;
+  } */
+
+  .hero-stork-img {
+  max-height: 10rem;
+  transition: max-height 0.4s ease, right 0.4s ease, bottom 0.4s ease;
+}
 
 
     /* ======================================
@@ -289,6 +374,22 @@ div#time-animation-controls {
   height: 6px;
   border-radius: 4px;
 }
+
+.play-img {
+  position: relative;
+  height: 6vh; /* or use a relative unit like 10vh */
+}
+
+.play-stork-img {
+  position: absolute;
+  bottom: 0rem;
+  right: 0.0rem;
+  max-height: 100%;
+  height: auto;
+  width: auto;
+  pointer-events: none;
+}
+
 
     /* ======================================
 
@@ -414,18 +515,42 @@ div#time-animation-controls {
 
     ====================================== */
 
-  #map {
+#map {
   min-height: 600px;
   /* height: 700px; */
   width: 100%;
-  border: 1px solid #ccc;
+  /* border: 1px solid #ccc; */
   /* border-radius: 8px; */
+  border-radius: 1rem !important;
   margin-bottom: 0 !important;
 }
 
-#map-div {
-  padding-right: 0 !important;
+#map {
+  flex: 1;
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 0.75rem;
 }
+
+/* Optional: give a max-width to prevent map overflow on huge screens */
+@media (min-width: 1400px) {
+  #main-container {
+    margin-right: 1rem;
+    /* margin-left: 1rem; */
+  }
+}
+
+#map-div {
+  /* border-radius: 1rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);  */
+  padding-right: 0;
+  padding-left: 0.5rem;
+}
+
+/* #legend .rounded {
+  border-radius: 1rem  
+} */
+
 
 #map-card {
   padding: 16px 16px 8px 16px;
@@ -441,16 +566,25 @@ div#time-animation-controls {
   background-color: #c8e8d5;
 }
 
-.legend {
+/* Styles for the main legend card container */
+.legend-container {
   background-color: #A1D6BF;
-  padding: 10px;
+  padding: 1rem 0.5rem !important;
   max-height: 100%;
   overflow-y: auto;
-  /* min-height: 500px; */
+  border-radius: 1rem !important;
+  min-height: 600px;
+  overflow: hidden !important;
+  /* margin-left: 0 !important; */
+  /* box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15); */
 }
 
+/* Base flex properties for #legend and #year-legend (the direct parents of items) */
+/* Styles for the actual list of legend items (inside the card) */
 #legend, #year-legend {
-  /* width: 200px; */
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
   max-width: 100%;
   width: 100%;
   overflow-x: auto;
@@ -458,15 +592,10 @@ div#time-animation-controls {
   margin-right: 10px;
   padding: 10px;
   padding-bottom: 0.75rem;
-  /* background-color: #d5f7bd; */
-  border-right: 1px solid #ccc;
   font-family: sans-serif;
   font-size: 14px;
   overflow-y: auto;
-  box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
+  /* box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1); */
 }
 
 .legend-item {
@@ -474,12 +603,22 @@ div#time-animation-controls {
   word-break: break-word;
 }
 
-#legend div, .legend-item {
+/* Base flex properties for individual legend items (all direct div children) */
+#legend > div,
+#year-legend > div {
+    display: flex;
+    align-items: center;
+    gap: 6px; /* Gap between color-box and label within an item */
+    padding-bottom: 0.0rem;
+    flex-wrap: wrap; /* Allows the content inside *each item* to wrap if it's too long */
+}
+
+/* #legend div, .legend-item {
   display: flex;
   align-items: center;
   gap: 6px;
   padding-bottom: 0.0rem;
-} 
+}  */
 
 .color-box {
   flex-shrink: 0;
@@ -491,7 +630,7 @@ div#time-animation-controls {
 }
 
 
-  .btn, .form-select, .form-control {
+.btn, .form-select, .form-control {
   transition: all 0.3s ease-in-out;
 }
 .btn:hover {
@@ -511,20 +650,9 @@ div#time-animation-controls {
   box-sizing: border-box;
 }
 
-#map {
-  flex: 1;
-  border-radius: 4px;
-  overflow: hidden;
-  margin-bottom: 0.75rem;
-}
 
-/* Optional: give a max-width to prevent map overflow on huge screens */
-@media (min-width: 1400px) {
-  #main-container {
-    margin-right: 1rem;
-    /* margin-left: 1rem; */
-  }
-}
+
+
 
 /* Default styling */
 #map-controls {
@@ -580,7 +708,7 @@ div#time-animation-controls {
   height: auto;
   width: 100%;
   white-space: normal;
-  padding: 0.375rem 0.75rem;
+  /* padding: 0.375rem 0.75rem; */
   font-weight: 600;
   border-radius: 0.4rem;
   text-align: center;
@@ -601,9 +729,9 @@ div#time-animation-controls {
   border: 1px solid #006699 !important;
 } */
 
-#clear-button-div {
-  margin-left: 7px;
-}
+/* #clear-button-div {
+  margin-left: 0px;
+} */
 
 #clearAllFilters {
   white-space: normal; /* Allow line breaks */
@@ -639,13 +767,29 @@ div#time-animation-controls {
   border-radius: 0.5rem !important; 
   margin-bottom: 1px !important; 
   text-align: center !important;
+  font-size: 0.9rem;
 }
 /* Filter time-slot buttons */  
 .uniform-btn-wide {
   width: 120px !important;
   height: 35px !important;
-  border-radius: 0.5rem !important;
+  border-radius: 0.9rem !important;
   margin-bottom: 1px !important;
   text-align: center !important;
+  font-size: 0.9rem;
 }
 
+
+
+
+    /* ======================================
+
+      LEAVE BELOW .hide AT VERY BOTTOM OF CSS
+
+    ====================================== */
+
+/* Enables visibility switch without setting inline styles, allowing any media query rules to still apply. */
+/* Hide utility class */
+.hide {
+  display: none !important;
+}
