@@ -839,7 +839,7 @@ function renderClustersOnMap(data) {
   // - Store grouped data and timestamps for use in animation
   // - Update slider background to reflect year ranges via color gradient
   allSortedPoints = [...filteredPoints].sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
-  const downsampleStep = 100;  // Can be changed to anything such as 50, 100, 200, etc.
+  const downsampleStep = 50;  // Can be changed to anything such as 50, 100, 200, etc.
   
   // Monthly or weekly slider toggle
   const timeGrouping = document.querySelector('input[name="timeGrouping"]:checked')?.value || 'monthly';
