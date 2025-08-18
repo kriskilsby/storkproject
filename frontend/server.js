@@ -3,14 +3,11 @@
 const express = require('express');
 const path = require('path');
 const fs = require('fs');
-// const { Pool } = require('pg');
 const clusterRoute = require('./routes/cluster'); // Clustering API route
-const metadataRouter = require('./routes/metadata'); // <== NEW: metadata route
+const metadataRouter = require('./routes/metadata'); // metadata api route
 const bodyParser = require('body-parser');
 
 const app = express();
-
-
 
 // View engine setup
 app.set('view engine', 'ejs');
@@ -21,8 +18,8 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use(bodyParser.json());
 
 // Routes
-app.use('/api/cluster', clusterRoute); // <== ✅ connects your clustering endpoint
-app.use('/api/metadata', metadataRouter); // <== Mounts Python metadata script
+app.use('/api/cluster', clusterRoute); // connects the clustering endpoint
+app.use('/api/metadata', metadataRouter); // Mounts Python metadata script
 
 // Sample test route
 app.get('/api/hello', (req, res) => {
@@ -43,7 +40,6 @@ app.get('/', (req, res) => {
 // Initialize and start server
 async function startServer() {
   try {
-    // await runSqlFile('../backend/db/init.sql');
 
     const PORT = process.env.PORT || 3000;
     app.listen(PORT, () => {
@@ -54,4 +50,4 @@ async function startServer() {
   }
 }
 
-startServer(); // 🚀 Start the app
+startServer(); // Start the app

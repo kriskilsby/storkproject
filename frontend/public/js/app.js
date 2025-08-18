@@ -452,18 +452,6 @@ function updateAnimationMarker(index) {
   document.getElementById('time-label').textContent = ts.toLocaleString();
 }
 
-
-// Downsamples a list of points by selecting every 'step'-th point
-// Used to reduce animation slider density for performance
-// function downsamplePoints(points, step = 100) {
-//   const sampledPoints = [];
-//   for (let i = 0; i < points.length; i += step) {
-//     sampledPoints.push(points[i]);
-//   }
-//   return sampledPoints;
-// }
-
-
 // Groups points by month and returns average GPS location for each month
 // Used for slider animation to smooth out dense datasets
 function getMonthlyAveragedPoints(allPoints) {
@@ -520,7 +508,6 @@ function getMonthlyAveragedPoints(allPoints) {
     timestamps
   };
 }
-
 
 // Groups points by ISO week and returns average location for each week
 // Supports weekly time slider playback mode
@@ -583,8 +570,6 @@ function getWeeklyAveragedPoints(allPoints) {
   };
 }
 
-
-// ############## KK NEW CODE ADDED BELOW ##################
 function resetFiltersAndAnimation() {
   // Stop animation if running
   if (animationInterval) stopAnimation();
@@ -643,7 +628,7 @@ function resetFiltersAndAnimation() {
 //     MAIN WORKING CODE renderClustersOnMap
 // ========================================================== KK CHECKED
 
-// ############## KK NEW CODE ADDED BELOW ##################
+
 // Main function responsible for rendering filtered points
 function renderClustersOnMap(data) {
   console.time("⌚ Start renderClustersOnMap");
@@ -653,71 +638,7 @@ function renderClustersOnMap(data) {
     return;
   }
 
-  // ##### KK NEW CODE ADDED BELOW ######################
 
-  // === Cleanup previous UI state before rendering new data ===
-
-  // // Stop any running animation
-  // if (animationInterval) stopAnimation();
-
-  // // 🧽 Clear filters
-  // currentBird = "all";
-  // currentYear = "all";
-
-  // // Reset dropdowns
-  // const yearSelect = document.getElementById("year-select");
-  // birdSelect = document.getElementById("bird-select");
-  // if (yearSelect) {
-  //   yearSelect.value = "all";
-  //   $('#year-select').trigger('change.select2');
-  // }
-  // if (birdSelect) {
-  //   birdSelect.value = "all";
-  //   $('#bird-select').trigger('change.select2');
-  // }
-
-  // // Uncheck all Month and Hour checkboxes
-  // document.querySelectorAll('input[name="month"]').forEach(cb => {
-  //   cb.checked = false;
-  //   // cb.dispatchEvent(new Event("change"));
-  // });
-  // document.querySelectorAll('input[name="hour"]').forEach(cb => {
-  //   cb.checked = false;
-  //   // cb.dispatchEvent(new Event("change"));
-  // });
-
-  // // Clear distance filter inputs
-  // document.getElementById("distanceMin").value = "";
-  // document.getElementById("distanceMax").value = "";
-
-  // // Reset time slider UI
-  // timeSlider = document.getElementById("time-slider");
-  // timeSliderLabel = document.getElementById("time-label");
-  // if (timeSlider) timeSlider.value = 0;
-  // if (timeSliderLabel) timeSliderLabel.innerText = "No time loaded";
-
-  // // Reset play/pause UI controls
-  // if (playPauseBtn) playPauseBtn.textContent = "▶️ Play";
-  // pauseBtn = document.getElementById("pauseButton");
-  // if (pauseBtn) {
-  //   pauseBtn.disabled = true;
-  //   pauseBtn.textContent = "Pause";
-  // }
-
-  // // Clear time display control if visible
-  // if (timeDisplayControl && timeDisplayControl.getContainer()) {
-  //   timeDisplayControl.getContainer().innerHTML = "";
-  // }
-
-  // // Toggle legend containers
-  // document.getElementById("year-legend-container").style.display = "none";
-  // document.getElementById("cluster-legend-container").style.display = "block";
-
-  // // Ensure future map centering works
-  // mapHasBeenCentered = false;
-
-
-  // ##### KK NEW CODE ADDED ABOVE ######################
 
   console.time("🧹 Clear previous clusterLayerGroup");
   clusterLayerGroup.clearLayers();
@@ -781,16 +702,7 @@ function renderClustersOnMap(data) {
     playBtn.title = "Select a bird to play the animation";
     playBtn.classList.add("disabled");
   }
-  // console.log("Play button enabled:", !playBtn.disabled);
-  // console.log("uniqueBirds.size:", uniqueBirds.size, "selectedBird:", selectedBird);
-
-  // Apply all user-defined filters to the dataset:
-  // - Bird ID
-  // - Year
-  // - Month checkboxes
-  // - Time slot checkboxes (mapped via customSlots)
-  // - Distance range
-  // - Selected cluster (via legend click)
+  
   const selectedMonths = getSelectedCheckboxValues("month"); 
   const selectedSlots = getSelectedCheckboxValues("hour");   
 
@@ -949,6 +861,7 @@ function renderClustersOnMap(data) {
     .sort((a, b) => b[1] - a[1])
     .map(([clusterId]) => parseInt(clusterId));
 
+  // Change the number of clusters shown in the legend - 20# as standard
   const topClustersToShow = 20;
 
   // Build legend entries for top N clusters
@@ -1196,22 +1109,6 @@ function showYearLegend(timestamps) {
 
 
 // Enable play button only when a specific bird is selected
-// function updatePlayButtonState() {
-//   const playBtn = document.getElementById("playButton");
-
-//   const uniqueBirds = new Set(allSortedPoints.map(p => p.individual_local_identifier));
-//   const multipleBirds = uniqueBirds.size > 1;
-//   const allBirdsSelected = !currentBird || currentBird === "all";
-
-//   if (multipleBirds && allBirdsSelected) {
-//     playBtn.disabled = true;
-//     playBtn.title = "Select a specific bird to enable animation.";
-//   } else {
-//     playBtn.disabled = false;
-//     playBtn.title = "";
-//   }
-// }
-
 function updatePlayButtonState() {
   const playBtn = document.getElementById("playButton");
   const playBtnLabel = document.querySelector('label[for="playButton"]');
@@ -1598,59 +1495,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (visible) visible.classList.remove("d-none");
   });
   
-  // ################## KK NEW CODE BLOCK BELOW ADDED #########################
-
-//   document.getElementById("clusteringForm").addEventListener("submit", () => {
-//   // 🛑 Stop animation if it's running
-//   if (animationInterval) stopAnimation();
-
-//   // // ✅ Reset global filter state
-//   // currentBird = "all";
-//   // currentYear = "all";
-
-//   // // ✅ Reset Year & Bird dropdowns to "all"
-//   // const yearSelect = document.getElementById("year-select");
-//   // const birdSelect = document.getElementById("bird-select");
-//   // if (yearSelect) yearSelect.value = "all";
-//   // if (birdSelect) birdSelect.value = "all";
-//   // if (yearSelect) yearSelect.dispatchEvent(new Event("change"));
-//   // if (birdSelect) birdSelect.dispatchEvent(new Event("change"));
-
-//   // // ✅ Uncheck all Month & Hour checkboxes
-//   // document.querySelectorAll('input[name="month"], input[name="hour"]').forEach(cb => {
-//   //   cb.checked = false;
-//   //   cb.dispatchEvent(new Event("change"));
-//   // });
-
-//   // // ✅ Clear distance inputs
-//   // document.getElementById("distanceMin").value = "";
-//   // document.getElementById("distanceMax").value = "";
-
-//   // // ✅ Reset time slider
-//   // const timeSlider = document.getElementById("time-slider");
-//   // const timeLabel = document.getElementById("time-label");
-//   // if (timeSlider) timeSlider.value = 0;
-//   // if (timeLabel) timeLabel.innerText = "No time loaded";
-
-//   // // ✅ Reset time grouping to monthly
-//   // const monthlyRadio = document.querySelector('input[name="timeGrouping"][value="monthly"]');
-//   // if (monthlyRadio) monthlyRadio.checked = true;
-
-//   // // ✅ Reset play/pause button states
-//   // updatePlayButtonState();
-
-//   // // ✅ Hide year legend, restore cluster legend
-//   // const yearLegend = document.getElementById("year-legend-container");
-//   // const clusterLegend = document.getElementById("cluster-legend-container");
-//   // if (yearLegend) yearLegend.style.display = "none";
-//   // if (clusterLegend) clusterLegend.style.display = "block";
-// });
-
-
-
-  // ################# KK NEW CODE BLOCK ADDED ABOVE ########################
-
-
+  
     // ===========================
     // Bird Dropdown Change Event
     // ===========================  KK CHECKED
@@ -1933,12 +1778,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     console.timeEnd("📝 form.addEventListener submit");
   });
   
-   // ############## KK REMOVED BELOW FOR TESTING ###########################
-  // #################################################################
   
-  // ############## KK REMOVED ABOVE FOR TESTING ###########################
-  // ################################################################
-
   // Helper function to format metric values
   function formatMetric(value, decimals = 3) {
     return value != null && !isNaN(value) ? value.toFixed(decimals) : 'N/A';
