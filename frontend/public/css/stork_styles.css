@@ -555,7 +555,7 @@ background #CBCAE8 */
 
 
 #map-card {
-  padding: 16px 16px 8px 16px;
+  padding: 16px 16px 0px 16px;
 }
 
 .legend-item.selected-cluster {
@@ -680,7 +680,7 @@ background #CBCAE8 */
 #map-section {
   background-color: #F9F9F9;
   color: #3A2F51;
-  margin-bottom: 1em;
+  margin-bottom: 0.5em !important;
   padding: 0 0px;
 }
 
@@ -783,6 +783,277 @@ background #CBCAE8 */
   text-align: center !important;
   font-size: 0.9rem;
 }
+
+    /* ======================================
+
+        EXTENDED DATA TABLES SECTION
+
+    ====================================== */
+
+/* -----------------------------
+   Sections & Table Cards
+------------------------------ */
+
+/* #table-section, #summary-table-section {
+  margin-top: 1em !important;
+} */
+
+/* Setup for the main table card */
+  #table-card {
+  background-color: #A1D6BF !important;
+  color: #3A2F51;
+  padding: 0rem 1rem 1rem 1rem;
+  border-radius: 1rem;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+}
+
+/* Setup for the summary table card */
+  #summary-table-card {
+  background-color: #D3D6A1 !important;
+  color: #3A2F51;
+  padding: 0rem 1rem 0.5rem 1rem;
+  border-radius: 1rem;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+}
+
+/* Setup for the chart table card */
+  #chart-card {
+  background-color: #A4A1D6 !important;
+  color: #3A2F51;
+  padding: 0rem 1rem 1rem 1rem;
+  border-radius: 1rem;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+  margin-top: 0.5rem;
+}
+
+
+
+/* -----------------------------
+   Table Styling
+------------------------------ */
+#clusterTable {
+  background-color: #fdfdfd !important; /* slightly softer off-white */
+}
+
+#birdYearTable {
+  background-color: #fdfdfd !important; 
+  margin-bottom: 0 !important; /* remove space under table */
+}
+
+
+
+/* -----------------------------
+   Map Link Button
+------------------------------ */
+.cluster-btn {
+  background-color: #3A2F51;   /* dark purple/navy */
+  color: #ffffff;
+  border: none;
+  padding: 4px 10px;
+  font-size: 12px;
+  border-radius: 6px;
+  transition: background-color 0.2s ease;
+  text-decoration: none;
+}
+
+.cluster-btn:hover {
+  background-color: #57477A;   /* lighter hover */
+  color: #ffffff;
+}
+
+/* -----------------------------
+   Export Buttons (CSV, Excel, PDF, Print)
+------------------------------ */
+.dt-button {
+  background-color: #3A2F51 !important;
+  color: #fff !important;
+  border: none !important;
+  border-radius: 6px !important;
+  padding: 6px 12px !important;
+  margin: 0 4px !important;
+  font-size: 13px !important;
+  transition: background-color 0.2s ease;
+}
+
+.dt-button:hover {
+  background-color: #57477A !important;
+  color: #fff !important;
+}
+
+/* -----------------------------
+   Search Input
+------------------------------ */
+.dataTables_filter input {
+  background-color: #fdfdfd !important;   /* matches table */
+  border: 1px solid #ccc !important;
+  border-radius: 6px !important;
+  padding: 4px 8px !important;
+  font-size: 14px;
+  color: #3A2F51 !important;
+}
+
+.dataTables_filter input:focus {
+  border-color: #3A2F51  !important;
+  box-shadow: 0 0 0 2px rgba(58, 47, 81, 0.25);
+  outline: none;
+}
+
+/* -----------------------------
+   Pagination Buttons
+------------------------------ */
+.dataTables_wrapper .dataTables_paginate .paginate_button {
+  background-color: #fdfdfd;   /* off-white */
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  color: #3A2F51 !important;
+  padding: 4px 10px;
+  margin: 0 2px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.dataTables_wrapper .dataTables_paginate .paginate_button:hover {
+  background-color: #57477A !important;
+  color: #ffffff !important;
+  /* border: 1px solid #3A2F51; */
+}
+
+.dataTables_wrapper .dataTables_paginate .paginate_button.current {
+  background-color: #f0f0f0 !important; /* subtle off-white shade */
+  color: #3A2F51 !important;           /* dark text for visibility */
+  border: 1px solid #ccc !important;
+}
+
+/* -----------------------------
+   Length Dropdown (Show Entries)
+------------------------------ */
+.dataTables_wrapper .dataTables_length select {
+  background-color: #fdfdfd;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  padding: 4px 8px;
+  color: #3A2F51;
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+}
+
+.dataTables_wrapper .dataTables_length select:focus {
+  border-color: #3A2F51;
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(58, 47, 81, 0.2);
+}
+
+/* -----------------------------
+   Optional: Adjust table header
+------------------------------ */
+#clusterTable thead th,
+#birdYearTable thead th {
+  background-color: #e6e6e6; /* same subtle grey */
+  color: #3A2F51;
+  border-bottom: 2px solid #ccc;
+  padding: 6px;
+}
+/* Force both tables to render the same interior style */
+#clusterTable, #birdYearTable {
+  background-color: #fdfdfd !important;
+  border-collapse: collapse;
+}
+
+#birdYearTable_wrapper {
+  height: auto !important;
+  min-height: 0 !important;
+  margin-bottom: 0 !important;
+}
+
+
+#clusterTable td, #birdYearTable td {
+  background-color: #fdfdfd; /* ensures cells cover card bg */
+  color: #3A2F51;
+}
+/* -----------------------------
+   Optional: Scrollbar for long tables
+------------------------------ */
+.dataTables_scrollBody {
+  max-height: 400px !important;
+  overflow-y: auto !important;
+}
+
+/* -----------------------------
+   Tooltip for Map Buttons
+------------------------------ */
+.cluster-btn[title] {
+  cursor: pointer;
+}
+
+/* -----------------------------
+   Styles for Summary Table
+------------------------------ */
+
+/* Button group consistency */
+.btn-group .btn {
+  border-radius: 0.5rem !important;
+  font-size: 0.9rem;
+  padding: 0.4rem 0.8rem;
+  margin: 0 10px;
+}
+
+/* Dropdown style */
+#largeThreshold {
+  border-radius: 0.5rem;
+  background-color: #fdfdfd; /* same off-white as tables */
+  border: 1px solid #ccc;
+  color: #3A2F51;
+}
+
+/* Hover/active states */
+.btn-outline-primary:hover,
+.btn-outline-success:hover,
+.btn-outline-info:hover {
+  opacity: 0.9;
+}
+
+.metric-toggle {
+  background-color: #6c5ce7; /* vivid purple */
+  color: #fff;
+  font-weight: 600;
+  border: none;
+  padding: 0.5rem 1rem;
+  transition: background-color 0.2s ease;
+}
+
+.metric-toggle:hover {
+  background-color: #5a4bd1; /* darker on hover */
+  color: #fff;
+}
+
+.metric-toggle.active {
+  background-color: #3A2F51; /* your SME deep purple */
+  color: #fff;
+  box-shadow: 0 0 0 0.2rem rgba(58, 47, 81, 0.4); /* subtle glow */
+}
+
+/* -----------------------------
+   Button Styles for Charts
+------------------------------ */
+
+.chart-value-toggle {
+  background-color: #fff;         /* white background */
+  color: #4B0082;                 /* dark purple text */
+  border: 2px solid #4B0082;      /* purple border */
+  font-weight: 600;
+  transition: all 0.2s ease-in-out;
+}
+
+.chart-value-toggle:hover {
+  background-color: #4B0082;
+  color: #fff;                    /* invert on hover */
+}
+
+.chart-value-toggle.active {
+  background-color: #4B0082;
+  color: #fff;
+}
+
 
 
 
