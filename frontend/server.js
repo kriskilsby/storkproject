@@ -4,7 +4,7 @@ const express = require('express');
 const path = require('path');
 const fs = require('fs');
 const clusterRoute = require('./routes/cluster'); // Clustering API route
-const metadataRouter = require('./routes/metadata'); // metadata api route
+const metadataRouter = require('./routes/metadata'); // metadata API route
 const bodyParser = require('body-parser');
 
 const app = express();
@@ -37,7 +37,7 @@ app.get('/', (req, res) => {
 
 
 // ######### LEAVE THIS AT VERY BOTTOM OF FILE ##############################
-// Initialize and start server
+// Initialise and start server
 async function startServer() {
   try {
 
