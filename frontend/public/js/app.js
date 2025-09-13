@@ -643,96 +643,6 @@ function resetFiltersAndAnimation() {
 }
 
 
-// Function to update the jQuery DataTable with current filtered points
-// function updateClusterDataTable(filteredPoints) {
-//   // Build the rows from your filtered points
-//   const rows = filteredPoints.map(p => {
-//     const date = new Date(p.timestamp);
-//     return [
-//       p.individual_local_identifier,       // Bird ID
-//       p.cluster,                           // Cluster ID
-//       date.toISOString().split("T")[0],    // Date (YYYY-MM-DD)
-//       date.toTimeString().split(" ")[0],   // Time (HH:MM:SS)
-//       p.location_lat.toFixed(5),           // Latitude
-//       p.location_long.toFixed(5),          // Longitude
-//       p.calculated_heading?.toFixed(0) || "N/A", // Heading
-//       p.distance?.toFixed(1) || "N/A"      // Distance (m)
-//     ];
-//   });
-
-//   // If DataTable already exists, clear & reload
-//   if ($.fn.DataTable.isDataTable('#clusterTable')) {
-//     const table = $('#clusterTable').DataTable();
-//     table.clear();
-//     table.rows.add(rows);
-//     table.draw();
-//   } else {
-//     // Otherwise initialise the table
-//     $('#clusterTable').DataTable({
-//       data: rows,
-//       columns: [
-//         { title: "Bird ID" },
-//         { title: "Cluster" },
-//         { title: "Date" },
-//         { title: "Time" },
-//         { title: "Latitude" },
-//         { title: "Longitude" },
-//         { title: "Heading (°)" },
-//         { title: "Distance (m)" }
-//       ],
-//       pageLength: 10,
-//       dom: 'Bfrtip', // Include buttons for export
-//       buttons: ['copy', 'csv', 'excel'],
-//     });
-
-//     // Optional: hook row click → zoom map
-//     $('#clusterTable tbody').on('click', 'tr', function () {
-//       const rowData = $('#clusterTable').DataTable().row(this).data();
-//       const lat = parseFloat(rowData[4]);
-//       const lon = parseFloat(rowData[5]);
-//       const clusterId = parseInt(rowData[1]);
-
-//       // Zoom to the selected cluster
-//       const clusterPoints = filteredPoints.filter(p => p.cluster === clusterId);
-//       if (clusterPoints.length > 0) {
-//         const bounds = L.latLngBounds(clusterPoints.map(p => [p.location_lat, p.location_long]));
-//         map.fitBounds(bounds);
-//       }
-
-//       // Highlight the marker for this point
-//       L.popup()
-//         .setLatLng([lat, lon])
-//         .setContent(`Bird ${rowData[0]}<br/>Cluster ${clusterId}<br/>${rowData[2]} ${rowData[3]}`)
-//         .openOn(map);
-//     });
-//   }
-// }
-
-// Aggregate points for table
-// ############ KK ORIGINAL WORKING CODE ################
-// function aggregateClusterData(points) {
-//   const grouped = {};
-
-//   points.forEach(point => {
-//     const year = point.timestamp ? new Date(point.timestamp).getFullYear() : 'Unknown';
-//     const key = `${point.individual_local_identifier}_${year}_${point.cluster}`;
-
-//     if (!grouped[key]) {
-//       grouped[key] = {
-//         individual: point.individual_local_identifier,
-//         year: year,
-//         cluster: point.cluster,
-//         points: 0
-//       };
-//     }
-
-//     grouped[key].points++;
-//   });
-
-//   return Object.values(grouped);
-// }
-// ############ KK ORIGINAL WORKING CODE ################
-
 function aggregateClusterData(points) {
   const grouped = {};
 
@@ -769,28 +679,6 @@ function aggregateClusterData(points) {
 }
 
 // Update the DataTable
-// ############ KK ORIGINAL WORKING CODE ################
-// function updateClusterDataTable(filteredPoints) {
-//   const aggregated = aggregateClusterData(filteredPoints);
-
-//   $('#clusterTable').DataTable({
-//     destroy: true,
-//     data: aggregated,
-//     columns: [
-//       { data: 'individual', title: 'Bird ID' },
-//       { data: 'year', title: 'Year' },
-//       { data: 'cluster', title: 'Cluster' },
-//       { data: 'points', title: 'Total Points' }
-//     ],
-//     dom: 'Bfrtip',
-//     buttons: ['csv', 'excel', 'pdf', 'print'],
-//     pageLength: 25,
-//     scrollY: '400px',
-//     scrollCollapse: true
-//   });
-// }
-// ############ KK ORIGINAL WORKING CODE ################
-
 
 function updateClusterDataTable(filteredPoints) {
   const aggregated = aggregateClusterData(filteredPoints);
@@ -891,468 +779,6 @@ function updateClusterDataTable(filteredPoints) {
 }
 
 
-// function updateBirdYearSummaryTable(metric = 'totalClusters', thresholdPercent = 5) {
-//   if (!allPoints || !allPoints.length) return;
-
-//   // Save current scroll position
-//   let scrollPos = 0;
-//   if ($.fn.DataTable.isDataTable('#birdYearTable')) {
-//     scrollPos = $('#birdYearTable').parent().scrollTop();
-//   }
-
-//   // Aggregate points by Bird ID and Year
-//   const birdYearData = {};
-//   allPoints.forEach(p => {
-//     const bird = p.individual_local_identifier;
-//     const year = new Date(p.timestamp).getFullYear();
-//     if (!birdYearData[bird]) birdYearData[bird] = {};
-//     if (!birdYearData[bird][year]) birdYearData[bird][year] = [];
-//     birdYearData[bird][year].push(p);
-//   });
-
-//   // Prepare table data
-//   const tableData = Object.entries(birdYearData).map(([bird, years]) => {
-//     const row = { bird };
-//     for (let y = 2017; y <= 2024; y++) {
-//       const points = years[y] || [];
-//       let value = 0;
-
-//       if (metric === 'totalClusters') {
-//         value = new Set(points.map(pt => pt.cluster)).size;
-//       } else if (metric === 'largeClusters') {
-//         const total = points.length;
-//         const clusterCounts = {};
-//         points.forEach(pt => clusterCounts[pt.cluster] = (clusterCounts[pt.cluster] || 0) + 1);
-//         value = Object.values(clusterCounts).filter(cnt => cnt / total * 100 >= thresholdPercent).length;
-//       } else if (metric === 'smallClusters') {
-//         const total = points.length;
-//         const clusterCounts = {};
-//         points.forEach(pt => clusterCounts[pt.cluster] = (clusterCounts[pt.cluster] || 0) + 1);
-//         value = Object.values(clusterCounts).filter(cnt => cnt / total * 100 < thresholdPercent).length;
-//       }
-
-//       // Store tooltip info: total points for this bird-year
-//       row[y] = {
-//         value: value,
-//         points: points.length
-//       };
-//     }
-//     return row;
-//   });
-
-//   // Initialize or refresh DataTable
-//   if ($.fn.DataTable.isDataTable('#birdYearTable')) {
-//     const table = $('#birdYearTable').DataTable();
-//     table.clear();
-//     table.rows.add(tableData);
-//     table.draw(false); // preserve scroll/paging
-//   } else {
-//     $('#birdYearTable').DataTable({
-//       data: tableData,
-//       scrollX: true,
-//       scrollY: '500px', // taller for larger datasets
-//       columns: [
-//         { data: 'bird', title: 'Bird ID' },
-//         { 
-//           data: 2017, 
-//           title: '2017',
-//           render: d => d.value,
-//           createdCell: (td, cellData) => $(td).attr('title', `${cellData.points} points`)
-//         },
-//         { 
-//           data: 2018, 
-//           title: '2018',
-//           render: d => d.value,
-//           createdCell: (td, cellData) => $(td).attr('title', `${cellData.points} points`)
-//         },
-//         { 
-//           data: 2019, 
-//           title: '2019',
-//           render: d => d.value,
-//           createdCell: (td, cellData) => $(td).attr('title', `${cellData.points} points`)
-//         },
-//         { 
-//           data: 2020, 
-//           title: '2020',
-//           render: d => d.value,
-//           createdCell: (td, cellData) => $(td).attr('title', `${cellData.points} points`)
-//         },
-//         { 
-//           data: 2021, 
-//           title: '2021',
-//           render: d => d.value,
-//           createdCell: (td, cellData) => $(td).attr('title', `${cellData.points} points`)
-//         },
-//         { 
-//           data: 2022, 
-//           title: '2022',
-//           render: d => d.value,
-//           createdCell: (td, cellData) => $(td).attr('title', `${cellData.points} points`)
-//         },
-//         { 
-//           data: 2023, 
-//           title: '2023',
-//           render: d => d.value,
-//           createdCell: (td, cellData) => $(td).attr('title', `${cellData.points} points`)
-//         },
-//         { 
-//           data: 2024, 
-//           title: '2024',
-//           render: d => d.value,
-//           createdCell: (td, cellData) => $(td).attr('title', `${cellData.points} points`)
-//         }
-//       ],
-//       paging: false,
-//       info: false,
-//       searching: false,
-//       ordering: false,
-//       dom: 'Bfrtip',
-//       buttons: ['csv', 'excel', 'pdf', 'print']
-//     });
-//   }
-
-//   // Restore scroll position
-//   $('#birdYearTable').parent().scrollTop(scrollPos);
-// }
-
-
-// Call this at the end of updateBirdYearSummaryTable() KK ORIGINAL DETAIL
-// function updateBirdYearChart() {
-//   if (!allPoints || !allPoints.length) return;
-//   const metric = currentChartMetric;
-//   const valueType = currentChartValueType;
-
-//   const birdYearData = {};
-//   allPoints.forEach(p => {
-//     const bird = p.individual_local_identifier;
-//     const year = new Date(p.timestamp).getFullYear();
-//     if (!birdYearData[bird]) birdYearData[bird] = {};
-//     if (!birdYearData[bird][year]) birdYearData[bird][year] = [];
-//     birdYearData[bird][year].push(p);
-//   });
-
-//   const series = [];
-//   Object.entries(birdYearData).forEach(([bird, years]) => {
-//     const data = [];
-//     for (let y = 2017; y <= 2024; y++) {
-//       const points = years[y] || [];
-//       const totalPoints = points.length;
-//       const clusterCounts = {};
-//       points.forEach(pt => clusterCounts[pt.cluster] = (clusterCounts[pt.cluster] || 0) + 1);
-
-//       let clusterValue = Object.keys(clusterCounts).length;
-//       let pointsValue = totalPoints;
-
-//       if (metric === 'largeClusters') {
-//         const filtered = Object.values(clusterCounts).filter(cnt => cnt / totalPoints * 100 >= getCurrentThreshold());
-//         clusterValue = filtered.length;
-//         pointsValue = filtered.reduce((sum, cnt) => sum + cnt, 0);
-//       } else if (metric === 'smallClusters') {
-//         const filtered = Object.values(clusterCounts).filter(cnt => cnt / totalPoints * 100 < getCurrentThreshold());
-//         clusterValue = filtered.length;
-//         pointsValue = filtered.reduce((sum, cnt) => sum + cnt, 0);
-//       }
-
-//       data.push(valueType === 'Clusters' ? clusterValue : pointsValue);
-//     }
-
-//     series.push({ name: bird, data: data });
-//   });
-
-//   Highcharts.chart('birdYearChart', {
-//     chart: { type: 'column' },
-//     title: { text: `${valueType} per Bird by Year` },
-//     xAxis: {
-//       categories: [2017,2018,2019,2020,2021,2022,2023,2024],
-//       title: { text: 'Year' }
-//     },
-//     yAxis: { title: { text: valueType } },
-//     tooltip: { shared: true },
-//     series: series
-//   });
-// }
-
-
-
-// KK THIS FUNCTION IS THE LAST WORKING VERSION ########
-// function updateBirdYearChart(metric = currentMetric, valueType = 'Clusters') {
-//   if (!allPoints || !allPoints.length) return;
-
-//   const thresholdPercent = getCurrentThreshold()
-
-//   // Populate the Highchart year dropdown dynamically
-//   const $yearSelect = $('#chartYearSelect');
-
-//   // Populate dropdown only if empty
-//   if ($yearSelect.children().length === 0) {
-
-//     // Determine the years present in the data, and only show those years
-//     const yearsSet = new Set(allPoints.map(p => new Date(p.timestamp).getFullYear()));
-//     const allYears = Array.from(yearsSet).sort((a,b) => a - b); // ascending order
-
-//     // Add year options
-//     allYears.forEach(y => $yearSelect.append(`<option value="${y}">${y}</option>`));
-//     $yearSelect.append('<option value="all" selected>All Years</option>'); // Add All Years at end
-
-//     // Add change listener
-//     $yearSelect.on('change', () => {
-//       updateBirdYearChart(currentMetric, currentChartValueType);
-//     });
-//   }
-
-//   // KK removed as its hard-coding the selection
-//   // $yearSelect.empty(); // Clear previous options
-//   // allYears.forEach(y => $yearSelect.append(`<option value="${y}">${y}</option>`));
-//   // $yearSelect.append('<option value="all" selected>All Years</option>'); // Adds All Years to the dropdown and makes it default choice
-
-//   // Get selected year string
-//   const selectedYear = $yearSelect.val();
-
-//   const yearsToUse = selectedYear === 'all'
-//   ? Array.from(new Set(allPoints.map(p => new Date(p.timestamp).getFullYear()))).sort((a,b)=>a-b)
-//   : [parseInt(selectedYear)];
-
-//   // Group points by Bird ID and then Year
-//   const birdYearData = {};
-//   allPoints.forEach(p => {
-//     const bird = p.individual_local_identifier;
-//     const year = new Date(p.timestamp).getFullYear();
-//     if (!birdYearData[bird]) birdYearData[bird] = {};
-//     if (!birdYearData[bird][year]) birdYearData[bird][year] = [];
-//     birdYearData[bird][year].push(p);
-//   });
-
-//   // Determine which years to include in chart
-//   // const chartYears = selectedYear === 'all' ? allYears : [parseInt(selectedYear)];
-
-//   // Prepare series data for Highcharts
-//   const series = Object.entries(birdYearData).map(([bird, yearsMap]) => {
-//     // const data = chartYears.map(y => {
-//     const data = yearsToUse.map(y => {
-//       const pts = yearsMap[y] || [];
-//       const total = pts.length;
-//       if (total === 0) return 0;
-
-//       const counts = {};
-//       pts.forEach(pt => counts[pt.cluster] = (counts[pt.cluster] || 0) + 1);
-
-//       let clusterValue = Object.keys(counts).length;
-//       let pointsValue = total;
-
-//       if (metric === 'largeClusters') {
-//         const filtered = Object.values(counts).filter(c => (c / total * 100) >= thresholdPercent);
-//         clusterValue = filtered.length;
-//         pointsValue = filtered.reduce((a,c) => a+c, 0);
-//       } else if (metric === 'smallClusters') {
-//         const filtered = Object.values(counts).filter(c => (c / total * 100) < thresholdPercent);
-//         clusterValue = filtered.length;
-//         pointsValue = filtered.reduce((a,c) => a+c, 0);
-//       }
-
-//       return valueType === 'Points' ? pointsValue : clusterValue;
-//     });
-
-//     return { name: bird, data };
-//   });
-
-//   // Render Highcharts
-//   Highcharts.chart('birdYearChart', {
-//     chart: { type: 'column' },
-//     title: { text: `${valueType} per Bird by Year (${metric})` },
-//     // xAxis: { categories: chartYears, title: { text: 'Year' } },
-//     xAxis: { categories: yearsToUse, title: { text: 'Year' } },
-//     yAxis: { title: { text: valueType } },
-//     tooltip: { shared: true },
-//     series
-//   });
-// }
-// KK THIS FUNCTION IS THE LAST WORKING VERSION ########
-
-// Optional: update chart when dropdown changes
-// KK REMOVE DUPLICATE CHANGE LISTENER
-// $('#chartYearSelect').on('change', function() {
-//   updateBirdYearChart(currentMetric, currentChartValueType);
-// });
-
-// KK DELETE WHEN TESTED
-// function updateBirdYearChart(metric = currentMetric, valueType = 'Clusters') {
-//   if (!allPoints || !allPoints.length) return;
-
-//   const thresholdPercent = getCurrentThreshold();
-
-//   // Dropdown population
-//   const $yearSelect = $('#chartYearSelect');
-//   if ($yearSelect.children().length === 0) {
-//     const yearsSet = new Set(allPoints.map(p => new Date(p.timestamp).getFullYear()));
-//     const allYears = Array.from(yearsSet).sort((a,b) => a - b);
-//     allYears.forEach(y => $yearSelect.append(`<option value="${y}">${y}</option>`));
-//     $yearSelect.append('<option value="all" selected>All Years</option>');
-//     $yearSelect.on('change', () => updateBirdYearChart(currentMetric, currentChartValueType));
-//   }
-
-//   const selectedYear = $yearSelect.val();
-//   const yearsToUse = selectedYear === 'all'
-//     ? Array.from(new Set(allPoints.map(p => new Date(p.timestamp).getFullYear()))).sort((a,b)=>a-b)
-//     : [parseInt(selectedYear)];
-
-//   // Group points by Bird ID and Year
-//   const birdYearData = {};
-//   allPoints.forEach(p => {
-//     const bird = p.individual_local_identifier;
-//     const year = new Date(p.timestamp).getFullYear();
-//     if (!birdYearData[bird]) birdYearData[bird] = {};
-//     if (!birdYearData[bird][year]) birdYearData[bird][year] = [];
-//     birdYearData[bird][year].push(p);
-//   });
-
-//   // Clear previous charts
-//   const container = $('#birdYearChartsContainer');
-//   container.empty();
-
-//   const birds = Object.keys(birdYearData);
-//   const maxBirdsPerChart = 14; // adjust for readability
-
-//   for (let i = 0; i < birds.length; i += maxBirdsPerChart) {
-//     const chunkBirds = birds.slice(i, i + maxBirdsPerChart);
-//     const series = chunkBirds.map(bird => {
-//       const data = yearsToUse.map(y => {
-//         const pts = birdYearData[bird][y] || [];
-//         const total = pts.length;
-//         if (total === 0) return 0;
-
-//         const counts = {};
-//         pts.forEach(pt => counts[pt.cluster] = (counts[pt.cluster] || 0) + 1);
-
-//         let clusterValue = Object.keys(counts).length;
-//         let pointsValue = total;
-
-//         if (metric === 'largeClusters') {
-//           const filtered = Object.values(counts).filter(c => (c / total * 100) >= thresholdPercent);
-//           clusterValue = filtered.length;
-//           pointsValue = filtered.reduce((a,c) => a+c, 0);
-//         } else if (metric === 'smallClusters') {
-//           const filtered = Object.values(counts).filter(c => (c / total * 100) < thresholdPercent);
-//           clusterValue = filtered.length;
-//           pointsValue = filtered.reduce((a,c) => a+c, 0);
-//         }
-
-//         return valueType === 'Points' ? pointsValue : clusterValue;
-//       });
-
-//       return { name: bird, data };
-//     });
-
-//     // Create a new chart div
-//     const chartDiv = $('<div>').addClass('birdYearChartChunk').css('height', '400px').appendTo(container);
-
-//     Highcharts.chart(chartDiv[0], {
-//       chart: { type: 'column' },
-//       title: { text: `${valueType} per Bird by Year (${metric})` },
-//       xAxis: { categories: yearsToUse, title: { text: 'Year' } },
-//       yAxis: { title: { text: valueType } },
-//       tooltip: { shared: true },
-//       series
-//     });
-//   }
-// }
-// KK DELETE WHEN TESTED
-
-// KK DELETE WHEN TESTED
-// function updateBirdYearChart(metric = currentMetric, valueType = 'Clusters') {
-//   if (!allPoints || !allPoints.length) return;
-
-//   const thresholdPercent = getCurrentThreshold();
-
-//   // --- Dropdown population (only once) ---
-//   const $yearSelect = $('#chartYearSelect');
-//   if ($yearSelect.children().length === 0) {
-//     const yearsSet = new Set(allPoints.map(p => new Date(p.timestamp).getFullYear()));
-//     const allYears = Array.from(yearsSet).sort((a,b) => a - b);
-//     allYears.forEach(y => $yearSelect.append(`<option value="${y}">${y}</option>`));
-//     $yearSelect.append('<option value="all" selected>All Years</option>');
-//     $yearSelect.on('change', () => updateBirdYearChart(currentMetric, currentChartValueType));
-//   }
-
-//   const selectedYear = $yearSelect.val();
-//   const yearsToUse = selectedYear === 'all'
-//     ? Array.from(new Set(allPoints.map(p => new Date(p.timestamp).getFullYear()))).sort((a,b)=>a-b)
-//     : [parseInt(selectedYear)];
-
-//   // --- Group points by Bird ID and Year ---
-//   const birdYearData = {};
-//   allPoints.forEach(p => {
-//     const bird = p.individual_local_identifier;
-//     const year = new Date(p.timestamp).getFullYear();
-//     if (!birdYearData[bird]) birdYearData[bird] = {};
-//     if (!birdYearData[bird][year]) birdYearData[bird][year] = [];
-//     birdYearData[bird][year].push(p);
-//   });
-
-//   // --- Clear previous charts ---
-//   const container = $('#birdYearChartsContainer');
-//   container.empty();
-
-//   const birds = Object.keys(birdYearData);
-//   const maxBirdsPerChart = 14;
-
-//   if (selectedYear === 'all') {
-//     // Multiple charts (chunked for readability)
-//     for (let i = 0; i < birds.length; i += maxBirdsPerChart) {
-//       const chunkBirds = birds.slice(i, i + maxBirdsPerChart);
-//       renderBirdChart(chunkBirds, yearsToUse, metric, valueType, birdYearData, container);
-//     }
-//   } else {
-//     // Single chart with all birds
-//     renderBirdChart(birds, yearsToUse, metric, valueType, birdYearData, container);
-//   }
-// }
-
-// // --- Helper function to render one chart ---
-// function renderBirdChart(birdList, yearsToUse, metric, valueType, birdYearData, container) {
-//   const series = birdList.map(bird => {
-//     const data = yearsToUse.map(y => {
-//       const pts = birdYearData[bird][y] || [];
-//       const total = pts.length;
-//       if (total === 0) return 0;
-
-//       const counts = {};
-//       pts.forEach(pt => counts[pt.cluster] = (counts[pt.cluster] || 0) + 1);
-
-//       let clusterValue = Object.keys(counts).length;
-//       let pointsValue = total;
-
-//       if (metric === 'largeClusters') {
-//         const filtered = Object.values(counts).filter(c => (c / total * 100) >= getCurrentThreshold());
-//         clusterValue = filtered.length;
-//         pointsValue = filtered.reduce((a,c) => a+c, 0);
-//       } else if (metric === 'smallClusters') {
-//         const filtered = Object.values(counts).filter(c => (c / total * 100) < getCurrentThreshold());
-//         clusterValue = filtered.length;
-//         pointsValue = filtered.reduce((a,c) => a+c, 0);
-//       }
-
-//       return valueType === 'Points' ? pointsValue : clusterValue;
-//     });
-
-//     return { name: bird, data };
-//   });
-
-//   const chartDiv = $('<div>')
-//     .addClass('birdYearChartChunk')
-//     .css('height', '400px')
-//     .appendTo(container);
-
-//   Highcharts.chart(chartDiv[0], {
-//     chart: { type: 'column' },
-//     title: { text: `${valueType} per Bird by Year (${metric})` },
-//     xAxis: { categories: yearsToUse, title: { text: 'Year' } },
-//     yAxis: { title: { text: valueType } },
-//     tooltip: { shared: true },
-//     series
-//   });
-// }
-// KK DELETE WHEN TESTED
-
 // Populates the Highchart year dropdown
 function initYearDropdown() {
   console.log("running initYearDropdown");
@@ -1401,15 +827,7 @@ function updateBirdYearChart(metric = currentMetric, valueType = 'Clusters') {
 
   const thresholdPercent = getCurrentThreshold();
 
-  // --- Dropdown population (only once) ---
-  // const $yearSelect = $('#chartYearSelect');
-  // if ($yearSelect.children().length === 0) {
-  //   const yearsSet = new Set(allPoints.map(p => new Date(p.timestamp).getFullYear()));
-  //   const allYears = Array.from(yearsSet).sort((a,b) => a - b);
-  //   allYears.forEach(y => $yearSelect.append(`<option value="${y}">${y}</option>`));
-  //   $yearSelect.append('<option value="all" selected>All Years</option>');
-  //   $yearSelect.on('change', () => updateBirdYearChart(currentMetric, currentChartValueType));
-  // }
+  
 
   // run new function initYearDropdown()
   // Initialize dropdown if empty
@@ -1459,213 +877,7 @@ function updateBirdYearChart(metric = currentMetric, valueType = 'Clusters') {
   }
 }
 
-// ########### KK TESTING TO REMOVE IF WORKING OK ###########################
-// // --- Helper function to render charts ---
-// function renderBirdChart(birdList, yearsToUse, metric, valueType, birdYearData, container) {
-//   console.log("running renderBirdChart");
-//   const series = birdList.map(bird => {
-//     const data = yearsToUse.map(y => {
-//       const pts = birdYearData[bird][y] || [];
-//       const total = pts.length;
-//       if (total === 0) return { y: 0, clusterDetail: [] };
 
-//       const counts = {};
-//       pts.forEach(pt => counts[pt.cluster] = (counts[pt.cluster] || 0) + 1);
-
-//       let clusterValue = Object.keys(counts).length;
-//       let pointsValue = total;
-
-//             // --- filter for metric and build clusterDetail accordingly ---
-//       let clusterDetail = [];
-//       if (metric === 'largeClusters') {
-//         const filtered = Object.entries(counts).filter(([_, size]) => (size / total * 100) >= getCurrentThreshold());
-//         clusterValue = filtered.length;
-//         pointsValue = filtered.reduce((a, [,c]) => a + c, 0);
-//         clusterDetail = filtered.map(([clusterId, size]) => ({ id: clusterId, size }));
-//       } else if (metric === 'smallClusters') {
-//         const filtered = Object.entries(counts).filter(([_, size]) => (size / total * 100) < getCurrentThreshold());
-//         clusterValue = filtered.length;
-//         pointsValue = filtered.reduce((a, [,c]) => a + c, 0);
-//         clusterDetail = filtered.map(([clusterId, size]) => ({ id: clusterId, size }));
-//       } else {
-//         // Total clusters: include all
-//         clusterDetail = Object.entries(counts).map(([clusterId, size]) => ({ id: clusterId, size }));
-//       }
-
-//       return {
-//         y: valueType === 'Points' ? pointsValue : clusterValue,
-//         clusterDetail,
-//         totalPoints: total
-//       };
-//     });
-
-//     return { name: bird, data };
-//   });
-
-//   const chartDiv = $('<div>')
-//     .addClass('birdYearChartChunk')
-//     .css('height', '400px')
-//     .appendTo(container);
-
-//   Highcharts.chart(chartDiv[0], {
-//     chart: { type: 'column' },
-//     title: { text: `${valueType} per Bird by Year (${metric})` },
-//     xAxis: { categories: yearsToUse, title: { text: 'Year' } },
-//     yAxis: { title: { text: valueType } },
-//     legend: {
-//       title: { text: 'Bird ID' },
-//       labelFormatter: function () {
-//         const yData = this.yData || []
-//         // Grey out if this series has no non-zero data
-//         const hasData = yData.some(y => y > 0);
-//         return `<span style="color:${hasData ? 'black' : '#999'}">${this.name}</span>`;
-//       },
-//       useHTML: true
-//     },
-//     tooltip: {
-//       useHTML: true,
-//       outside: true,             // allow tooltip outside chart
-//       followPointer: true,       // better placement on crowded charts
-//       stickOnContact: true,   // (optional) tooltip stays when mouse enters it
-//       style: {
-//         maxHeight: '250px',
-//         overflowY: 'auto'
-//       },
-//       formatter: function () {
-//         const point = this.point;
-//         let detailHtml = '';
-//         if (point.clusterDetail && point.clusterDetail.length) {
-//           detailHtml = '<br/><b>Clusters:</b><ul style="margin:0;padding-left:15px;max-height:200px;overflow:auto">';
-//           point.clusterDetail.slice(0, 50).forEach(c => {
-//             detailHtml += `<li>Cluster ${c.id}: ${c.size} pts</li>`;
-//           });
-//           if (point.clusterDetail.length > 50) {
-//             detailHtml += `<li>... +${point.clusterDetail.length - 50} more</li>`;
-//           }
-//           detailHtml += '</ul>';
-//         }
-//         return `<b>${this.series.name}</b><br/>
-//                 Year: ${this.key}<br/>
-//                 ${valueType}: ${this.y}<br/>
-//                 Total Points: ${point.totalPoints}${detailHtml}`;
-//       }
-//     },
-//     plotOptions: {
-//       series: {
-//         states: {
-//           inactive: { opacity: 0.3 } // still interactive but faded when not hovered
-//         }
-//       }
-//     },
-//     series
-//   });
-
-// }
-// ########### KK TESTING TO REMOVE IF WORKING OK ###########################
-
-// ########### KK BEST WORKING COPY SO FAR ###########################
-// function renderBirdChart(birdList, yearsToUse, metric, valueType, birdYearData, container) {
-//   console.log("running renderBirdChart");
-
-//   // Precompute all clusterDetail for each bird/year (master data)
-//   const masterData = {};
-//   birdList.forEach(bird => {
-//     masterData[bird] = {};
-//     yearsToUse.forEach(y => {
-//       const pts = birdYearData[bird][y] || [];
-//       const counts = {};
-//       pts.forEach(pt => counts[pt.cluster] = (counts[pt.cluster] || 0) + 1);
-//       const clusterDetail = Object.entries(counts).map(([id, size]) => ({ id, size }));
-//       masterData[bird][y] = { total: pts.length, clusterDetail };
-//     });
-//   });
-
-//   // Build Highcharts series
-//   const series = birdList.map(bird => {
-//     const data = yearsToUse.map(y => {
-//       const info = masterData[bird][y];
-//       const total = info.total;
-//       let clusterDetail = [...info.clusterDetail]; // copy array
-
-//       let clusterValue = clusterDetail.length;
-//       let pointsValue = total;
-
-//       // Filter for Large/Small clusters
-//       if (metric === 'largeClusters') {
-//         const filtered = clusterDetail.filter(c => (c.size / total * 100) >= getCurrentThreshold());
-//         clusterValue = filtered.length;
-//         pointsValue = filtered.reduce((a,c) => a+c.size, 0);
-//         clusterDetail = filtered;
-//       } else if (metric === 'smallClusters') {
-//         const filtered = clusterDetail.filter(c => (c.size / total * 100) < getCurrentThreshold());
-//         clusterValue = filtered.length;
-//         pointsValue = filtered.reduce((a,c) => a+c.size, 0);
-//         clusterDetail = filtered;
-//       }
-
-//       return {
-//         y: valueType === 'Points' ? pointsValue : clusterValue,
-//         clusterDetail,
-//         totalPoints: total
-//       };
-//     });
-
-//     return { name: bird, data };
-//   });
-
-//   const chartDiv = $('<div>')
-//     .addClass('birdYearChartChunk')
-//     .css('height', '400px')
-//     .appendTo(container);
-
-//   Highcharts.chart(chartDiv[0], {
-//     chart: { type: 'column' },
-//     title: { text: `${valueType} per Bird by Year (${metric})` },
-//     xAxis: { categories: yearsToUse, title: { text: 'Year' } },
-//     yAxis: { title: { text: valueType } },
-//     legend: {
-//       title: { text: 'Bird ID' },
-//       labelFormatter: function () {
-//         const hasData = this.data && this.data.some(d => d.y > 0);
-//         return `<span style="color:${hasData ? 'black' : '#999'}">${this.name}</span>`;
-//       },
-//       useHTML: true
-//     },
-//     tooltip: {
-//       useHTML: true,
-//       outside: true,
-//       followPointer: true,
-//       stickOnContact: true,
-//       formatter: function () {
-//         const point = this.point;
-//         let detailHtml = '';
-//         if (point.clusterDetail && point.clusterDetail.length) {
-//           detailHtml = '<br/><b>Clusters:</b><ul style="margin:0;padding-left:15px;max-height:200px;overflow:auto">';
-//           point.clusterDetail.slice(0,50).forEach(c => {
-//             detailHtml += `<li>Cluster ${c.id}: ${c.size} pts</li>`;
-//           });
-//           if (point.clusterDetail.length > 50) {
-//             detailHtml += `<li>... +${point.clusterDetail.length - 50} more</li>`;
-//           }
-//           detailHtml += '</ul>';
-//         }
-//         return `<b>${this.series.name}</b><br/>
-//                 Year: ${this.key}<br/>
-//                 ${valueType}: ${this.y}<br/>
-//                 Total Points: ${point.totalPoints}${detailHtml}`;
-//       }
-//     },
-//     plotOptions: {
-//       series: {
-//         states: {
-//           inactive: { opacity: 0.3 }
-//         }
-//       }
-//     },
-//     series
-//   });
-// }
-// ########### KK BEST WORKING COPY SO FAR ###########################
 
 function renderBirdChart(birdList, yearsToUse, metric, valueType, birdYearData, container) {
   console.log("running renderBirdChart");
@@ -1766,10 +978,6 @@ function renderBirdChart(birdList, yearsToUse, metric, valueType, birdYearData, 
 }
 
 
-
-
-
-
 // sort of working the best so far KK WORKING CODE
 function updateBirdYearSummaryTable(metric = currentMetric, valueType = 'Clusters') {
   console.log("running updateBirdYearSummaryTable");
@@ -1788,76 +996,23 @@ function updateBirdYearSummaryTable(metric = currentMetric, valueType = 'Cluster
 
   // Collect all unique years from allPoints
   const yearsSet = new Set(allPoints.map(p => new Date(p.timestamp).getFullYear()));
-  const allYears = Array.from(yearsSet).sort((a, b) => a - b);
+  // const allYears = Array.from(yearsSet).sort((a, b) => a - b);
+  const allYears = Array.from(yearsSet).map(y => y.toString()).sort(); // keys as strings
   console.log("Summary Table allYears:", allYears);
 
+  
   // Group points by Bird ID and Year
-  // const birdYearData = {};
-  // allPoints.forEach(p => {
-  //   const bird = p.individual_local_identifier;
-  //   const year = new Date(p.timestamp).getFullYear();
-  //   if (!birdYearData[bird]) birdYearData[bird] = {};
-  //   if (!birdYearData[bird][year]) birdYearData[bird][year] = [];
-  //   birdYearData[bird][year].push(p);
-  // });
-
-   const birdYearData = {};
+  const birdYearData = {};
   allPoints.forEach(p => {
     const bird = p.individual_local_identifier;
     const year = new Date(p.timestamp).getFullYear();
     if (!birdYearData[bird]) birdYearData[bird] = {};
-    // Initialize all years with empty array if missing
-    allYears.forEach(y => {
-      if (!birdYearData[bird][y]) birdYearData[bird][y] = [];
-    });
+    if (!birdYearData[bird][year]) birdYearData[bird][year] = [];
     birdYearData[bird][year].push(p);
   });
 
+
   console.log("Number of birds in birdYearData:", Object.keys(birdYearData).length);
-
-
- 
-
-
-  // // KK new code section ######
-  // // Populate year dropdown from birdYearData
-  // const yearsSet = new Set();
-  // Object.values(birdYearData).forEach(yearMap => {
-  //   Object.keys(yearMap).forEach(y => yearsSet.add(parseInt(y)));
-  // });
-  // const allYears = Array.from(yearsSet).sort((a,b) => a - b);
-
-  // const $yearSelect = $('#chartYearSelect');
-  // $yearSelect.empty();
-  // allYears.forEach(y => $yearSelect.append(`<option value="${y}">${y}</option>`));
-  // $yearSelect.append('<option value="all" selected>All Years</option>');
-
-  // // Only bind change listener once
-  // if (!$yearSelect.data('listener-bound')) {
-  //   $yearSelect.on('change', () => updateBirdYearChart(currentMetric, currentChartValueType));
-  //   $yearSelect.data('listener-bound', true);
-  // }
-  // KK new code section ######
-
-  // run new function initYearDropdown()
-  // Make sure dropdown is initialised
-  // if ($('#chartYearSelect').children().length === 0) {
-  //   initYearDropdown();
-  // }
-  // initYearDropdown()
-
-
-  // Prepare table data
-  // const tableData = Object.entries(birdYearData).map(([bird, years]) => {
-  //   const row = { bird };
-  //   for (let y = 2017; y <= 2024; y++) {
-  //     const points = years[y] || [];
-  //     let clusterValue = 0;
-  //     let pointsValue = points.length;
-
-  //     const clusterCounts = {};
-  //     points.forEach(pt => clusterCounts[pt.cluster] = (clusterCounts[pt.cluster] || 0) + 1);
-
 
   // Ensure every bird has an array for every year (even if empty)
   Object.keys(birdYearData).forEach(bird => {
@@ -1874,12 +1029,12 @@ function updateBirdYearSummaryTable(metric = currentMetric, valueType = 'Cluster
       let clusterValue = 0;
       let pointsValue = points.length;
 
-
       const clusterCounts = {};
-      // points.forEach(pt => {
-      //   clusterCounts[pt.cluster] = (clusterCounts[pt.cluster] || 0) + 1;
-      // });
-      points.forEach(pt => clusterCounts[pt.cluster] = (clusterCounts[pt.cluster] || 0) + 1);
+   
+
+      points.forEach(pt => {
+        clusterCounts[pt.cluster] = (clusterCounts[pt.cluster] || 0) + 1;
+      });
 
       if (metric === 'totalClusters') {
         clusterValue = Object.keys(clusterCounts).length;
@@ -1895,29 +1050,45 @@ function updateBirdYearSummaryTable(metric = currentMetric, valueType = 'Cluster
           .reduce((sum, cnt) => sum + cnt, 0);
       }
 
-
       // Store both values for display & export
       row[y] = {value: clusterValue, points: pointsValue};
     });
     return row;
   });
 
-  // Build column definitions dynamically
+ 
+  // Debug logs
+  console.log("tableData preview:", tableData);
+  if (tableData.length > 0) {
+    console.log("First row keys:", Object.keys(tableData[0]));
+  }
+  console.log("allYears:", allYears);
+
+
+  // Build DataTable columns dynamically
   const yearColumns = allYears.map(y => ({
     data: y,
-    title: y.toString(),
-    render: d => d.value,
-    createdCell: (td, cellData) => $(td).attr('title', `${cellData.points} points`)
+    title: y,
+    render: d => (d && typeof d.value !== 'undefined') ? d.value : 0,
+    createdCell: (td, cellData) => {
+      const pts = (cellData && typeof cellData.points !== 'undefined') ? cellData.points : 0;
+      $(td).attr('title', `${pts} points`);
+    }
   }));
+
 
   const hiddenYearColumns = allYears.map(y => ({
     data: y,
     title: `${y} Points`,
     visible: false,
-    render: d => d.points
+    render: d => (d && typeof d.points !== 'undefined') ? d.points : 0
   }));
 
-
+  // Destroy existing DataTable if it exists
+  if ($.fn.DataTable.isDataTable('#birdYearTable')) {
+      $('#birdYearTable').DataTable().destroy();
+      $('#birdYearTable').empty(); // clear old table HTML, including headers
+  }
 
   // Initialize or refresh DataTable
 
@@ -1937,35 +1108,6 @@ function updateBirdYearSummaryTable(metric = currentMetric, valueType = 'Cluster
         ...yearColumns,
         ...hiddenYearColumns
       ],
-
-          // if ($.fn.DataTable.isDataTable('#birdYearTable')) {
-          //   const table = $('#birdYearTable').DataTable();
-          //   table.clear();
-          //   table.rows.add(tableData);
-          //   table.draw(false); // preserve scroll/paging
-          // } else {
-          //   $('#birdYearTable').DataTable({
-          //     data: tableData,
-          //     scrollX: true,
-          //     scrollY: '500px', // taller for larger datasets
-          //     scrollCollapse: true,
-          //     columns: [
-          //       { data: 'bird', title: 'Bird ID' },
-          //       ...[2017,2018,2019,2020,2021,2022,2023,2024].map(y => ({
-          //         data: y,
-          //         title: y.toString(),
-          //         render: d => d.value,           // show cluster count in table
-          //         createdCell: (td, cellData) => $(td).attr('title', `${cellData.points} points`)
-          //       })),
-          //       // Hidden columns for export
-          //       ...[2017,2018,2019,2020,2021,2022,2023,2024].map(y => ({
-          //         data: y,
-          //         title: `${y} Points`,
-          //         visible: false,
-          //         render: d => d.points
-          //       }))
-          //     ],
-
       paging: false,
       info: false,
       searching: false,
@@ -1987,189 +1129,6 @@ function updateBirdYearSummaryTable(metric = currentMetric, valueType = 'Cluster
 
 }
 
-
-// function updateBirdYearSummaryTable(metric = 'totalClusters', thresholdPercent = 5) {
-//   if (!allPoints || !allPoints.length) return;
-
-//   // Save scroll position
-//   let scrollPos = 0;
-//   if ($.fn.DataTable.isDataTable('#birdYearTable')) {
-//     scrollPos = $('#birdYearTable').parent().scrollTop();
-//   }
-
-//   // Aggregate points by Bird ID & Year
-//   const birdYearData = {};
-//   allPoints.forEach(p => {
-//     const bird = p.individual_local_identifier;
-//     const year = new Date(p.timestamp).getFullYear();
-//     if (!birdYearData[bird]) birdYearData[bird] = {};
-//     if (!birdYearData[bird][year]) birdYearData[bird][year] = [];
-//     birdYearData[bird][year].push(p);
-//   });
-
-//   // Prepare table & chart data
-//   const tableData = Object.entries(birdYearData).map(([bird, years]) => {
-//     const row = { bird };
-//     for (let y = 2017; y <= 2024; y++) {
-//       const points = years[y] || [];
-//       const clusterCounts = {};
-//       points.forEach(pt => clusterCounts[pt.cluster] = (clusterCounts[pt.cluster] || 0) + 1);
-
-//       let clusterValue = 0;
-//       let pointsValue = points.length;
-
-//       if (metric === 'totalClusters') {
-//         clusterValue = Object.keys(clusterCounts).length;
-//       } else if (metric === 'largeClusters') {
-//         clusterValue = Object.values(clusterCounts).filter(cnt => cnt / points.length * 100 >= thresholdPercent).length;
-//         pointsValue = Object.values(clusterCounts)
-//           .filter(cnt => cnt / points.length * 100 >= thresholdPercent)
-//           .reduce((sum, cnt) => sum + cnt, 0);
-//       } else if (metric === 'smallClusters') {
-//         clusterValue = Object.values(clusterCounts).filter(cnt => cnt / points.length * 100 < thresholdPercent).length;
-//         pointsValue = Object.values(clusterCounts)
-//           .filter(cnt => cnt / points.length * 100 < thresholdPercent)
-//           .reduce((sum, cnt) => sum + cnt, 0);
-//       }
-
-//       row[y] = { value: clusterValue, points: pointsValue };
-//     }
-//     return row;
-//   });
-
-//   // Initialize/refresh DataTable
-//   if ($.fn.DataTable.isDataTable('#birdYearTable')) {
-//     const table = $('#birdYearTable').DataTable();
-//     table.clear();
-//     table.rows.add(tableData);
-//     table.draw(false);
-//   } else {
-//     $('#birdYearTable').DataTable({
-//       data: tableData,
-//       scrollX: true,
-//       scrollY: '500px',
-//       columns: [
-//         { data: 'bird', title: 'Bird ID' },
-//         ...[2017,2018,2019,2020,2021,2022,2023,2024].flatMap(y => ([
-//           { data: y, title: `${y}`, render: d => d.value, createdCell: (td, cellData) => $(td).attr('title', `${cellData.points} points`) },
-//           { data: y, title: `${y} Points`, visible: false, render: d => d.points } // hidden for export
-//         ]))
-//       ],
-//       paging: false,
-//       info: false,
-//       searching: false,
-//       ordering: false,
-//       dom: 'Bfrtip',
-//       buttons: [
-//         { extend: 'csv', exportOptions: { columns: ':visible, :hidden' } },
-//         { extend: 'excel', exportOptions: { columns: ':visible, :hidden' } },
-//         { extend: 'pdf', exportOptions: { columns: ':visible, :hidden' } },
-//         'print'
-//       ]
-//     });
-//   }
-
-//   // Restore scroll
-//   $('#birdYearTable').parent().scrollTop(scrollPos);
-
-//   // Update chart
-//   updateBirdYearChart(tableData, metric);
-// }
-
-// // Chart function
-// function updateBirdYearChart(tableData, metric) {
-//   if (!window.Highcharts) return;
-
-//   const series = tableData.map(row => ({
-//     name: row.bird,
-//     data: [2017,2018,2019,2020,2021,2022,2023,2024].map(y => row[y] ? row[y].value : 0)
-//   }));
-
-//   Highcharts.chart('birdYearChart', {
-//     chart: { type: 'column' },
-//     title: { text: `Bird × Year - ${metric}` },
-//     xAxis: { categories: [2017,2018,2019,2020,2021,2022,2023,2024] },
-//     yAxis: { title: { text: 'Cluster Count' } },
-//     tooltip: {
-//       formatter: function() {
-//         const y = this.x;
-//         const birdRow = tableData.find(r => r.bird === this.series.name);
-//         const points = birdRow && birdRow[y] ? birdRow[y].points : 0;
-//         return `<b>${this.series.name}</b><br/>Year ${y}: ${this.y} clusters<br/>${points} points`;
-//       }
-//     },
-//     series: series
-//   });
-// }
-
-
-
-
-
-
-// Assuming clusterData is your flat array of cluster rows
-// function refreshClusterDetailTable(clusterData, threshold) {
-//   const tableData = clusterData.map(c => {
-//     const totalForBirdYear = birdYearTotals[c.individual][c.year];
-//     const percent = (c.pointCount / totalForBirdYear) * 100;
-//     const sizeCategory = percent >= threshold ? "Large" : "Small";
-    
-//     return {
-//       individual: c.individual,
-//       cluster: c.clusterId,
-//       year: c.year,
-//       date: c.date,
-//       time: c.time,
-//       lat: c.lat,
-//       lon: c.lon,
-//       points: c.pointCount,
-//       clusterSize: sizeCategory
-//     };
-//   });
-
-//   // Clear + reload DataTable
-//   clusterDetailTable.clear();
-//   clusterDetailTable.rows.add(tableData).draw();
-// }
-
-// Refreshes the detail table (# cluster size recalculated)
-// function refreshClusterDetailTable(clusterData, threshold) {
-//   const tableData = clusterData.map(c => {
-//     const totalForBirdYear = birdYearTotals[c.individual][c.year] || 0;
-//     const percent = totalForBirdYear ? (c.pointCount / totalForBirdYear) * 100 : 0;
-//     const sizeCategory = percent >= threshold ? "Large" : "Small";
-
-//     return {
-//       individual: c.individual,
-//       clusterId: c.clusterId,
-//       year: c.year,
-//       date: c.date,
-//       time: c.time,
-//       lat: c.lat,
-//       lon: c.lon,
-//       pointCount: c.pointCount,
-//       percent: percent,
-//       sizeCategory: sizeCategory
-//     };
-//   });
-
-//   clusterDetailTable.clear();
-//   clusterDetailTable.rows.add(tableData);
-//   clusterDetailTable.draw();
-// }
-
-
-// KK MAY NOT BE USED ANYWHERE NOW ######################
-// // Calculate total points per bird per year
-// function calculateBirdYearTotals(clusterData) {
-//   const totals = {};
-//   clusterData.forEach(c => {
-//     if (!totals[c.individual]) totals[c.individual] = {};
-//     if (!totals[c.individual][c.year]) totals[c.individual][c.year] = 0;
-//     totals[c.individual][c.year] += c.pointCount;
-//   });
-//   return totals;
-// }
 
 // Rewritten refreshClusterDetailTable to work with allPoints
 function refreshClusterDetailTable(points, threshold) {
@@ -2231,65 +1190,6 @@ function refreshClusterDetailTable(points, threshold) {
 }
 
 
-// KK MAY NOT BE USED ANYWHERE NOW ################
-// function setClusterData(data) {
-//   clusterData = data;
-//   birdYearTotals = calculateBirdYearTotals(data);
-//   // then render tables initially
-//   refreshClusterSummaryTable(clusterData, getCurrentThreshold());
-//   refreshClusterDetailTable(clusterData, getCurrentThreshold());
-// }
-
-
-
-
-// Summarises clusters per bird/year
-// function refreshClusterSummaryTable(clusterData, threshold) {
-//   const grouped = {};
-
-//   // Build bird-year totals
-//   clusterData.forEach(c => {
-//     const key = c.individual + "-" + c.year;
-//     if (!grouped[key]) {
-//       grouped[key] = {
-//         individual: c.individual,
-//         year: c.year,
-//         clusters: new Set(),
-//         totalPoints: 0,
-//         clusterPoints: {}
-//       };
-//     }
-//     grouped[key].clusters.add(c.clusterId);
-//     grouped[key].totalPoints += c.pointCount;
-
-//     if (!grouped[key].clusterPoints[c.clusterId]) {
-//       grouped[key].clusterPoints[c.clusterId] = 0;
-//     }
-//     grouped[key].clusterPoints[c.clusterId] += c.pointCount;
-//   });
-
-//   // Work out how many large clusters
-//   Object.values(grouped).forEach(entry => {
-//     entry.largeClusters = Object.values(entry.clusterPoints).filter(count => {
-//       return count >= (entry.totalPoints * threshold / 100);
-//     }).length;
-//   });
-
-//   // Push into DataTable
-//   const table = $('#clusterSummaryTable').DataTable();
-//   table.clear();
-//   Object.values(grouped).forEach(entry => {
-//     table.row.add([
-//       entry.individual,
-//       entry.year,
-//       entry.clusters.size,
-//       entry.totalPoints,
-//       entry.largeClusters
-//     ]);
-//   });
-//   table.draw();
-// }
-
 // Rewritten refreshClusterSummaryTable to work with allPoints
 // Threshold-free version for Bird × Year summary table
 function refreshClusterSummaryTable(points) {
@@ -2343,60 +1243,6 @@ function refreshClusterSummaryTable(points) {
   });
   table.draw();
 }
-
-
-// ####################### KK REMOVE BELOW THIS ALREADY IN DOM SECTION - OR SIMILAR #############
-  // ==========================================================
-  //     Highchart Setting Setup
-  // ========================================================== 
-
-// // On page load set metric to totalClusters and read chosen threshold, then populate the table
-// $(document).ready(function() {
-//   const initialMetric = 'totalClusters';
-//   const initialThreshold = parseFloat($('#largeThreshold').val());
-//   currentMetric = initialMetric; // keep globals in sync
-//   updateBirdYearSummaryTable(initialMetric, initialThreshold);
-
-//   // Ensure the metric and threshold are set together, when the metric is changed
-//   $('.metric-toggle').on('click', function() {
-//     currentMetric = $(this).data('metric'); // totalClusters | largeClusters | smallClusters
-//     // Update the CSS base on the metric chosen
-//     $('.metric-toggle').removeClass('btn-primary btn-secondary btn-info');
-//     if (currentMetric === 'totalClusters') $(this).addClass('btn-primary');
-//     else if (currentMetric === 'largeClusters') $(this).addClass('btn-secondary');
-//     else if (currentMetric === 'smallClusters') $(this).addClass('btn-info');
-
-//     // Re-render table and chart together
-//     const threshold = parseFloat($('#largeThreshold').val());
-//     updateBirdYearSummaryTable(currentMetric, threshold);
-//   });
-
-//   // Threshold dropdown
-//   $('#largeThreshold').on('change', function() {
-//     const threshold = parseFloat(this.value);
-//     updateBirdYearSummaryTable(currentMetric, threshold);
-//   });
-// });
-// ####################### KK REMOVE ABOVE THIS ALREADY IN DOM SECTION - OR SIMILAR #############
-
-
-// ######## KK FUNCTION DUPLICATED ELSEWHERE REMOVE THIS ONE #############
-// // After allPoints is set
-// function initYearDropdown() {
-//   const $yearSelect = $('#chartYearSelect');
-//   $yearSelect.empty();
-
-//   const yearsSet = new Set(allPoints.map(p => new Date(p.timestamp).getFullYear()));
-//   const allYears = Array.from(yearsSet).sort((a,b) => a - b);
-
-//   allYears.forEach(y => $yearSelect.append(`<option value="${y}">${y}</option>`));
-//   $yearSelect.append('<option value="all" selected>All Years</option>');
-
-//   $yearSelect.on('change', () => {
-//     updateBirdYearChart(currentMetric, currentChartValueType);
-//   });
-// }
-// ######################## REMOVE ABOVE ########################################
 
 
 // ==========================================================
@@ -3875,38 +2721,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     ]
   });
 
-  // // ===============================
-  // // Metric Toggle Buttons
-  // // ===============================
-  // document.querySelectorAll('.metric-toggle').forEach(btn => {
-  //   btn.addEventListener('click', () => {
-  //     currentMetric = btn.getAttribute('data-metric'); // update global
-  //     const threshold = getCurrentThreshold();
-
-  //     updateBirdYearSummaryTable(currentMetric, threshold);
-
-  //     // Highlight active button
-  //     document.querySelectorAll('.metric-toggle').forEach(b => b.classList.remove('active'));
-  //     btn.classList.add('active');
-  //   });
-  // });
-
-
-  // // ===============================
-  // // Refresh DataTable on Threshold Change
-  // // ===============================
-
-
-  // document.getElementById("largeThreshold").addEventListener("change", function() {
-  //   const threshold = getCurrentThreshold();
-  //   console.log("Threshold changed to:", threshold, "Points count:", allPoints.length);
-
-  //   // Re-render both summary + detail tables using current metric + threshold
-  //   updateBirdYearSummaryTable(currentMetric, threshold);
-  //   refreshClusterSummaryTable(allPoints, threshold);
-  //   refreshClusterDetailTable(allPoints, threshold);
-  // });
-
   // ===============================
   // Metric toggle buttons
   // ===============================
@@ -3962,44 +2776,6 @@ $('#chartYearSelect').off('change').on('change', function() {
     console.log("Year changed:", selectedYear);
     updateBirdYearChart(currentMetric, currentChartValueType);
 });
-
-
-  // $('#chartYearSelect').on('change', function() {
-  //   updateBirdYearChart(currentMetric, currentChartValueType, parseFloat($('#largeThreshold').val()));
-  // });
-
-  /// Populate dropdown once
-  // $(document).ready(function() {
-  //   if (!allPoints || !allPoints.length) {
-  //     console.warn("⚠️ No allPoints found at DOM ready");
-  //     return;
-  //   }
-
-  //   const yearsSet = new Set(allPoints.map(p => new Date(p.timestamp).getFullYear()));
-  //   const allYears = Array.from(yearsSet).sort((a,b) => a - b);
-
-  //   console.log("✅ Years extracted:", allYears);   // <---- check this
-
-  //   const $yearSelect = $('#chartYearSelect');
-  //   $yearSelect.empty();
-
-  //   // Add years first
-  //   allYears.forEach(y => {
-  //     console.log("Adding year option:", y);  // <---- check each iteration
-  //     $yearSelect.append(`<option value="${y}">${y}</option>`);
-  //   });
-
-  //   // Then add "All Years"
-  //   $yearSelect.append('<option value="all" selected>All Years</option>');
-
-  //   // Trigger chart update when user changes dropdown
-  //   $yearSelect.on('change', function() {
-  //     updateBirdYearChart(currentMetric, currentChartValueType);
-  //   });
-
-  //   // Initial render
-  //   updateBirdYearChart(currentMetric, currentChartValueType);
-  // });
 
   // -------------------
   // DOM-ready

@@ -26,24 +26,23 @@
   padding-left: 0 !important;
 }
   #legend, #year-legend {
-    flex-direction: row !important; /* Change to row direction for multi-column layout */
-    flex-wrap: wrap; /* Allow items to wrap to the next line */
-    justify-content: flex-start; /* Align items to the start of the row */
-    gap: 8px; /* Increase gap slightly for better spacing in multi-column */
-    padding: 10px; /* Keep consistent padding, or adjust for smaller screens */
+    flex-direction: row !important; 
+    flex-wrap: wrap; 
+    justify-content: flex-start; 
+    gap: 8px; 
+    padding: 10px; 
   }
 
   
   /* Style the individual legend items to take roughly half the width */
-  #legend > div, /* Target all direct div children (includes the "more clusters" item) */
+  #legend > div, 
   #year-legend > div {
-    flex: 1 1 calc(50% - 4px) !important; /* FORCED to grow, not shrink, base width 50% minus half the gap */
-    max-width: calc(50% - 4px) !important; /* FORCED max width to ensure two items per row */
-    word-break: break-all; /* More aggressive word-breaking for narrower columns */
+    flex: 1 1 calc(50% - 4px) !important; 
+    max-width: calc(50% - 4px) !important; 
+    word-break: break-all; 
   }
 
-/* .legend-item class specific rules, if any other than what's covered by #legend > div */
-  /* This rule is largely redundant if #legend > div is used, but doesn't hurt */
+  
   .legend-item {
     flex-wrap: wrap; /* Ensures content within the item wraps */
   }
@@ -81,21 +80,21 @@
   #legend, #year-legend {
     font-size: 12px;
     padding: 5px;
-    gap: 6px; /* Slightly smaller gap when in a single column again */
-    flex-direction: column !important; /* Revert to single column */
-    flex-wrap: nowrap !important; /* Prevent wrapping if it becomes a single column */  
+    gap: 6px; 
+    flex-direction: column !important; 
+    flex-wrap: nowrap !important; 
   }
 
   /* Ensure items take full width to stack properly */
   #legend > div,
   #year-legend > div {
-    flex: 1 1 100% !important; /* FORCED to take full width */
-    max-width: 100% !important; /* Ensures they don't overflow */
+    flex: 1 1 100% !important; 
+    max-width: 100% !important; 
   }
 
   .legend-item {
-    flex: 1 1 100%; /* Make items take full width to stack */
-    max-width: 100%; /* Ensure they don't overflow */
+    flex: 1 1 100%; 
+    max-width: 100%; 
   }
 
  .color-box {
@@ -133,16 +132,6 @@
 h6.legend-label-text {
   margin-left: 1rem;
 }
-
-/* .row {
-  margin-left: 0;
-  margin-right: 0;
-  overflow-x: hidden;
-  overflow: hidden !important;
-} */
-
-
-
 
 
 body {
@@ -246,21 +235,6 @@ p.filterform-p {
   padding-right: 1rem;
 }
 
-/* #hero-top img {
-  max-width: 100%;
-  height: auto;
-  display: block;
-  margin: 0 auto;
-} */
-
-  /* #hero-top h1 {
-    font-size: 3rem;
-  }
-
-  #hero-top p {
-    font-size: 2.3rem;
-  } */
-
   .hero-stork-img {
   max-height: 10rem;
   transition: max-height 0.4s ease, right 0.4s ease, bottom 0.4s ease;
@@ -312,16 +286,16 @@ background #CBCAE8 */
   width: 5rem;
   font-size: 0.9rem;
   line-height: normal; 
-  transition: opacity 0.3s ease, filter 0.3s ease; /* kk new code */
-  opacity: 1;  /* kk new code */
-  cursor: pointer;  /* kk new code */
+  transition: opacity 0.3s ease, filter 0.3s ease; 
+  opacity: 1;  
+  cursor: pointer; 
 }
 
 #playButton.disabled, 
 #playButton:disabled {
-  opacity: 0.4;          /* more obvious "dull" */
-  cursor: not-allowed;   /* disables pointer */
-  filter: grayscale(50%); /* subtle grayscale to dull */
+  opacity: 0.4;        
+  cursor: not-allowed;   
+  filter: grayscale(50%); 
 }
 
 #time-label {
@@ -379,7 +353,7 @@ background #CBCAE8 */
 
 .play-img {
   position: relative;
-  height: 6vh; /* or use a relative unit like 10vh */
+  height: 6vh; 
 }
 
 .play-stork-img {
@@ -610,17 +584,11 @@ background #CBCAE8 */
 #year-legend > div {
     display: flex;
     align-items: center;
-    gap: 6px; /* Gap between color-box and label within an item */
+    gap: 6px; 
     padding-bottom: 0.0rem;
-    flex-wrap: wrap; /* Allows the content inside *each item* to wrap if it's too long */
+    flex-wrap: wrap; 
 }
 
-/* #legend div, .legend-item {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding-bottom: 0.0rem;
-}  */
 
 .color-box {
   flex-shrink: 0;
@@ -651,8 +619,6 @@ background #CBCAE8 */
   margin: 0 1rem 1rem 1rem; 
   box-sizing: border-box;
 }
-
-
 
 
 
@@ -794,9 +760,6 @@ background #CBCAE8 */
    Sections & Table Cards
 ------------------------------ */
 
-/* #table-section, #summary-table-section {
-  margin-top: 1em !important;
-} */
 
 /* Setup for the main table card */
   #table-card {
@@ -1037,16 +1000,16 @@ background #CBCAE8 */
 ------------------------------ */
 
 .chart-value-toggle {
-  background-color: #fff;         /* white background */
-  color: #4B0082;                 /* dark purple text */
-  border: 2px solid #4B0082;      /* purple border */
+  background-color: #fff;         
+  color: #4B0082;                
+  border: 2px solid #4B0082;     
   font-weight: 600;
   transition: all 0.2s ease-in-out;
 }
 
 .chart-value-toggle:hover {
   background-color: #4B0082;
-  color: #fff;                    /* invert on hover */
+  color: #fff;                    
 }
 
 .chart-value-toggle.active {
