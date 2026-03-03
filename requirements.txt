@@ -1,0 +1,11 @@
+pandas
+numpy
+psycopg2
+python-dotenv
+sqlalchemy
+scikit-learn
+hdbscan
+haversine
+folium
+matplotlib
+tqdm
