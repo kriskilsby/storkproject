@@ -21,7 +21,8 @@ The application consists of:
 
 The original migration datasets (4 CSV files) are available at:
 
-[KAGGLE DATASET LINK – TO BE ADDED]
+[Kaggle Dataset Link](https://www.kaggle.com/datasets/kristopherkilsby/stork-dataset-2016-2022)
+
 
 After downloading, place the CSV files in:
 
@@ -86,8 +87,13 @@ backend/db/table-setup.sql
 
 Create and activate virtual environment (optional but recommended):
 
-python -m venv venv  
-venv\Scripts\activate   (Windows)
+# Windows
+python -m venv venv
+venv\Scripts\activate
+
+# macOS/Linux
+python -m venv venv
+source venv/bin/activate
 
 Install required packages:
 
